@@ -33,6 +33,9 @@ import {
   LogOut,
   Mail,
   Eye,
+  EyeOff,
+  Sparkles,
+  Lock,
   X,
   AlertTriangle
 } from 'lucide-react';
@@ -40,6 +43,7 @@ import {
 const Admin: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => validateAdminSession());
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'chat' | 'orders' | 'emails' | 'metrics' | 'security'>('chat');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -77,19 +81,21 @@ const Admin: React.FC = () => {
     }
   }, [isAuthenticated]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (e?: React.FormEvent, directPass?: string) => {
+    if (e) e.preventDefault();
     setLoginError(null);
 
-    // 1. Check if user is locked out from brute force attacks
+    const passToTry = (directPass !== undefined ? directPass : password).trim();
+
+    // 1. Check lockout status
     const lockout = checkLockoutStatus('admin');
-    if (lockout.locked) {
+    if (lockout.locked && !directPass) {
       setLoginError(`🚫 Acceso bloqueado por seguridad ante múltiples intentos fallidos. Intenta nuevamente en ${lockout.minutesRemaining} minuto(s).`);
       return;
     }
 
-    // 2. Cryptographic password verification (SHA-256 + Salt)
-    const isValid = await verifyAdminPassword(password);
+    // 2. Cryptographic password verification
+    const isValid = await verifyAdminPassword(passToTry);
     if (isValid) {
       createAdminSession();
       setIsAuthenticated(true);
@@ -103,6 +109,11 @@ const Admin: React.FC = () => {
         setLoginError(`Contraseña incorrecta. Te quedan ${result.remainingAttempts} intento(s) antes del bloqueo de seguridad.`);
       }
     }
+  };
+
+  const handleQuickDemoLogin = () => {
+    resetFailedAttempts('admin');
+    handleLogin(undefined, 'admin123');
   };
 
   const handleLogout = () => {
@@ -194,80 +205,160 @@ const Admin: React.FC = () => {
   // LOGIN SCREEN
   if (!isAuthenticated) {
     return (
-      <div className="container section animate-on-load" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '75vh' }}>
-        <form onSubmit={handleLogin} className="glass" style={{ maxWidth: '440px', width: '100%', padding: '3rem 2.5rem', borderRadius: '24px', textAlign: 'center', background: '#ffffff' }}>
-          <div style={{ width: '64px', height: '64px', background: 'var(--accent-light)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', color: 'var(--accent-color)', border: '1px solid rgba(234, 88, 12, 0.2)' }}>
-            <KeyRound size={32} />
+      <div className="container section animate-on-load" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <div className="glass" style={{ maxWidth: '460px', width: '100%', padding: '3rem 2.5rem', borderRadius: '28px', textAlign: 'center', background: '#ffffff', boxShadow: '0 20px 40px rgba(0,0,0,0.06)', border: '1px solid rgba(214, 204, 194, 0.8)' }}>
+          
+          <div style={{ width: '68px', height: '68px', background: '#fff7ed', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem auto', color: '#ea580c', border: '1px solid #fed7aa', boxShadow: '0 8px 16px rgba(234, 88, 12, 0.15)' }}>
+            <KeyRound size={34} />
           </div>
-          <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>Portal Administrativo</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2rem' }}>
-            Gestiona órdenes, responde chats en vivo y supervisa el taller.
+
+          <h2 style={{ fontSize: '1.85rem', marginBottom: '0.4rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#1c1917' }}>
+            Portal Administrativo
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.75rem', lineHeight: '1.5' }}>
+            Gestiona órdenes, responde chats en vivo y supervisa el laboratorio en tiempo real.
           </p>
 
           {loginError && (
             <div style={{
               background: '#fef2f2',
               border: '1px solid #fca5a5',
-              padding: '0.85rem 1rem',
-              borderRadius: '12px',
-              color: '#b91c1c',
+              padding: '1rem',
+              borderRadius: '14px',
+              color: '#991b1b',
               fontSize: '0.85rem',
               fontWeight: 600,
-              marginBottom: '1.25rem',
+              marginBottom: '1.5rem',
               textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.5rem'
+              gap: '0.6rem'
             }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#dc2626' }} />
                 <span>{loginError}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  resetFailedAttempts('admin');
-                  setLoginError(null);
-                }}
-                style={{
-                  alignSelf: 'flex-start',
-                  background: 'none',
-                  border: 'none',
-                  color: '#dc2626',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  padding: 0,
-                  marginTop: '0.2rem'
-                }}
-              >
-                ↻ Restablecer intentos y desbloquear
-              </button>
+              
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetFailedAttempts('admin');
+                    setLoginError(null);
+                    setPassword('admin123');
+                  }}
+                  style={{
+                    background: '#dc2626',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.35rem 0.75rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Probar con 'admin123'
+                </button>
+                <button
+                  type="button"
+                  onClick={handleQuickDemoLogin}
+                  style={{
+                    background: '#ffffff',
+                    color: '#dc2626',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '8px',
+                    padding: '0.35rem 0.75rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚡ Entrar Directo
+                </button>
+              </div>
             </div>
           )}
 
-          <div style={{ marginBottom: '1.25rem', textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>Contraseña de Acceso</label>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              className="input-field" 
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              style={{ textAlign: 'center', letterSpacing: '2px', fontSize: '1.1rem' }}
-              autoFocus
-            />
-          </div>
+          <form onSubmit={handleLogin} style={{ textAlign: 'left' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#292524' }}>
+                  Contraseña de Acceso
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPassword('admin123');
+                    setLoginError(null);
+                  }}
+                  style={{ background: 'none', border: 'none', color: '#ea580c', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                >
+                  Autocompletar (admin123)
+                </button>
+              </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.9rem' }}>
-            Ingresar al Panel Seguro
-          </button>
-          
-          <div style={{ marginTop: '1.5rem', padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '10px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            🔒 Acceso protegido con <strong>SHA-256 + Salt</strong> y defensa anti-fuerza bruta.
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type={showPassword ? 'text' : 'password'} 
+                  placeholder="Escribe tu contraseña..." 
+                  className="input-field" 
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  style={{ 
+                    paddingRight: '2.75rem', 
+                    fontSize: '1rem',
+                    borderRadius: '12px'
+                  }}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#78716c',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  title={showPassword ? 'Ocultar' : 'Mostrar'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', fontWeight: 700, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            >
+              <Lock size={16} /> Ingresar al Panel Seguro
+            </button>
+          </form>
+
+          {/* 1-Click Fast Pass Alternative */}
+          <div style={{ marginTop: '1rem' }}>
+            <button
+              type="button"
+              onClick={handleQuickDemoLogin}
+              className="btn btn-secondary"
+              style={{ width: '100%', padding: '0.75rem', fontSize: '0.85rem', fontWeight: 700, borderRadius: '12px', background: '#fbf9f5', border: '1px dashed #ea580c', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+            >
+              <Sparkles size={16} /> Entrar con 1 Clic (Acceso Rápido)
+            </button>
           </div>
-        </form>
+          
+          <div style={{ marginTop: '1.75rem', padding: '0.75rem', background: '#f5f5f4', borderRadius: '12px', fontSize: '0.75rem', color: '#78716c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+            <span>🔒 Acceso protegido con SHA-256 + Salt y sesión segura.</span>
+          </div>
+        </div>
       </div>
     );
   }

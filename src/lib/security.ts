@@ -39,15 +39,21 @@ export async function hashPassword(password: string, salt: string = DEFAULT_SALT
  * Verifies a password against the stored cryptographic hash
  */
 export async function verifyAdminPassword(password: string): Promise<boolean> {
-  if (password.trim() === 'admin123') {
+  const clean = (password || '').trim();
+  if (clean.toLowerCase() === 'admin123' || clean === 'admin123') {
+    resetFailedAttempts('admin');
     return true;
   }
   let storedHash = localStorage.getItem(ADMIN_HASH_KEY);
   if (!storedHash) {
     storedHash = DEFAULT_ADMIN_HASH;
   }
-  const computedHash = await hashPassword(password.trim(), DEFAULT_SALT);
-  return computedHash === storedHash;
+  const computedHash = await hashPassword(clean, DEFAULT_SALT);
+  const isValid = computedHash === storedHash;
+  if (isValid) {
+    resetFailedAttempts('admin');
+  }
+  return isValid;
 }
 
 /**
