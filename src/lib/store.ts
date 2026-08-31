@@ -45,6 +45,13 @@ export interface Order {
   items: OrderItem[];
   addAudioVideoEnhancement: boolean;
   generalNotes: string;
+
+  // Delivery & Logistics
+  deliveryType?: 'taller_pickup' | 'home_delivery' | 'national_shipping';
+  deliveryAddress?: string;
+  deliveryNotes?: string;
+  tallerAddress?: string;
+  trackingCourierNumber?: string;
 }
 
 import { 
@@ -99,6 +106,18 @@ export const saveOrder = (order: Order) => {
 
   // Sync to Supabase in background
   saveOrderToCloud(order);
+};
+
+export const updateOrder = (orderId: string, updates: Partial<Order>): Order | null => {
+  const order = getOrderById(orderId);
+  if (!order) return null;
+  const updated: Order = {
+    ...order,
+    ...updates,
+    id: order.id // Prevent ID change
+  };
+  saveOrder(updated);
+  return updated;
 };
 
 export const getOrderById = (id: string): Order | undefined => {

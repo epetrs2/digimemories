@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   MessageSquare, 
   X, 
   Send, 
-  RefreshCw
+  RefreshCw,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import { 
   getOrCreateVisitorThread, 
@@ -12,73 +14,27 @@ import {
   triggerHumanEscalation,
   markThreadAsReadByVisitor
 } from '../lib/chatStore';
-import type { ChatMessage, ChatThread } from '../lib/chatStore';
+import type { ChatThread } from '../lib/chatStore';
+import { getBotResponse, type BotReplyResult } from '../lib/botTrainer';
 
 const FAQ_SUGGESTIONS = [
   "¿Cuánto cuesta digitalizar mis cintas?",
   "¿Cómo entregan los archivos finales?",
   "¿Qué formatos de cinta aceptan?",
   "¿Qué pasa si mi cinta tiene moho?",
-  "¿Cómo funciona el rastreo de mi orden?",
+  "¿Tienen servicio a domicilio?",
   "Hablar con un asesor humano"
 ];
 
-const BOT_KNOWLEDGE: { keywords: string[]; answer: string }[] = [
-  {
-    keywords: ['precio', 'costo', 'cuanto cuesta', 'tarifa', 'cotizar', 'presupuesto', 'vale'],
-    answer: 'Nuestra tarifa base es de **$200 MXN por cinta** (VHS, Beta, Hi8, MiniDV) que incluye hasta 2 horas de digitalización en MP4. Discos DVD a $150 MXN y fotos sueltas a $7 MXN. Si tu cinta dura más de 2h, solo se cobran $50 MXN por hora adicional.'
-  },
-  {
-    keywords: ['entrega', 'usb', 'disco duro', 'formato', 'mp4', 'donde guardan'],
-    answer: 'Entregamos tus videos en archivos digitales **MP4 de alta fidelidad** compatibles con Smart TV, computadoras y celulares. Por privacidad y calidad, la entrega es estrictamente física en una memoria USB o Disco Duro. ¡Y te devolvemos todas tus cintas originales intactas!'
-  },
-  {
-    keywords: ['formato', 'vhs', 'beta', 'betamax', 'hi8', 'minidv', 'video8', 'dvd', 'super 8', '8mm'],
-    answer: 'Digitalizamos: **VHS, VHS-C, Betamax, Video8, Hi8, Digital8, MiniDV, discos DVD y escaneo de fotos y álbumes**. Todos son capturados en tiempo real 1:1 con equipo profesional.'
-  },
-  {
-    keywords: ['moho', 'hongo', 'rota', 'reparar', 'limpiar', 'danada', 'daño', 'sirve'],
-    answer: 'Inspeccionamos cada cinta sin costo. Si una cinta presenta daño físico severo o moho excesivo que impida su lectura segura, te lo notificamos y **no se cobra esa unidad**. No realizamos reparaciones químicas invasivas.'
-  },
-  {
-    keywords: ['tiempo', 'cuanto tarda', 'demora', 'dias', 'plazo', 'urgente'],
-    answer: 'El tiempo promedio de entrega es de **3 a 7 días hábiles**, dependiendo de la cantidad de cintas en tu lote. Como digitalizamos a velocidad real 1:1, garantizamos máxima calidad sin aceleraciones destructivas.'
-  },
-  {
-    keywords: ['rastreo', 'rastrear', 'id', 'pin', 'seguimiento', 'estado', 'donde va'],
-    answer: 'Al generar tu cotización obtienes un **Número de Rastreo único de 6 dígitos**. Cuando abonas tu anticipo, te entregamos tu PIN de 4 dígitos para ver el estatus de cada cinta en tiempo real en nuestro portal.'
-  },
-  {
-    keywords: ['mejora', 'color', 'audio', 'remasterizar', 'calidad', 'filtro', 'restaurar'],
-    answer: 'Ofrecemos el servicio opcional de **Mejora Premium de Color y Audio** ($150 MXN adicionales por cinta) que aplica corrección de saturación, estabilización de brillo y reducción de ruido analógico.'
-  },
-  {
-    keywords: ['donde estan', 'ubicacion', 'direccion', 'sucursal', 'taller', 'horario'],
-    answer: 'Nuestro taller principal se encuentra en **Av. Insurgentes Sur #450, Col. Roma Sur, CDMX**. Recibimos material de Lunes a Sábado de 10:00 a 18:00 hrs.'
-  },
-  {
-    keywords: ['hola', 'buenas', 'buen dia', 'saludos', 'que tal'],
-    answer: '¡Hola! 👋 Qué gusto saludarte. Soy Guillermo de DigiMemories. ¿Tienes cintas familiares antiguas (VHS, Beta, Hi8) o fotografías que quieras digitalizar?'
-  },
-  {
-    keywords: ['gracias', 'muchas gracias', 'perfecto', 'excelente', 'ok', 'de acuerdo'],
-    answer: '¡Con todo gusto! Estamos listos para ayudarte a revivir tus mejores recuerdos familiares. Si tienes cualquier otra pregunta, aquí estaré.'
-  }
-];
-
-const HUMAN_REQUEST_KEYWORDS = [
-  'humano', 'persona', 'asesor', 'agente', 'administrador', 'alguien', 'no entiendes', 
-  'factura', 'rfc', 'descuento especial', 'mayoreo', 'paquete especial', 'queja', 'reclamo',
-  'uber flash', 'paqueteria urgente', 'cotizacion especial'
-];
-
-const LiveChat: React.FC = () => {
+export const LiveChat: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [showTeaser, setShowTeaser] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [thread, setThread] = useState<ChatThread | null>(null);
+  const [activeQuickReplies, setActiveQuickReplies] = useState<{ label: string; action: string }[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,13 +57,13 @@ const LiveChat: React.FC = () => {
     };
   }, [location.pathname]);
 
-  // Show teaser after 4s
+  // Show teaser after 3.5s
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isOpen && (!thread || thread.messages.length <= 1)) {
         setShowTeaser(true);
       }
-    }, 4000);
+    }, 3500);
     return () => clearTimeout(timer);
   }, [isOpen, thread?.messages.length]);
 
@@ -116,7 +72,7 @@ const LiveChat: React.FC = () => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [thread?.messages.length, isTyping, isOpen]);
+  }, [thread?.messages.length, isTyping, isOpen, activeQuickReplies]);
 
   // Clear unread when opened
   useEffect(() => {
@@ -132,51 +88,64 @@ const LiveChat: React.FC = () => {
     const query = (textToSend || inputText).trim();
     if (!query || !thread) return;
 
+    setActiveQuickReplies([]);
+
     // 1. Add visitor message
     addMessageToThread(thread.id, 'visitor', query, 'Tú');
     if (!textToSend) setInputText('');
     syncThread();
 
-    // 2. If already in human mode or thread is archived, do not auto-respond with bot
+    // 2. If in human mode or thread is archived, skip automated bot response
     if (thread.mode === 'human' || thread.status === 'archived') {
       return;
     }
 
-    // 3. Bot evaluation
+    // 3. Intelligent bot evaluation
     setIsTyping(true);
 
     setTimeout(() => {
-      const lower = query.toLowerCase();
+      const result: BotReplyResult = getBotResponse(query);
 
-      // Check if user explicitly wants human or asked complex out-of-scope query
-      const wantsHuman = HUMAN_REQUEST_KEYWORDS.some(k => lower.includes(k));
-      
-      let matchedResponse = BOT_KNOWLEDGE.find(item => 
-        item.keywords.some(k => lower.includes(k))
-      );
-
-      if (wantsHuman || !matchedResponse) {
-        // Bot is NOT capable of answering or human is requested -> ESCALATE TO ADMIN!
+      if (result.isEscalation) {
         triggerHumanEscalation(thread.id, query);
       } else {
-        // Bot answers accurately
-        addMessageToThread(thread.id, 'bot', matchedResponse.answer, 'Guillermo (Asistente)');
+        addMessageToThread(thread.id, 'bot', result.text, 'Guillermo (Asistente IA)');
+      }
+
+      if (result.quickReplies && result.quickReplies.length > 0) {
+        setActiveQuickReplies(result.quickReplies);
       }
 
       setIsTyping(false);
       syncThread();
-    }, 750);
+    }, 600);
+  };
+
+  const handleQuickAction = (action: string, label: string) => {
+    if (action === 'NAVIGATE_CALCULATOR') {
+      navigate('/#calculator');
+      const calcEl = document.getElementById('calculator');
+      if (calcEl) calcEl.scrollIntoView({ behavior: 'smooth' });
+    } else if (action === 'NAVIGATE_TRACK') {
+      navigate('/track');
+    } else if (action === 'NAVIGATE_CONTACT') {
+      navigate('/contact');
+    } else if (action === 'REQUEST_HUMAN') {
+      if (thread) triggerHumanEscalation(thread.id, 'Petición de asesor humano');
+    } else {
+      handleSendMessage(label);
+    }
   };
 
   const handleStartNewChat = () => {
     localStorage.removeItem('digimemories_current_visitor_id');
     const fresh = getOrCreateVisitorThread('Visitante', location.pathname);
     setThread(fresh);
+    setActiveQuickReplies([]);
   };
 
   const isContactPage = location.pathname === '/contact';
   const bottomOffset = isContactPage ? '96px' : '24px';
-
   const unreadCount = thread?.unreadByVisitor || 0;
   const isHumanMode = thread?.mode === 'human';
   const isArchived = thread?.status === 'archived';
@@ -205,7 +174,7 @@ const LiveChat: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }} />
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-color)' }}>Asesor en Vivo</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-color)' }}>Guillermo • Asesor IA</span>
             </div>
             <button 
               onClick={(e) => { e.stopPropagation(); setShowTeaser(false); }}
@@ -215,35 +184,39 @@ const LiveChat: React.FC = () => {
             </button>
           </div>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-primary)', margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
-            ¿Tienes dudas sobre cómo rescatar tus cintas VHS o fotos? ¡Pregúntame aquí!
+            ¿Tienes dudas sobre cómo digitalizar tus cintas VHS, Betamax o fotos? ¡Escríbeme y te cotizo al instante!
           </p>
         </div>
       )}
 
-      {/* Main Launcher Button */}
+      {/* Floating Trigger Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="btn btn-primary animate-pulse-glow"
+          aria-label="Abrir chat de ayuda"
           style={{
             width: '60px',
             height: '60px',
             borderRadius: '50%',
-            padding: 0,
+            background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+            color: '#ffffff',
+            border: 'none',
+            boxShadow: '0 10px 25px rgba(234, 88, 12, 0.4)',
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 8px 25px rgba(234, 88, 12, 0.4)',
             position: 'relative',
-            cursor: 'pointer'
+            transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
-          aria-label="Abrir chat en vivo"
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          <MessageSquare size={26} color="#ffffff" />
+          <MessageSquare size={26} />
           
           <span style={{
             position: 'absolute',
-            top: '2px',
+            bottom: '2px',
             right: '2px',
             width: '14px',
             height: '14px',
@@ -280,9 +253,9 @@ const LiveChat: React.FC = () => {
         <div 
           className="glass animate-on-load"
           style={{
-            width: '380px',
+            width: '390px',
             maxWidth: 'calc(100vw - 32px)',
-            height: '560px',
+            height: '580px',
             maxHeight: 'calc(100vh - 120px)',
             display: 'flex',
             flexDirection: 'column',
@@ -332,8 +305,9 @@ const LiveChat: React.FC = () => {
                 }} />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                  {isHumanMode ? 'Operador en Vivo' : 'Guillermo'}
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: 1.2, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {isHumanMode ? 'Operador en Vivo' : 'Guillermo (IA)'}
+                  {!isHumanMode && <Sparkles size={13} className="text-orange-500 inline" />}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   {isArchived ? (
@@ -341,7 +315,7 @@ const LiveChat: React.FC = () => {
                   ) : isHumanMode ? (
                     <span style={{ color: 'var(--accent-color)', fontWeight: 700 }}>• Atendido por Administrador</span>
                   ) : (
-                    <span>Especialista en Preservación</span>
+                    <span>Cotizador & Especialista 24/7</span>
                   )}
                 </div>
               </div>
@@ -350,7 +324,7 @@ const LiveChat: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <button 
                 onClick={handleStartNewChat}
-                title="Iniciar nuevo chat"
+                title="Reiniciar conversación"
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.4rem', borderRadius: '6px' }}
               >
                 <RefreshCw size={16} />
@@ -365,7 +339,7 @@ const LiveChat: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick FAQ Suggestion Carousel/Pills */}
+          {/* Quick FAQ Suggestion Carousel */}
           {!isArchived && (
             <div style={{
               padding: '0.6rem 0.85rem',
@@ -383,15 +357,23 @@ const LiveChat: React.FC = () => {
                   onClick={() => handleSendMessage(sug)}
                   style={{
                     background: '#ffffff',
-                    border: '1px solid rgba(214, 204, 194, 0.7)',
-                    borderRadius: '999px',
-                    padding: '0.3rem 0.75rem',
+                    border: '1px solid rgba(214, 204, 194, 0.8)',
+                    borderRadius: '20px',
+                    padding: '0.35rem 0.85rem',
                     fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'var(--text-secondary)',
+                    color: 'var(--text-primary)',
                     cursor: 'pointer',
-                    flexShrink: 0,
-                    transition: 'all 0.2s'
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--accent-color)';
+                    e.currentTarget.style.color = 'var(--accent-color)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(214, 204, 194, 0.8)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
                   }}
                 >
                   {sug}
@@ -400,25 +382,30 @@ const LiveChat: React.FC = () => {
             </div>
           )}
 
-          {/* Messages Container */}
+          {/* Message List */}
           <div style={{
             flex: 1,
-            padding: '1.25rem',
             overflowY: 'auto',
+            padding: '1.25rem',
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem',
-            background: '#ffffff'
+            background: '#faf8f5'
           }}>
-            {thread?.messages.map((msg: ChatMessage) => {
-              const isVisitor = msg.sender === 'visitor';
-              const isAdmin = msg.sender === 'admin';
-              const isSystem = msg.sender === 'system';
+            {thread?.messages.map((msg) => {
+              const isMe = msg.sender === 'visitor';
+              const isSys = msg.sender === 'system';
 
-              if (isSystem) {
+              if (isSys) {
                 return (
                   <div key={msg.id} style={{ textAlign: 'center', margin: '0.5rem 0' }}>
-                    <span style={{ fontSize: '0.75rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '0.35rem 0.85rem', borderRadius: '999px', fontWeight: 600 }}>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      background: 'rgba(0,0,0,0.06)',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '12px',
+                      color: 'var(--text-muted)'
+                    }}>
                       {msg.text}
                     </span>
                   </div>
@@ -431,125 +418,168 @@ const LiveChat: React.FC = () => {
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: isVisitor ? 'flex-end' : 'flex-start',
+                    alignItems: isMe ? 'flex-end' : 'flex-start',
                     maxWidth: '88%',
-                    alignSelf: isVisitor ? 'flex-end' : 'flex-start'
+                    alignSelf: isMe ? 'flex-end' : 'flex-start'
                   }}
                 >
-                  {!isVisitor && (
-                    <span style={{ fontSize: '0.7rem', color: isAdmin ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: isAdmin ? 700 : 500, marginBottom: '0.2rem', padding: '0 0.35rem' }}>
-                      {isAdmin ? '👨‍💻 Operador Admin' : 'Guillermo (Asistente)'}
-                    </span>
-                  )}
-
                   <div style={{
-                    padding: '0.85rem 1.15rem',
-                    borderRadius: isVisitor ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                    background: isVisitor ? 'var(--accent-color)' : isAdmin ? 'var(--accent-light)' : 'var(--bg-secondary)',
-                    color: isVisitor ? '#ffffff' : 'var(--text-primary)',
-                    fontSize: '0.92rem',
-                    lineHeight: 1.55,
-                    border: isAdmin ? '1px solid rgba(234, 88, 12, 0.3)' : 'none',
-                    boxShadow: isVisitor ? '0 4px 12px var(--accent-glow)' : 'var(--shadow-sm)'
+                    fontSize: '0.7rem',
+                    color: 'var(--text-muted)',
+                    marginBottom: '0.2rem',
+                    marginLeft: isMe ? 0 : '0.4rem',
+                    marginRight: isMe ? '0.4rem' : 0,
+                    fontWeight: 600
                   }}>
-                    {msg.text.split('**').map((part, idx) => 
-                      idx % 2 === 1 ? <strong key={idx}>{part}</strong> : part
-                    )}
+                    {msg.senderName || (isMe ? 'Tú' : 'Guillermo')} • {msg.timestamp}
                   </div>
 
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem', padding: '0 0.35rem' }}>
-                    {msg.timestamp}
-                  </span>
+                  <div style={{
+                    padding: '0.8rem 1rem',
+                    borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                    background: isMe 
+                      ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' 
+                      : '#ffffff',
+                    color: isMe ? '#ffffff' : 'var(--text-primary)',
+                    fontSize: '0.875rem',
+                    lineHeight: 1.5,
+                    boxShadow: isMe ? '0 4px 12px rgba(234, 88, 12, 0.25)' : '0 2px 8px rgba(0,0,0,0.04)',
+                    border: isMe ? 'none' : '1px solid rgba(231, 226, 217, 0.9)',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-line'
+                  }}>
+                    {msg.text}
+                  </div>
                 </div>
               );
             })}
 
-            {/* Typing indicator */}
+            {/* Quick Action Chips from Bot Reply */}
+            {activeQuickReplies.length > 0 && !isTyping && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.25rem' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Opciones Sugeridas:
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  {activeQuickReplies.map((qr, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleQuickAction(qr.action, qr.label)}
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #ea580c',
+                        color: '#c2410c',
+                        borderRadius: '12px',
+                        padding: '0.4rem 0.75rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        boxShadow: '0 2px 6px rgba(234, 88, 12, 0.1)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {qr.label} <ArrowRight size={12} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bot Typing Indicator */}
             {isTyping && (
               <div style={{
-                alignSelf: 'flex-start',
-                padding: '0.65rem 1rem',
-                background: 'var(--bg-secondary)',
-                borderRadius: '16px 16px 16px 4px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '0.4rem',
+                padding: '0.6rem 0.9rem',
+                background: '#ffffff',
+                borderRadius: '16px',
+                width: 'fit-content',
+                boxShadow: 'var(--shadow-sm)',
+                border: '1px solid var(--glass-border)'
               }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-color)', animation: 'pulseGlow 1.2s infinite' }} />
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-color)', animation: 'pulseGlow 1.2s infinite 0.2s' }} />
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-color)', animation: 'pulseGlow 1.2s infinite 0.4s' }} />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>Escribiendo respuesta...</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Guillermo está escribiendo</span>
+                <span className="typing-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent-color)' }} />
+                <span className="typing-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent-color)', animationDelay: '0.2s' }} />
+                <span className="typing-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent-color)', animationDelay: '0.4s' }} />
               </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Chat Input Bar or Archived Banner */}
-          {isArchived ? (
-            <div style={{ padding: '1rem', background: 'var(--bg-secondary)', textAlign: 'center', borderTop: '1px solid var(--glass-border)' }}>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem 0' }}>
-                Esta conversación ha concluido.
-              </p>
-              <button 
-                onClick={handleStartNewChat} 
-                className="btn btn-primary"
-                style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}
+          {/* Input Footer */}
+          <div style={{
+            padding: '0.85rem 1rem',
+            background: '#ffffff',
+            borderTop: '1px solid var(--glass-border)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem'
+          }}>
+            {isArchived ? (
+              <div style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', padding: '0.4rem 0' }}>
+                Esta conversación ha finalizado.{' '}
+                <button 
+                  onClick={handleStartNewChat}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent-color)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Iniciar nuevo chat
+                </button>
+              </div>
+            ) : (
+              <form 
+                onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}
               >
-                <RefreshCw size={14} /> Iniciar nuevo chat
-              </button>
-            </div>
-          ) : (
-            <form 
-              onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-              style={{
-                padding: '0.85rem 1rem',
-                background: 'var(--bg-base)',
-                borderTop: '1px solid var(--glass-border)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem'
-              }}
-            >
-              <input 
-                ref={inputRef}
-                type="text" 
-                className="input-field" 
-                placeholder="Escribe tu duda o pregunta..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                style={{
-                  padding: '0.65rem 0.95rem',
-                  fontSize: '0.9rem',
-                  borderRadius: '12px'
-                }}
-              />
-
-              <button
-                type="submit"
-                disabled={!inputText.trim()}
-                className="btn btn-primary"
-                style={{
-                  width: '42px',
-                  height: '42px',
-                  padding: 0,
-                  borderRadius: '12px',
-                  flexShrink: 0,
-                  opacity: !inputText.trim() ? 0.4 : 1,
-                  cursor: !inputText.trim() ? 'default' : 'pointer'
-                }}
-                aria-label="Enviar mensaje"
-              >
-                <Send size={18} />
-              </button>
-            </form>
-          )}
-
+                <input 
+                  ref={inputRef}
+                  type="text"
+                  placeholder={isHumanMode ? "Escribe un mensaje al operador..." : "Escribe tu consulta o cotización..."}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem 1rem',
+                    borderRadius: '16px',
+                    border: '1.5px solid rgba(214, 204, 194, 0.8)',
+                    outline: 'none',
+                    fontSize: '0.875rem',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)'
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = 'var(--accent-color)')}
+                  onBlur={(e) => (e.target.style.borderColor = 'rgba(214, 204, 194, 0.8)')}
+                />
+                <button
+                  type="submit"
+                  disabled={!inputText.trim()}
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '14px',
+                    background: inputText.trim() ? 'var(--accent-color)' : '#e7e2d9',
+                    color: '#ffffff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: inputText.trim() ? 'pointer' : 'default',
+                    transition: 'background 0.2s ease',
+                    flexShrink: 0
+                  }}
+                >
+                  <Send size={18} />
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       )}
-
     </div>
   );
 };
-
 export default LiveChat;

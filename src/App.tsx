@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LiveChat from './components/LiveChat';
@@ -9,10 +10,25 @@ import Process from './pages/Process';
 import FAQ from './pages/FAQ';
 import Track from './pages/Track';
 import Admin from './pages/Admin';
+import { recordPageView } from './lib/analytics';
+
+function PageTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Exclude /admin from public visitor tracking
+    if (!location.pathname.startsWith('/admin')) {
+      recordPageView(location.pathname);
+    }
+  }, [location.pathname]);
+
+  return null;
+}
 
 function App() {
   return (
     <Router>
+      <PageTracker />
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
         <Navbar />
         <main style={{ flex: 1 }}>

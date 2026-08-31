@@ -4,14 +4,17 @@ import {
   saveOrder, 
   calculateFinalTotal, 
   markOrderAsCompletedAndNotify,
-  getSentEmails
+  getSentEmails,
+  updateItem
 } from '../lib/store';
-import type { Order, EmailNotification } from '../lib/store';
+import type { Order, EmailNotification, OrderItem } from '../lib/store';
 import { getChatThreads } from '../lib/chatStore';
 import type { ChatThread } from '../lib/chatStore';
 import AdminChatManager from '../components/AdminChatManager';
 import AdminEmailManager from '../components/AdminEmailManager';
 import AdminSecurityCenter from '../components/AdminSecurityCenter';
+import AdminTrafficAnalytics from '../components/AdminTrafficAnalytics';
+import AdminOrderEditModal from '../components/AdminOrderEditModal';
 import { sendDepositConfirmationAndPinEmail } from '../lib/emailService';
 import { 
   verifyAdminPassword, 
@@ -20,8 +23,7 @@ import {
   destroyAdminSession, 
   checkLockoutStatus, 
   recordFailedLoginAttempt,
-  resetFailedAttempts,
-  sanitizeHtml 
+  resetFailedAttempts 
 } from '../lib/security';
 import { 
   Package, 
@@ -36,7 +38,11 @@ import {
   EyeOff,
   Lock,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Compass,
+  Edit,
+  Truck,
+  MapPin
 } from 'lucide-react';
 
 const Admin: React.FC = () => {
@@ -44,17 +50,25 @@ const Admin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chat' | 'orders' | 'emails' | 'metrics' | 'security'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'orders' | 'traffic' | 'emails' | 'metrics' | 'security'>('chat');
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
   const [sentEmails, setSentEmails] = useState<EmailNotification[]>([]);
   const [previewEmail, setPreviewEmail] = useState<EmailNotification | null>(null);
 
   const loadData = () => {
-    setOrders(getOrders());
+    const fetchedOrders = getOrders();
+    setOrders(fetchedOrders);
     setChatThreads(getChatThreads());
     setSentEmails(getSentEmails());
+
+    // Keep selectedOrder in sync
+    if (selectedOrder) {
+      const refreshed = fetchedOrders.find(o => o.id === selectedOrder.id);
+      if (refreshed) setSelectedOrder(refreshed);
+    }
   };
 
   useEffect(() => {
@@ -118,85 +132,51 @@ const Admin: React.FC = () => {
 
   const handleSetPin = async (orderId: string) => {
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
-    let targetOrder: Order | null = null;
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
 
-    const updatedOrders = orders.map(o => {
-      if (o.id === orderId) {
-        o.pin = pin;
-        o.depositPaid = true;
-        o.status = 'en_proceso';
-        saveOrder(o);
-        targetOrder = o;
-        return o;
-      }
-      return o;
-    });
+    const finalTotal = calculateFinalTotal(order);
+    const updatedOrder: Order = {
+      ...order,
+      pin,
+      depositPaid: true,
+      status: 'en_proceso'
+    };
 
-    setOrders(updatedOrders);
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder(updatedOrders.find(o => o.id === orderId) || null);
-    }
+    saveOrder(updatedOrder);
+    setOrders(getOrders());
+    setSelectedOrder(updatedOrder);
 
-    if (targetOrder) {
-      const orderToSend: Order = targetOrder;
-      const total = calculateFinalTotal(orderToSend);
-      
-      // Dispatch email to client via SMTP/Sandbox
-      sendDepositConfirmationAndPinEmail({
-        order: orderToSend,
+    // Send deposit confirmation & PIN email to client
+    try {
+      await sendDepositConfirmationAndPinEmail({
+        order: updatedOrder,
         pin,
-        total
-      }).then(() => {
-        loadData();
-      }).catch(err => console.warn('Error sending deposit PIN email:', err));
-
-      alert(`✅ ¡Anticipo Registrado y PIN Generado: ${pin}!\n\n📧 Se ha enviado automáticamente el comprobante en formato Ticket Térmico con su PIN de acceso al correo del cliente (${orderToSend.clientEmail}).`);
+        total: finalTotal
+      });
+      loadData();
+    } catch (err) {
+      console.warn('Error sending deposit PIN email:', err);
     }
   };
 
-  const handleCompleteOrder = (orderId: string) => {
-    if (window.confirm(`¿Confirmas que toda la digitalización de la orden #${orderId} está lista? Se enviará automáticamente el correo electrónico de entrega al cliente.`)) {
-      const result = markOrderAsCompletedAndNotify(orderId);
-      if (result) {
-        loadData();
-        setSelectedOrder(result.order);
-        alert(`🎉 ¡Orden #${orderId} completada!\n\nSe ha enviado automáticamente el correo de finalización a ${result.order.clientEmail}.`);
-      }
+  const handleCompleteOrder = async (orderId: string) => {
+    const res = markOrderAsCompletedAndNotify(orderId);
+    if (res) {
+      loadData();
+      setSelectedOrder(res.order);
+      setPreviewEmail(res.email);
     }
   };
 
-  const updateOrderItemField = (orderId: string, itemId: string, field: string, value: any) => {
-    const updatedOrders = orders.map(o => {
-      if (o.id === orderId) {
-        o.items = o.items.map(i => {
-          if (i.id === itemId) {
-            return { ...i, [field]: value };
-          }
-          return i;
-        });
-        
-        const allCompleted = o.items.every(i => i.status === 'completada' || i.status === 'fallida');
-        if (allCompleted && o.status !== 'completada') {
-          // Auto complete and send email
-          markOrderAsCompletedAndNotify(orderId);
-        } else {
-          saveOrder(o);
-        }
-        
-        return o;
-      }
-      return o;
-    });
-    setOrders(updatedOrders);
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder(updatedOrders.find(o => o.id === orderId) || null);
-    }
+  const updateOrderItemField = (orderId: string, itemId: string, field: keyof OrderItem, value: any) => {
+    updateItem(orderId, itemId, { [field]: value });
+    loadData();
   };
 
-  const totalAttention = chatThreads.filter(t => t.status !== 'archived' && t.needsHumanAttention).length;
-  const totalUnreadMessages = chatThreads.reduce((sum, t) => sum + t.unreadByAdmin, 0);
+  const totalUnreadMessages = chatThreads.reduce((acc, t) => acc + (t.unreadByAdmin || 0), 0);
+  const totalAttention = chatThreads.filter(t => t.needsHumanAttention && t.status === 'active').length;
 
-  // LOGIN SCREEN
   if (!isAuthenticated) {
     return (
       <div className="container section animate-on-load" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
@@ -415,6 +395,22 @@ const Admin: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('traffic')}
+          className="btn"
+          style={{
+            background: activeTab === 'traffic' ? '#ffffff' : 'transparent',
+            color: activeTab === 'traffic' ? 'var(--accent-color)' : 'var(--text-secondary)',
+            boxShadow: activeTab === 'traffic' ? 'var(--shadow-sm)' : 'none',
+            padding: '0.65rem 1.4rem',
+            fontSize: '0.95rem',
+            borderRadius: '12px'
+          }}
+        >
+          <Compass size={18} />
+          <span>Tráfico & Origen 🌐</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('emails')}
           className="btn"
           style={{
@@ -482,14 +478,14 @@ const Admin: React.FC = () => {
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{orders.length} totales</span>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '580px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '620px', overflowY: 'auto' }}>
                 {orders.map(order => {
                   const isSelected = selectedOrder?.id === order.id;
                   const finalTotal = calculateFinalTotal(order);
                   const isCompleted = order.status === 'completada';
 
                   return (
-                    <button 
+                    <div 
                       key={order.id}
                       onClick={() => setSelectedOrder(order)}
                       style={{ 
@@ -500,7 +496,8 @@ const Admin: React.FC = () => {
                         borderRadius: '14px',
                         color: 'var(--text-primary)',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease'
+                        transition: 'all 0.2s ease',
+                        position: 'relative'
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
@@ -516,6 +513,13 @@ const Admin: React.FC = () => {
                         {order.clientName}
                       </div>
 
+                      {order.deliveryAddress && (
+                        <div style={{ fontSize: '0.75rem', color: '#78716c', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                          <MapPin size={12} className="text-orange-500" />
+                          <span className="truncate">{order.deliveryAddress}</span>
+                        </div>
+                      )}
+
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
                         <span style={{
                           padding: '0.15rem 0.5rem',
@@ -526,9 +530,22 @@ const Admin: React.FC = () => {
                         }}>
                           {isCompleted ? '✓ Completada' : order.depositPaid ? 'En Proceso' : 'Esperando Anticipo'}
                         </span>
-                        <span>PIN: <strong>{order.pin || 'Sin asignar'}</strong></span>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>PIN: <strong>{order.pin || 'Sin asignar'}</strong></span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingOrder(order);
+                            }}
+                            className="p-1 text-stone-400 hover:text-orange-600 rounded hover:bg-white"
+                            title="Editar Datos"
+                          >
+                            <Edit size={14} />
+                          </button>
+                        </div>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
 
@@ -545,9 +562,17 @@ const Admin: React.FC = () => {
               <div className="glass" style={{ padding: '2.25rem', background: '#ffffff', borderRadius: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
                   <div>
-                    <span className="badge" style={{ marginBottom: '0.4rem' }}>
-                      {selectedOrder.status === 'completada' ? '✓ Orden Finalizada' : 'En Gestión'}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                      <span className="badge">
+                        {selectedOrder.status === 'completada' ? '✓ Orden Finalizada' : 'En Gestión'}
+                      </span>
+                      <button
+                        onClick={() => setEditingOrder(selectedOrder)}
+                        className="px-2.5 py-1 text-xs font-bold bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg flex items-center gap-1 transition shadow-sm"
+                      >
+                        <Edit size={13} /> Editar Dirección & Datos
+                      </button>
+                    </div>
                     <h2 style={{ fontSize: '1.85rem', margin: 0 }}>Orden #{selectedOrder.id}</h2>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
                       Cliente: <strong>{selectedOrder.clientName}</strong> ({selectedOrder.clientEmail})
@@ -563,6 +588,30 @@ const Admin: React.FC = () => {
                     </div>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>Total Recalculado</p>
                   </div>
+                </div>
+
+                {/* Logistics Info Card */}
+                <div style={{ background: '#faf8f5', border: '1px solid #e7e2d9', borderRadius: '14px', padding: '1.25rem', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: '#c2410c', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Truck size={14} /> Logística y Entrega
+                    </div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#ffedd5', color: '#9a3412' }}>
+                      {selectedOrder.deliveryType === 'home_delivery' ? '🛵 Entrega CDMX' : (selectedOrder.deliveryType === 'national_shipping' ? '📦 Envío Nacional' : '🏢 Recoger en Taller')}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '0.85rem', color: '#44403c', marginBottom: '4px' }}>
+                    <strong>Dirección del Cliente:</strong> {selectedOrder.deliveryAddress || 'No especificada (Recolección en sucursal)'}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#44403c' }}>
+                    <strong>Taller Asignado:</strong> {selectedOrder.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}
+                  </div>
+                  {selectedOrder.trackingCourierNumber && (
+                    <div style={{ fontSize: '0.85rem', color: '#0369a1', marginTop: '4px' }}>
+                      <strong>Guía de Paquetería:</strong> {selectedOrder.trackingCourierNumber}
+                    </div>
+                  )}
                 </div>
 
                 {/* Anticipo / Completion Action Card */}
@@ -600,48 +649,59 @@ const Admin: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', background: 'var(--bg-secondary)', borderRadius: '14px', marginBottom: '2rem', border: '1px solid rgba(214, 204, 194, 0.8)', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Anticipo Registrado</div>
-                      <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--accent-color)' }}>PIN: {selectedOrder.pin}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', background: '#f0fdf4', borderRadius: '14px', marginBottom: '2rem', border: '1px solid #bbf7d0', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <CheckCircle2 size={24} color="#16a34a" />
+                      <div>
+                        <div style={{ fontSize: '0.9rem', color: '#166534', fontWeight: 700 }}>Anticipo Registrado</div>
+                        <div style={{ fontSize: '0.8rem', color: '#15803d' }}>
+                          PIN Activo: <strong>{selectedOrder.pin}</strong>
+                        </div>
+                      </div>
                     </div>
 
                     <button 
-                      onClick={() => handleCompleteOrder(selectedOrder.id)} 
+                      onClick={() => handleCompleteOrder(selectedOrder.id)}
                       className="btn btn-primary"
-                      style={{ padding: '0.65rem 1.25rem', fontSize: '0.9rem' }}
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                     >
-                      <CheckCircle2 size={16} /> Completar Orden y Enviar Mail al Cliente
+                      <CheckCircle2 size={16} /> Marcar Orden como Completada
                     </button>
                   </div>
                 )}
 
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', fontWeight: 700 }}>Artículos de la Orden</h3>
+                {/* Items Status Inspection */}
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Material en Proceso ({selectedOrder.items.length})</h3>
+                
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {selectedOrder.items.map(item => (
-                    <div key={item.id} style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: '14px', border: '1px solid rgba(214, 204, 194, 0.6)' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+                  {selectedOrder.items.map((item, index) => (
+                    <div key={item.id} className="glass" style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                          #{index + 1} - {item.format}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                          ID: {item.id}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
                         <div>
-                          <div style={{ fontWeight: 800, fontSize: '1.05rem' }}>{item.format}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Identificador: {item.id}</div>
-                        </div>
-                        
-                        <div>
-                          <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>Estado de Digitalización</label>
+                          <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>Estado de la Cinta</label>
                           <select 
                             className="input-field" 
                             style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
                             value={item.status}
                             onChange={e => updateOrderItemField(selectedOrder.id, item.id, 'status', e.target.value)}
                           >
-                            <option value="pendiente">Pendiente en Fila</option>
-                            <option value="digitalizando">Digitalizando (En Proceso)</option>
-                            <option value="completada">Completada con Éxito</option>
-                            <option value="fallida">Falla de Lectura / Dañada</option>
+                            <option value="pendiente">⏳ Pendiente</option>
+                            <option value="digitalizando">🔄 En Digitalización 1:1</option>
+                            <option value="completada">✓ Digitalizada con Éxito</option>
+                            <option value="fallida">❌ Falla de Lectura / Dañada</option>
                           </select>
                         </div>
 
-                        {item.format === 'Cintas' && (
+                        {item.format.toLowerCase().includes('cinta') && (
                           <div>
                             <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>Horas Extra (+ $50/hr)</label>
                             <input 
@@ -655,40 +715,6 @@ const Admin: React.FC = () => {
                           </div>
                         )}
                       </div>
-
-                      {/* Failure report */}
-                      {item.status === 'fallida' && (
-                        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(239, 68, 68, 0.3)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                          <div>
-                            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#ef4444', display: 'block', marginBottom: '0.2rem' }}>Motivo de la Falla</label>
-                            <select 
-                              className="input-field" 
-                              style={{ borderColor: '#ef4444', fontSize: '0.85rem' }}
-                              value={item.failureReason || ''}
-                              onChange={e => updateOrderItemField(selectedOrder.id, item.id, 'failureReason', e.target.value)}
-                            >
-                              <option value="">Selecciona una razón...</option>
-                              <option value="Cinta rota o despegada">Cinta rota o despegada</option>
-                              <option value="Moho severo / Hongo blanco">Moho severo / Hongo blanco</option>
-                              <option value="Mecanismo trabado">Mecanismo trabado</option>
-                              <option value="Señal completamente borrada">Señal completamente borrada</option>
-                            </select>
-                          </div>
-                          
-                          <div>
-                            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#ef4444', display: 'block', marginBottom: '0.2rem' }}>Nota para el Cliente</label>
-                            <textarea 
-                              className="input-field" 
-                              rows={2}
-                              placeholder="Explica qué se detectó al intentar reproducir..."
-                              style={{ borderColor: '#ef4444', fontSize: '0.85rem' }}
-                              value={item.failureNote || ''}
-                              onChange={e => updateOrderItemField(selectedOrder.id, item.id, 'failureNote', e.target.value)}
-                            ></textarea>
-                          </div>
-                        </div>
-                      )}
-
                     </div>
                   ))}
                 </div>
@@ -704,12 +730,19 @@ const Admin: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: INTERNAL EMAIL ENGINE & SMTP SERVER */}
+      {/* TAB 3: TRAFFIC & AUDIENCE ANALYTICS */}
+      {activeTab === 'traffic' && (
+        <div className="animate-on-load">
+          <AdminTrafficAnalytics totalOrdersCount={orders.length} />
+        </div>
+      )}
+
+      {/* TAB 4: INTERNAL EMAIL ENGINE & SMTP SERVER */}
       {activeTab === 'emails' && (
         <AdminEmailManager orders={orders} />
       )}
 
-      {/* TAB 4: METRICS */}
+      {/* TAB 5: METRICS */}
       {activeTab === 'metrics' && (
         <div className="animate-on-load">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
@@ -721,7 +754,7 @@ const Admin: React.FC = () => {
             <div className="glass" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px' }}>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Valor Estimado en Cartera</div>
               <div style={{ fontSize: '2.5rem', fontWeight: 800, marginTop: '0.5rem', color: 'var(--accent-color)' }}>
-                ${orders.reduce((sum, o) => sum + calculateFinalTotal(o), 0)} MXN
+                ${orders.reduce((sum, o) => sum + calculateFinalTotal(o), 0).toLocaleString('es-MX')} MXN
               </div>
             </div>
 
@@ -738,9 +771,22 @@ const Admin: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 5: CYBERSECURITY AUDIT & CONTROLS */}
+      {/* TAB 6: CYBERSECURITY AUDIT & CONTROLS */}
       {activeTab === 'security' && (
         <AdminSecurityCenter />
+      )}
+
+      {/* Edit Order Modal */}
+      {editingOrder && (
+        <AdminOrderEditModal
+          order={editingOrder}
+          isOpen={!!editingOrder}
+          onClose={() => setEditingOrder(null)}
+          onSaved={(updated) => {
+            loadData();
+            setSelectedOrder(updated);
+          }}
+        />
       )}
 
       {/* Email Preview Modal */}
@@ -758,12 +804,15 @@ const Admin: React.FC = () => {
             </div>
 
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: '8px' }}>
-              <div><strong>Para:</strong> {previewEmail.toName} &lt;{previewEmail.toEmail}&gt;</div>
+              <div><strong>Para:</strong> {previewEmail.toName} ({previewEmail.toEmail})</div>
               <div><strong>Asunto:</strong> {previewEmail.subject}</div>
-              <div><strong>Fecha de envío:</strong> {new Date(previewEmail.sentAt).toLocaleString('es-MX')}</div>
+              <div><strong>Fecha de Envío:</strong> {new Date(previewEmail.sentAt).toLocaleString('es-MX')}</div>
             </div>
 
-            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewEmail.bodyHtml) }} />
+            <div 
+              style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '1rem', background: '#ffffff' }}
+              dangerouslySetInnerHTML={{ __html: previewEmail.bodyHtml }}
+            />
           </div>
         </div>
       )}
