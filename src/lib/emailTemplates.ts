@@ -59,28 +59,27 @@ export interface TestEmailTemplateData {
   mode: 'gmail_live' | 'custom_smtp' | 'sandbox';
 }
 
-const THERMAL_TICKET_STYLES = `
-  body { margin: 0; padding: 0; background-color: #f2efe9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace, sans-serif; -webkit-font-smoothing: antialiased; color: #1c1917; }
+const LUXURY_EMAIL_STYLES = `
+  body { margin: 0; padding: 0; background-color: #f6f3ee; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #292524; }
   table { border-collapse: collapse; width: 100%; }
   img { border: 0; outline: none; text-decoration: none; }
-  .ticket-wrapper { width: 100%; max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 18px; overflow: hidden; box-shadow: 0 15px 35px rgba(28, 25, 23, 0.08); border: 1px solid #e2ddd3; }
-  .ticket-header { background: #1c1917; color: #ffffff; padding: 32px 28px 24px 28px; text-align: center; border-bottom: 3px dashed #ea580c; position: relative; }
-  .ticket-body { padding: 32px 28px; background-color: #faf9f6; }
-  .barcode-strip { font-family: 'Courier New', Courier, monospace; letter-spacing: 3px; font-weight: 700; color: #44403c; text-align: center; margin: 20px 0 10px 0; font-size: 13px; }
-  .btn-action { display: inline-block; background: #ea580c; color: #ffffff !important; text-decoration: none; font-weight: 800; font-size: 15px; padding: 15px 32px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3); letter-spacing: 0.5px; }
-  .pin-badge { background: #1c1917; border: 2px dashed #ea580c; border-radius: 14px; padding: 20px; text-align: center; margin: 24px 0; }
-  .ticket-footer { background-color: #f2efe9; padding: 24px 28px; text-align: center; font-size: 11px; color: #78716c; border-top: 2px dashed #d6ccc2; font-family: 'Courier New', monospace; }
+  .wrapper { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border: 1px solid #e7e2d9; }
+  .header { background: linear-gradient(135deg, #1c1917 0%, #292524 100%); padding: 34px 28px; text-align: center; color: #ffffff; }
+  .brand-title { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; margin: 0; color: #ea580c; }
+  .brand-sub { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #d6d3d1; margin-top: 6px; }
+  .content { padding: 34px 28px; }
+  .badge { display: inline-block; background-color: #ffedd5; color: #c2410c; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .badge-green { display: inline-block; background-color: #dcfce7; color: #15803d; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .card { background-color: #faf8f5; border: 1px solid #e7e2d9; border-radius: 14px; padding: 22px; margin: 22px 0; }
+  .btn-primary { display: inline-block; background-color: #ea580c; color: #ffffff !important; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 14px rgba(234, 88, 12, 0.25); }
+  .footer { background-color: #f6f3ee; padding: 24px 28px; text-align: center; font-size: 12px; color: #78716c; border-top: 1px solid #e7e2d9; }
 `;
 
 /**
- * 1. TEMPLATE: CONFIRMACIÓN DE ANTICIPO & ACTIVACIÓN DE PIN (Ticket Térmico Pro)
+ * 1. TEMPLATE: CONFIRMACIÓN DE ANTICIPO & ACTIVACIÓN DE PIN (Diseño Premium Elegante)
  */
 export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateData): string {
   const trackUrl = data.trackUrl || 'https://digimemories.vercel.app/track';
-  const nowStr = new Date().toLocaleString('es-MX', { 
-    year: 'numeric', month: '2-digit', day: '2-digit', 
-    hour: '2-digit', minute: '2-digit', hour12: true 
-  });
 
   return `
 <!DOCTYPE html>
@@ -89,113 +88,82 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comprobante de Anticipo y PIN de Rastreo #${data.trackingId}</title>
-  <style>${THERMAL_TICKET_STYLES}</style>
+  <style>${LUXURY_EMAIL_STYLES}</style>
 </head>
-<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
+<body style="margin: 0; padding: 24px 12px; background-color: #f6f3ee;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <div class="ticket-wrapper">
+        <div class="wrapper">
           
-          <!-- Thermal Header -->
-          <div class="ticket-header">
-            <div style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 3px; color: #fed7aa; margin-bottom: 6px; text-transform: uppercase;">
-              *** COMPROBANTE OFICIAL DE ANTICIPO ***
-            </div>
-            <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; margin: 0; color: #ffffff;">
-              DIGIMEMORIES <span style="color: #ea580c;">LAB</span>
-            </div>
-            <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #a8a29e; margin-top: 4px;">
-              LABORATORIO DE PRESERVACIÓN ANALÓGICA • CDMX
-            </div>
+          <!-- Header -->
+          <div class="header">
+            <h1 class="brand-title">DIGIMEMORIES</h1>
+            <div class="brand-sub">Preservación Digital & Rescate Analógico</div>
           </div>
 
-          <!-- Ticket Body -->
-          <div class="ticket-body">
-            
-            <!-- Metadata Receipt Grid -->
-            <div style="border-bottom: 2px dashed #d6ccc2; padding-bottom: 16px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 12px; color: #44403c; line-height: 1.7;">
-              <div style="display: flex; justify-content: space-between;">
-                <span>FOLIO DE RASTREO:</span>
-                <strong style="color: #ea580c; font-size: 14px;">#${data.trackingId}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span>CLIENTE TITULAR:</span>
-                <strong style="color: #1c1917;">${data.clientName}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span>FECHA DE EMISIÓN:</span>
-                <span>${nowStr}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span>ESTADO DE ORDEN:</span>
-                <strong style="color: #15803d; background: #dcfce7; padding: 1px 8px; border-radius: 4px;">EN PROCESO DE CAPTURA 1:1</strong>
-              </div>
+          <!-- Content -->
+          <div class="content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <span class="badge">ORDEN #${data.trackingId}</span>
+              <span class="badge-green">✓ Anticipo Confirmado</span>
             </div>
 
-            <p style="font-size: 14px; line-height: 1.6; color: #292524; margin: 0 0 16px 0;">
-              ¡Hola, <strong>${data.clientName}</strong>! Hemos recibido y validado con éxito el anticipo correspondiente a tu lote de <strong>${data.itemsCount} artículo(s)</strong>. Tu material ya ha ingresado formalmente a nuestra fila de digitalización profesional.
+            <h2 style="font-size: 22px; font-weight: 800; color: #1c1917; margin: 0 0 12px 0;">
+              ¡Hola, ${data.clientName}!
+            </h2>
+            <p style="font-size: 15px; line-height: 1.6; color: #44403c; margin: 0 0 20px 0;">
+              Hemos validado tu anticipo correspondiente a tu lote de <strong>${data.itemsCount} artículo(s)</strong>. Tu material ya ha ingresado a nuestra fila de digitalización profesional 1:1.
             </p>
 
-            <!-- PIN SECURITY BADGE -->
-            <div class="pin-badge">
-              <div style="font-family: 'Courier New', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 2.5px; color: #fed7aa; margin-bottom: 8px;">
-                🔐 TU PIN PRIVADO DE SEGUIMIENTO EN VIVO
+            <!-- PIN LUXURY CARD -->
+            <div style="background: #1c1917; color: #ffffff; border-radius: 14px; padding: 24px 20px; text-align: center; margin: 24px 0; border: 2px solid #ea580c; box-shadow: 0 8px 20px rgba(0,0,0,0.12);">
+              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #fed7aa; margin-bottom: 8px; font-weight: 700;">
+                🔑 TU PIN DE RASTREO EN VIVO
               </div>
-              <div style="font-family: 'Courier New', monospace; font-size: 40px; font-weight: 900; letter-spacing: 10px; color: #ffedd5; margin: 6px 0;">
+              <div style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 900; letter-spacing: 8px; color: #ffedd5; margin: 8px 0;">
                 ${data.pin}
               </div>
-              <div style="font-size: 12px; color: #d6d3d1; margin-top: 8px; line-height: 1.4;">
-                Ingresa con tu <strong>Folio #${data.trackingId}</strong> y este <strong>PIN</strong> en nuestro portal para monitorear el avance cinta por cinta en tiempo real.
+              <div style="font-size: 13px; color: #d6d3d1; margin-top: 8px; line-height: 1.5;">
+                Ingresa con tu <strong>Folio #${data.trackingId}</strong> y este <strong>PIN</strong> en nuestro portal de seguimiento para consultar el estado cinta por cinta en tiempo real.
               </div>
             </div>
 
-            <!-- Financial Summary Box (Receipt Style) -->
-            <div style="background: #ffffff; border: 1px solid #e7e2d9; border-radius: 12px; padding: 18px; margin: 20px 0; font-family: 'Courier New', monospace;">
-              <div style="font-size: 11px; color: #78716c; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px dashed #e7e2d9; padding-bottom: 6px;">
-                Desglose Financiero del Servicio
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #57534e;">
-                <span>Total Estimado del Trabajo:</span>
+            <!-- Financial Summary Box -->
+            <div class="card">
+              <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #78716c; margin: 0 0 12px 0;">
+                Resumen Financiero del Servicio
+              </h3>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #44403c;">
+                <span>Total Estimado:</span>
                 <span>$${data.total.toLocaleString('es-MX')} MXN</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #15803d; font-weight: 700;">
+              <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; color: #15803d; font-weight: 700;">
                 <span>Anticipo Abonado (50%):</span>
-                <span>-$${data.depositAmount.toLocaleString('es-MX')} MXN [PAGADO]</span>
+                <span>-$${data.depositAmount.toLocaleString('es-MX')} MXN (Pagado)</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 800; color: #ea580c; border-top: 2px dashed #d6ccc2; padding-top: 10px; margin-top: 6px;">
-                <span>Saldo contra-entrega:</span>
+              <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; color: #ea580c; border-top: 1px dashed #d6ccc2; padding-top: 10px; margin-top: 6px;">
+                <span>Saldo al Recoger:</span>
                 <span>$${data.remainingAmount.toLocaleString('es-MX')} MXN</span>
               </div>
             </div>
 
-            <!-- Action Button CTA -->
-            <div style="text-align: center; margin: 30px 0 16px 0;">
-              <a href="${trackUrl}" target="_blank" class="btn-action">
-                🔍 Consultar Portal de Rastreo en Vivo →
+            <!-- Action Button -->
+            <div style="text-align: center; margin: 30px 0 10px 0;">
+              <a href="${trackUrl}" target="_blank" class="btn-primary">
+                🔍 Consultar Portal de Rastreo →
               </a>
-            </div>
-
-            <!-- Barcode Pattern Strip -->
-            <div class="barcode-strip">
-              ||| | ||||| || | |||| || ||| || ||||| |||| | |||
-              <div style="font-size: 10px; letter-spacing: 1px; color: #a8a29e; margin-top: 2px;">
-                SECURITY HASH: AUTH-PIN-${data.trackingId}-${data.pin}
-              </div>
             </div>
 
           </div>
 
-          <!-- Thermal Footer -->
-          <div class="ticket-footer">
+          <!-- Footer -->
+          <div class="footer">
             <div style="font-weight: 700; color: #44403c; margin-bottom: 4px;">
-              DIGIMEMORIES — TALLER DE PRESERVACIÓN
+              DigiMemories — Preservación de Memorias Familiares
             </div>
             <div>${data.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}</div>
             <div style="margin-top: 4px;">WhatsApp Taller: ${data.tallerPhone || '+52 55 4888 9876'}</div>
-            <div style="margin-top: 8px; color: #a8a29e; font-size: 10px;">
-              Conserva este correo como comprobante digital de tu servicio.
-            </div>
           </div>
 
         </div>
@@ -208,21 +176,17 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
 }
 
 /**
- * 2. TEMPLATE: COTIZACIÓN OFICIAL (Estilo Ticket Térmico con Desglose)
+ * 2. TEMPLATE: COTIZACIÓN OFICIAL (Diseño Premium con Desglose y PDF Adjunto)
  */
 export function getQuoteEmailHtml(data: QuoteTemplateData): string {
   const trackUrl = data.trackUrl || 'https://digimemories.vercel.app/track';
-  const nowStr = new Date().toLocaleString('es-MX', { 
-    year: 'numeric', month: '2-digit', day: '2-digit', 
-    hour: '2-digit', minute: '2-digit', hour12: true 
-  });
 
   const itemsRows = data.items.map(item => `
-    <tr style="border-bottom: 1px dashed #e7e2d9; font-family: 'Courier New', monospace; font-size: 13px;">
-      <td style="padding: 10px 4px; color: #292524; font-weight: 700;">${item.label}</td>
-      <td style="padding: 10px 4px; text-align: center; color: #57534e;">${item.quantity} ${item.unit}</td>
-      <td style="padding: 10px 4px; text-align: right; color: #78716c;">$${item.unitPrice}</td>
-      <td style="padding: 10px 4px; text-align: right; font-weight: 800; color: #ea580c;">$${item.subtotal.toLocaleString('es-MX')}</td>
+    <tr style="border-bottom: 1px solid #f0ede6;">
+      <td style="padding: 12px 8px; font-size: 14px; font-weight: 600; color: #292524;">${item.label}</td>
+      <td style="padding: 12px 8px; font-size: 14px; text-align: center; color: #57534e;">${item.quantity} ${item.unit}</td>
+      <td style="padding: 12px 8px; font-size: 14px; text-align: right; color: #78716c;">$${item.unitPrice}</td>
+      <td style="padding: 12px 8px; font-size: 14px; font-weight: 700; text-align: right; color: #ea580c;">$${item.subtotal.toLocaleString('es-MX')}</td>
     </tr>
   `).join('');
 
@@ -232,67 +196,52 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cotización Oficial #${data.trackingId}</title>
-  <style>${THERMAL_TICKET_STYLES}</style>
+  <title>Cotización #${data.trackingId}</title>
+  <style>${LUXURY_EMAIL_STYLES}</style>
 </head>
-<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
+<body style="margin: 0; padding: 24px 12px; background-color: #f6f3ee;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <div class="ticket-wrapper">
+        <div class="wrapper">
           
-          <!-- Thermal Header -->
-          <div class="ticket-header">
-            <div style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 3px; color: #fed7aa; margin-bottom: 6px; text-transform: uppercase;">
-              *** PRESUPUESTO OFICIAL DE DIGITALIZACIÓN ***
-            </div>
-            <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; margin: 0; color: #ffffff;">
-              DIGIMEMORIES <span style="color: #ea580c;">LAB</span>
-            </div>
-            <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #a8a29e; margin-top: 4px;">
-              PRESERVACIÓN DIGITAL 1:1 DE ALTA FIDELIDAD
-            </div>
+          <!-- Header -->
+          <div class="header">
+            <h1 class="brand-title">DIGIMEMORIES</h1>
+            <div class="brand-sub">Preservación Digital & Rescate Analógico</div>
           </div>
 
-          <!-- Ticket Body -->
-          <div class="ticket-body">
-            
-            <!-- Metadata Receipt Grid -->
-            <div style="border-bottom: 2px dashed #d6ccc2; padding-bottom: 14px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 12px; color: #44403c; line-height: 1.7;">
-              <div style="display: flex; justify-content: space-between;">
-                <span>FOLIO COTIZACIÓN:</span>
-                <strong style="color: #ea580c; font-size: 14px;">#${data.trackingId}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span>CLIENTE:</span>
-                <strong style="color: #1c1917;">${data.clientName}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span>FECHA:</span>
-                <span>${nowStr}</span>
-              </div>
+          <!-- Content -->
+          <div class="content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <span class="badge">FOLIO #${data.trackingId}</span>
+              <span style="font-size: 13px; color: #78716c;">Cotización Oficial</span>
             </div>
 
-            <p style="font-size: 14px; line-height: 1.6; color: #292524; margin: 0 0 18px 0;">
-              ¡Hola, <strong>${data.clientName}</strong>! Hemos generado tu presupuesto oficial con entrega en formato digital MP4 y resguardo seguro de tu material original.
+            <h2 style="font-size: 22px; font-weight: 800; color: #1c1917; margin: 0 0 12px 0;">
+              ¡Hola, ${data.clientName}!
+            </h2>
+            <p style="font-size: 15px; line-height: 1.6; color: #44403c; margin: 0 0 20px 0;">
+              Gracias por cotizar la digitalización de tus memorias familiares con nosotros. Hemos generado tu presupuesto oficial con entrega en memoria USB en formato MP4 de alta calidad.
             </p>
 
-            <!-- Attachment Notice -->
-            <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 20px;">📎</span>
-              <div style="font-size: 13px; color: #9a3412;">
-                <strong>Documento PDF Oficial Adjunto:</strong> Hemos adjuntado el presupuesto vectorial formal a este correo para tu control y resguardo.
+            <!-- PDF Attachment Callout -->
+            <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">📄</div>
+              <div>
+                <strong style="color: #c2410c; font-size: 14px; display: block;">Presupuesto PDF Adjunto</strong>
+                <span style="color: #7c2d12; font-size: 12px;">Hemos adjuntado el documento formal en PDF a este correo para tu respaldo.</span>
               </div>
             </div>
 
             <!-- Items Table -->
             <table style="margin-bottom: 20px;">
               <thead>
-                <tr style="border-bottom: 2px solid #1c1917; font-family: 'Courier New', monospace; font-size: 11px; text-transform: uppercase; color: #78716c;">
-                  <th align="left" style="padding: 6px 4px;">Formato</th>
-                  <th align="center" style="padding: 6px 4px;">Cant.</th>
-                  <th align="right" style="padding: 6px 4px;">P. Unit</th>
-                  <th align="right" style="padding: 6px 4px;">Subtotal</th>
+                <tr style="border-bottom: 2px solid #e7e2d9; font-size: 12px; text-transform: uppercase; color: #78716c;">
+                  <th align="left" style="padding: 8px;">Formato</th>
+                  <th align="center" style="padding: 8px;">Cantidad</th>
+                  <th align="right" style="padding: 8px;">P. Unitario</th>
+                  <th align="right" style="padding: 8px;">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
@@ -300,46 +249,38 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
               </tbody>
             </table>
 
-            <!-- Financial Totals -->
-            <div style="background: #ffffff; border: 1px solid #e7e2d9; border-radius: 12px; padding: 18px; margin: 20px 0; font-family: 'Courier New', monospace;">
-              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #57534e;">
-                <span>Total Estimado:</span>
-                <strong style="color: #1c1917;">$${data.total.toLocaleString('es-MX')} MXN</strong>
+            <!-- Financial Card -->
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #57534e;">
+                <span>Total Estimado del Servicio:</span>
+                <strong style="color: #1c1917; font-size: 16px;">$${data.total.toLocaleString('es-MX')} MXN</strong>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #ea580c; font-weight: 700;">
-                <span>Anticipo Requerido (50%):</span>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; color: #ea580c; font-weight: 700;">
+                <span>Anticipo para Iniciar (50%):</span>
                 <span>$${data.depositAmount.toLocaleString('es-MX')} MXN</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: #15803d; border-top: 2px dashed #d6ccc2; padding-top: 10px; margin-top: 6px;">
-                <span>Saldo al Recoger:</span>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; color: #15803d; border-top: 1px dashed #d6ccc2; padding-top: 8px;">
+                <span>Saldo Restante contra-entrega:</span>
                 <span>$${data.remainingAmount.toLocaleString('es-MX')} MXN</span>
               </div>
             </div>
 
-            <!-- Action CTA -->
-            <div style="text-align: center; margin: 30px 0 16px 0;">
-              <a href="${trackUrl}" target="_blank" class="btn-action">
-                📋 Ver Detalle de Orden en el Portal →
+            <!-- Action Button -->
+            <div style="text-align: center; margin: 30px 0 10px 0;">
+              <a href="${trackUrl}" target="_blank" class="btn-primary">
+                Ver Detalles en Portal de Rastreo →
               </a>
-            </div>
-
-            <!-- Barcode Pattern Strip -->
-            <div class="barcode-strip">
-              |||| | || ||||| | ||| |||| | || ||||| || | |||
-              <div style="font-size: 10px; letter-spacing: 1px; color: #a8a29e; margin-top: 2px;">
-                DIGIMEMORIES QUOTE REGISTRY • FOLIO #${data.trackingId}
-              </div>
             </div>
 
           </div>
 
-          <!-- Thermal Footer -->
-          <div class="ticket-footer">
+          <!-- Footer -->
+          <div class="footer">
             <div style="font-weight: 700; color: #44403c; margin-bottom: 4px;">
-              DIGIMEMORIES — TALLER DE PRESERVACIÓN
+              DigiMemories — Preservación de Memorias Familiares
             </div>
             <div>${data.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}</div>
-            <div style="margin-top: 4px;">WhatsApp: ${data.tallerPhone || '+52 55 4888 9876'}</div>
+            <div style="margin-top: 4px;">WhatsApp Taller: ${data.tallerPhone || '+52 55 4888 9876'}</div>
           </div>
 
         </div>
@@ -352,7 +293,7 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
 }
 
 /**
- * 3. TEMPLATE: ACTUALIZACIÓN DE ESTADO
+ * 3. TEMPLATE: ACTUALIZACIÓN DE ESTADO DE ORDEN
  */
 export function getOrderStatusEmailHtml(data: OrderUpdateTemplateData): string {
   return `
@@ -362,47 +303,48 @@ export function getOrderStatusEmailHtml(data: OrderUpdateTemplateData): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Actualización de Orden #${data.trackingId}</title>
-  <style>${THERMAL_TICKET_STYLES}</style>
+  <style>${LUXURY_EMAIL_STYLES}</style>
 </head>
-<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
+<body style="margin: 0; padding: 24px 12px; background-color: #f6f3ee;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <div class="ticket-wrapper">
-          <div class="ticket-header">
-            <div style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 3px; color: #fed7aa; margin-bottom: 6px; text-transform: uppercase;">
-              *** ACTUALIZACIÓN DE PROCESO DE TALLER ***
-            </div>
-            <div style="font-size: 26px; font-weight: 900; color: #ffffff;">
-              DIGIMEMORIES <span style="color: #ea580c;">LAB</span>
-            </div>
-            <div style="font-family: 'Courier New', monospace; font-size: 12px; color: #ea580c; margin-top: 4px;">
-              ORDEN #${data.trackingId}
-            </div>
+        <div class="wrapper">
+          <div class="header">
+            <h1 class="brand-title">DIGIMEMORIES</h1>
+            <div class="brand-sub">Actualización de Estado</div>
           </div>
 
-          <div class="ticket-body">
-            <div style="background: #ffffff; border: 2px solid #ea580c; border-radius: 14px; padding: 20px; text-align: center; margin-bottom: 24px;">
-              <div style="font-size: 11px; font-family: 'Courier New', monospace; color: #78716c; text-transform: uppercase; letter-spacing: 2px;">
-                ETAPA DEL PROCESO
+          <div class="content">
+            <div style="margin-bottom: 20px;">
+              <span class="badge">ORDEN #${data.trackingId}</span>
+            </div>
+
+            <h2 style="font-size: 20px; font-weight: 800; color: #1c1917; margin: 0 0 12px 0;">
+              ¡Hola, ${data.clientName}!
+            </h2>
+
+            <div class="card" style="border-left: 4px solid #ea580c;">
+              <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #ea580c; font-weight: 700; margin-bottom: 6px;">
+                NUEVO ESTADO DEL TRABAJO
               </div>
-              <div style="font-size: 22px; font-weight: 900; color: #1c1917; margin: 8px 0;">
+              <div style="font-size: 18px; font-weight: 800; color: #1c1917; margin-bottom: 8px;">
                 ${data.statusTitle}
               </div>
-              <div style="font-size: 14px; color: #57534e; line-height: 1.5;">
+              <div style="font-size: 14px; color: #57534e; line-height: 1.6;">
                 ${data.statusDescription}
               </div>
             </div>
 
-            <div style="text-align: center; margin: 28px 0 16px 0;">
-              <a href="${data.trackUrl}" target="_blank" class="btn-action">
+            <div style="text-align: center; margin: 30px 0 10px 0;">
+              <a href="${data.trackUrl}" target="_blank" class="btn-primary">
                 Ver Avance en Tiempo Real →
               </a>
             </div>
           </div>
 
-          <div class="ticket-footer">
-            <div>DIGIMEMORIES LAB • Preservación Digital</div>
+          <div class="footer">
+            <div>DigiMemories • Preservación Digital de Memorias Familiares</div>
           </div>
         </div>
       </td>
@@ -422,41 +364,37 @@ export function getCustomMessageHtml(data: CustomMessageTemplateData): string {
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${data.subject}</title>
-  <style>${THERMAL_TICKET_STYLES}</style>
+  <style>${LUXURY_EMAIL_STYLES}</style>
 </head>
-<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
+<body style="margin: 0; padding: 24px 12px; background-color: #f6f3ee;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <div class="ticket-wrapper">
-          <div class="ticket-header">
-            <div style="font-size: 24px; font-weight: 900; color: #ffffff;">
-              DIGIMEMORIES <span style="color: #ea580c;">LAB</span>
-            </div>
-            <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #fed7aa; margin-top: 4px;">
-              COMUNICADO OFICIAL DE TALLER
-            </div>
+        <div class="wrapper">
+          <div class="header">
+            <h1 class="brand-title">DIGIMEMORIES</h1>
+            <div class="brand-sub">Comunicado Oficial del Laboratorio</div>
           </div>
 
-          <div class="ticket-body">
-            <div style="font-size: 15px; line-height: 1.65; color: #292524;">
-              <p>Estimado(a) <strong>${data.clientName}</strong>,</p>
-              <div style="background: #ffffff; border: 1px solid #e7e2d9; border-left: 4px solid #ea580c; border-radius: 8px; padding: 18px; margin: 20px 0; font-size: 14px; line-height: 1.7; color: #1c1917; white-space: pre-wrap;">${data.message}</div>
-            </div>
+          <div class="content">
+            <h2 style="font-size: 20px; font-weight: 800; color: #1c1917; margin: 0 0 16px 0;">
+              Estimado(a) ${data.clientName},
+            </h2>
+
+            <div style="background: #faf8f5; border: 1px solid #e7e2d9; border-left: 4px solid #ea580c; border-radius: 12px; padding: 20px; margin: 20px 0; font-size: 15px; line-height: 1.7; color: #292524; white-space: pre-wrap;">${data.message}</div>
 
             ${data.actionUrl ? `
-              <div style="text-align: center; margin: 28px 0 16px 0;">
-                <a href="${data.actionUrl}" target="_blank" class="btn-action">
+              <div style="text-align: center; margin: 30px 0 10px 0;">
+                <a href="${data.actionUrl}" target="_blank" class="btn-primary">
                   ${data.actionText || 'Consultar Detalles'} →
                 </a>
               </div>
             ` : ''}
           </div>
 
-          <div class="ticket-footer">
-            <div>DIGIMEMORIES • Taller de Preservación Analógica</div>
+          <div class="footer">
+            <div>DigiMemories • Preservación de Memorias Familiares</div>
           </div>
         </div>
       </td>
@@ -477,36 +415,32 @@ export function getTestEmailHtml(data: TestEmailTemplateData): string {
 <head>
   <meta charset="utf-8">
   <title>Prueba Exitosa de Servidor SMTP</title>
-  <style>${THERMAL_TICKET_STYLES}</style>
+  <style>${LUXURY_EMAIL_STYLES}</style>
 </head>
-<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
+<body style="margin: 0; padding: 24px 12px; background-color: #f6f3ee;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <div class="ticket-wrapper">
-          <div class="ticket-header" style="background: #064e3b; border-bottom: 3px dashed #10b981;">
-            <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #a7f3d0; margin-bottom: 4px;">
-              *** DIAGNÓSTICO DE SERVIDOR EXITOSO ***
-            </div>
-            <div style="font-size: 24px; font-weight: 900; color: #ffffff;">
-              SMTP OPERATIVO 🟢
-            </div>
+        <div class="wrapper">
+          <div class="header" style="background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);">
+            <h1 class="brand-title" style="color: #34d399;">DIGIMEMORIES</h1>
+            <div class="brand-sub" style="color: #a7f3d0;">Diagnóstico de Servidor SMTP Exitoso 🟢</div>
           </div>
 
-          <div class="ticket-body">
-            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 18px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 13px; color: #065f46;">
-              <div><strong>SERVIDOR HOST:</strong> ${data.smtpHost}</div>
-              <div><strong>CUENTA EMISORA:</strong> ${data.smtpUser}</div>
-              <div><strong>MODO:</strong> ${data.mode === 'gmail_live' ? 'Gmail SMTP en Vivo 🟢' : 'Sandbox de Pruebas 🟡'}</div>
-              <div><strong>TIMESTAMP:</strong> ${data.timestamp}</div>
+          <div class="content">
+            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 18px; margin-bottom: 20px; font-size: 14px; color: #065f46;">
+              <div style="margin-bottom: 6px;"><strong>Servidor Host:</strong> ${data.smtpHost}</div>
+              <div style="margin-bottom: 6px;"><strong>Cuenta Emisora:</strong> ${data.smtpUser}</div>
+              <div style="margin-bottom: 6px;"><strong>Modo Activo:</strong> ${data.mode === 'gmail_live' ? 'Gmail SMTP en Vivo 🟢' : 'Sandbox de Pruebas 🟡'}</div>
+              <div><strong>Fecha y Hora:</strong> ${data.timestamp}</div>
             </div>
-            <p style="font-size: 14px; color: #374151; line-height: 1.5; margin: 0;">
-              Tu servidor de correo está despachando mensajes exitosamente. Todas las cotizaciones, comprobantes de anticipo con PIN y avisos de entrega se entregarán de forma inmediata.
+            <p style="font-size: 15px; color: #374151; line-height: 1.6; margin: 0;">
+              Tu servidor de correo está funcionando a la perfección. Todos los avisos de anticipo, PINs de rastreo y presupuestos oficiales en PDF se despacharán de forma inmediata y profesional.
             </p>
           </div>
 
-          <div class="ticket-footer">
-            <div>DigiMemories Engine • Sistema Interno de Mensajería</div>
+          <div class="footer">
+            <div>DigiMemories Engine • Sistema de Notificaciones Seguras</div>
           </div>
         </div>
       </td>
