@@ -12,6 +12,7 @@ import type { ChatThread } from '../lib/chatStore';
 import AdminChatManager from '../components/AdminChatManager';
 import AdminEmailManager from '../components/AdminEmailManager';
 import AdminSecurityCenter from '../components/AdminSecurityCenter';
+import { sendDepositConfirmationAndPinEmail } from '../lib/emailService';
 import { 
   verifyAdminPassword, 
   createAdminSession, 
@@ -110,23 +111,42 @@ const Admin: React.FC = () => {
     setPassword('');
   };
 
-  const handleSetPin = (orderId: string) => {
+  const handleSetPin = async (orderId: string) => {
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    let targetOrder: Order | null = null;
+
     const updatedOrders = orders.map(o => {
       if (o.id === orderId) {
         o.pin = pin;
         o.depositPaid = true;
         o.status = 'en_proceso';
         saveOrder(o);
+        targetOrder = o;
         return o;
       }
       return o;
     });
+
     setOrders(updatedOrders);
     if (selectedOrder?.id === orderId) {
       setSelectedOrder(updatedOrders.find(o => o.id === orderId) || null);
     }
-    alert(`✅ PIN Generado con éxito: ${pin}\n\nEnvía este PIN al cliente para que consulte su avance en /track.`);
+
+    if (targetOrder) {
+      const orderToSend: Order = targetOrder;
+      const total = calculateFinalTotal(orderToSend);
+      
+      // Dispatch email to client via SMTP/Sandbox
+      sendDepositConfirmationAndPinEmail({
+        order: orderToSend,
+        pin,
+        total
+      }).then(() => {
+        loadData();
+      }).catch(err => console.warn('Error sending deposit PIN email:', err));
+
+      alert(`✅ ¡Anticipo Registrado y PIN Generado: ${pin}!\n\n📧 Se ha enviado automáticamente el comprobante en formato Ticket Térmico con su PIN de acceso al correo del cliente (${orderToSend.clientEmail}).`);
+    }
   };
 
   const handleCompleteOrder = (orderId: string) => {

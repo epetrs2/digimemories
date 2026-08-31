@@ -19,12 +19,26 @@ export interface QuoteTemplateData {
   trackUrl?: string;
 }
 
+export interface DepositConfirmedTemplateData {
+  clientName: string;
+  clientEmail: string;
+  trackingId: string;
+  pin: string;
+  total: number;
+  depositAmount: number;
+  remainingAmount: number;
+  itemsCount: number;
+  trackUrl?: string;
+  tallerAddress?: string;
+  tallerPhone?: string;
+}
+
 export interface OrderUpdateTemplateData {
   clientName: string;
   trackingId: string;
   statusTitle: string;
   statusDescription: string;
-  stepNumber: number; // 1 to 4
+  stepNumber: number;
   pin?: string;
   trackUrl: string;
 }
@@ -45,31 +59,149 @@ export interface TestEmailTemplateData {
   mode: 'gmail_live' | 'custom_smtp' | 'sandbox';
 }
 
-const BASE_STYLES = `
-  body { margin: 0; padding: 0; background-color: #f6f3ee; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #292524; }
+const THERMAL_TICKET_STYLES = `
+  body { margin: 0; padding: 0; background-color: #f2efe9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace, sans-serif; -webkit-font-smoothing: antialiased; color: #1c1917; }
   table { border-collapse: collapse; width: 100%; }
   img { border: 0; outline: none; text-decoration: none; }
-  .wrapper { width: 100%; max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06); border: 1px solid #e7e2d9; }
-  .header { background: linear-gradient(135deg, #1c1917 0%, #292524 100%); padding: 36px 32px; text-align: center; color: #ffffff; }
-  .brand-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0; color: #ea580c; }
-  .brand-sub { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #d6d3d1; margin-top: 6px; }
-  .content { padding: 36px 32px; }
-  .badge { display: inline-block; background-color: #ffedd5; color: #c2410c; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; }
-  .card { background-color: #faf8f5; border: 1px solid #e7e2d9; border-radius: 12px; padding: 20px; margin: 24px 0; }
-  .btn-primary { display: inline-block; background-color: #ea580c; color: #ffffff !important; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 28px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25); }
-  .footer { background-color: #f6f3ee; padding: 28px 32px; text-align: center; font-size: 12px; color: #78716c; border-top: 1px solid #e7e2d9; }
+  .ticket-wrapper { width: 100%; max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 18px; overflow: hidden; box-shadow: 0 15px 35px rgba(28, 25, 23, 0.08); border: 1px solid #e2ddd3; }
+  .ticket-header { background: #1c1917; color: #ffffff; padding: 32px 28px 24px 28px; text-align: center; border-bottom: 3px dashed #ea580c; position: relative; }
+  .ticket-body { padding: 32px 28px; background-color: #faf9f6; }
+  .barcode-strip { font-family: 'Courier New', Courier, monospace; letter-spacing: 3px; font-weight: 700; color: #44403c; text-align: center; margin: 20px 0 10px 0; font-size: 13px; }
+  .btn-action { display: inline-block; background: #ea580c; color: #ffffff !important; text-decoration: none; font-weight: 800; font-size: 15px; padding: 15px 32px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3); letter-spacing: 0.5px; }
+  .pin-badge { background: #1c1917; border: 2px dashed #ea580c; border-radius: 14px; padding: 20px; text-align: center; margin: 24px 0; }
+  .ticket-footer { background-color: #f2efe9; padding: 24px 28px; text-align: center; font-size: 11px; color: #78716c; border-top: 2px dashed #d6ccc2; font-family: 'Courier New', monospace; }
 `;
 
-/**
- * Modern HTML Template for Quotes
- */
+export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateData): string {
+  const trackUrl = data.trackUrl || 'https://digimemories.vercel.app/track';
+  const nowStr = new Date().toLocaleString('es-MX', { 
+    year: 'numeric', month: '2-digit', day: '2-digit', 
+    hour: '2-digit', minute: '2-digit', hour12: true 
+  });
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comprobante de Anticipo y PIN de Rastreo #${data.trackingId}</title>
+  <style>${THERMAL_TICKET_STYLES}</style>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center">
+        <div class="ticket-wrapper">
+          <div class="ticket-header">
+            <div style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 3px; color: #fed7aa; margin-bottom: 6px; text-transform: uppercase;">
+              *** COMPROBANTE OFICIAL DE ANTICIPO ***
+            </div>
+            <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; margin: 0; color: #ffffff;">
+              DIGIMEMORIES <span style="color: #ea580c;">LAB</span>
+            </div>
+            <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #a8a29e; margin-top: 4px;">
+              LABORATORIO DE PRESERVACIÓN ANALÓGICA • CDMX
+            </div>
+          </div>
+
+          <div class="ticket-body">
+            <div style="border-bottom: 2px dashed #d6ccc2; padding-bottom: 16px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 12px; color: #44403c; line-height: 1.7;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>FOLIO DE RASTREO:</span>
+                <strong style="color: #ea580c; font-size: 14px;">#${data.trackingId}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>CLIENTE TITULAR:</span>
+                <strong style="color: #1c1917;">${data.clientName}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>FECHA DE EMISIÓN:</span>
+                <span>${nowStr}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>ESTADO DE ORDEN:</span>
+                <strong style="color: #15803d; background: #dcfce7; padding: 1px 8px; border-radius: 4px;">EN PROCESO DE CAPTURA 1:1</strong>
+              </div>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #292524; margin: 0 0 16px 0;">
+              ¡Hola, <strong>${data.clientName}</strong>! Hemos recibido y validado con éxito el anticipo correspondiente a tu lote de <strong>${data.itemsCount} artículo(s)</strong>. Tu material ya ha ingresado formalmente a nuestra fila de digitalización profesional.
+            </p>
+
+            <div class="pin-badge">
+              <div style="font-family: 'Courier New', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 2.5px; color: #fed7aa; margin-bottom: 8px;">
+                🔐 TU PIN PRIVADO DE SEGUIMIENTO EN VIVO
+              </div>
+              <div style="font-family: 'Courier New', monospace; font-size: 40px; font-weight: 900; letter-spacing: 10px; color: #ffedd5; margin: 6px 0;">
+                ${data.pin}
+              </div>
+              <div style="font-size: 12px; color: #d6d3d1; margin-top: 8px; line-height: 1.4;">
+                Ingresa con tu <strong>Folio #${data.trackingId}</strong> y este <strong>PIN</strong> en nuestro portal para monitorear el avance cinta por cinta en tiempo real.
+              </div>
+            </div>
+
+            <div style="background: #ffffff; border: 1px solid #e7e2d9; border-radius: 12px; padding: 18px; margin: 20px 0; font-family: 'Courier New', monospace;">
+              <div style="font-size: 11px; color: #78716c; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px dashed #e7e2d9; padding-bottom: 6px;">
+                Desglose Financiero del Servicio
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #57534e;">
+                <span>Total Estimado del Trabajo:</span>
+                <span>$${data.total.toLocaleString('es-MX')} MXN</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #15803d; font-weight: 700;">
+                <span>Anticipo Abonado (50%):</span>
+                <span>-$${data.depositAmount.toLocaleString('es-MX')} MXN [PAGADO]</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 800; color: #ea580c; border-top: 2px dashed #d6ccc2; padding-top: 10px; margin-top: 6px;">
+                <span>Saldo contra-entrega:</span>
+                <span>$${data.remainingAmount.toLocaleString('es-MX')} MXN</span>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0 16px 0;">
+              <a href="${trackUrl}" target="_blank" class="btn-action">
+                🔍 Consultar Portal de Rastreo en Vivo →
+              </a>
+            </div>
+
+            <div class="barcode-strip">
+              ||| | ||||| || | |||| || ||| || ||||| |||| | |||
+              <div style="font-size: 10px; letter-spacing: 1px; color: #a8a29e; margin-top: 2px;">
+                SECURITY HASH: AUTH-PIN-${data.trackingId}-${data.pin}
+              </div>
+            </div>
+          </div>
+
+          <div class="ticket-footer">
+            <div style="font-weight: 700; color: #44403c; margin-bottom: 4px;">
+              DIGIMEMORIES — TALLER DE PRESERVACIÓN
+            </div>
+            <div>${data.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}</div>
+            <div style="margin-top: 4px;">WhatsApp Taller: ${data.tallerPhone || '+52 55 4888 9876'}</div>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
 export function getQuoteEmailHtml(data: QuoteTemplateData): string {
+  const trackUrl = data.trackUrl || 'https://digimemories.vercel.app/track';
+  const nowStr = new Date().toLocaleString('es-MX', { 
+    year: 'numeric', month: '2-digit', day: '2-digit', 
+    hour: '2-digit', minute: '2-digit', hour12: true 
+  });
+
   const itemsRows = data.items.map(item => `
-    <tr style="border-bottom: 1px solid #f0ede6;">
-      <td style="padding: 12px 8px; font-size: 14px; font-weight: 600; color: #292524;">${item.label}</td>
-      <td style="padding: 12px 8px; font-size: 14px; text-align: center; color: #57534e;">${item.quantity} ${item.unit}</td>
-      <td style="padding: 12px 8px; font-size: 14px; text-align: right; color: #78716c;">$${item.unitPrice}</td>
-      <td style="padding: 12px 8px; font-size: 14px; font-weight: 700; text-align: right; color: #ea580c;">$${item.subtotal.toLocaleString('es-MX')}</td>
+    <tr style="border-bottom: 1px dashed #e7e2d9; font-family: 'Courier New', monospace; font-size: 13px;">
+      <td style="padding: 10px 4px; color: #292524; font-weight: 700;">${item.label}</td>
+      <td style="padding: 10px 4px; text-align: center; color: #57534e;">${item.quantity} ${item.unit}</td>
+      <td style="padding: 10px 4px; text-align: right; color: #78716c;">$${item.unitPrice}</td>
+      <td style="padding: 10px 4px; text-align: right; font-weight: 800; color: #ea580c;">$${item.subtotal.toLocaleString('es-MX')}</td>
     </tr>
   `).join('');
 
@@ -79,96 +211,102 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cotización #${data.trackingId}</title>
-  <style>${BASE_STYLES}</style>
+  <title>Cotización Oficial #${data.trackingId}</title>
+  <style>${THERMAL_TICKET_STYLES}</style>
 </head>
-<body style="margin: 0; padding: 24px 12px; background-color: #f6f3ee;">
+<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <div class="wrapper">
-          <!-- Header -->
-          <div class="header">
-            <h1 class="brand-title">DIGIMEMORIES</h1>
-            <div class="brand-sub">Preservación Digital & Rescate Analógico</div>
+        <div class="ticket-wrapper">
+          <div class="ticket-header">
+            <div style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 3px; color: #fed7aa; margin-bottom: 6px; text-transform: uppercase;">
+              *** PRESUPUESTO OFICIAL DE DIGITALIZACIÓN ***
+            </div>
+            <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; margin: 0; color: #ffffff;">
+              DIGIMEMORIES <span style="color: #ea580c;">LAB</span>
+            </div>
+            <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #a8a29e; margin-top: 4px;">
+              PRESERVACIÓN DIGITAL 1:1 DE ALTA FIDELIDAD
+            </div>
           </div>
 
-          <!-- Content -->
-          <div class="content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-              <span class="badge">FOLIO #${data.trackingId}</span>
-              <span style="font-size: 13px; color: #78716c;">Cotización Oficial</span>
-            </div>
-
-            <h2 style="font-size: 22px; font-weight: 700; color: #1c1917; margin: 0 0 10px 0;">¡Hola, ${data.clientName}!</h2>
-            <p style="font-size: 15px; line-height: 1.6; color: #57534e; margin: 0 0 20px 0;">
-              Hemos preparado con sumo cuidado la cotización para el rescate y digitalización de tus recuerdos familiares. Encontrarás el <strong>documento oficial en PDF adjunto a este correo</strong>.
-            </p>
-
-            <!-- Resumen de Servicios -->
-            <div class="card">
-              <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #78716c; margin: 0 0 14px 0;">Desglose de Formatos a Digitalizar</h3>
-              <table style="width: 100%;">
-                <thead>
-                  <tr style="border-bottom: 2px solid #e7e2d9; font-size: 12px; text-transform: uppercase; color: #78716c;">
-                    <th style="text-align: left; padding: 8px 8px;">Formato</th>
-                    <th style="text-align: center; padding: 8px 8px;">Cant.</th>
-                    <th style="text-align: right; padding: 8px 8px;">Unitario</th>
-                    <th style="text-align: right; padding: 8px 8px;">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${itemsRows}
-                  ${data.enhanceAudioVideo ? `
-                  <tr style="border-bottom: 1px solid #f0ede6;">
-                    <td colspan="3" style="padding: 12px 8px; font-size: 13px; color: #0284c7; font-weight: 600;">✨ Restauración IA & Limpieza de Ruido</td>
-                    <td style="padding: 12px 8px; font-size: 13px; font-weight: 700; text-align: right; color: #0284c7;">Incluido</td>
-                  </tr>` : ''}
-                </tbody>
-              </table>
-
-              <!-- Total y Anticipo -->
-              <div style="margin-top: 20px; padding-top: 16px; border-top: 2px dashed #e7e2d9;">
-                <table style="width: 100%;">
-                  <tr>
-                    <td style="font-size: 15px; color: #57534e;">Inversión Total Estimada:</td>
-                    <td style="font-size: 22px; font-weight: 800; color: #ea580c; text-align: right;">$${data.total.toLocaleString('es-MX')} MXN</td>
-                  </tr>
-                  <tr>
-                    <td style="font-size: 13px; color: #78716c; padding-top: 6px;">Anticipo de inicio (50%):</td>
-                    <td style="font-size: 14px; font-weight: 700; color: #1c1917; text-align: right; padding-top: 6px;">$${data.depositAmount.toLocaleString('es-MX')} MXN</td>
-                  </tr>
-                  <tr>
-                    <td style="font-size: 13px; color: #78716c; padding-top: 4px;">Saldo contra-entrega (50%):</td>
-                    <td style="font-size: 14px; font-weight: 700; color: #57534e; text-align: right; padding-top: 4px;">$${data.remainingAmount.toLocaleString('es-MX')} MXN</td>
-                  </tr>
-                </table>
+          <div class="ticket-body">
+            <div style="border-bottom: 2px dashed #d6ccc2; padding-bottom: 14px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 12px; color: #44403c; line-height: 1.7;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>FOLIO COTIZACIÓN:</span>
+                <strong style="color: #ea580c; font-size: 14px;">#${data.trackingId}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>CLIENTE:</span>
+                <strong style="color: #1c1917;">${data.clientName}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>FECHA:</span>
+                <span>${nowStr}</span>
               </div>
             </div>
 
-            <!-- Pasos Siguientes -->
-            <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: 20px; margin-bottom: 28px;">
-              <h4 style="margin: 0 0 10px 0; color: #9a3412; font-size: 15px;">📦 ¿Cómo entregar tus cintas o fotos?</h4>
-              <ul style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6; color: #7c2d12;">
-                <li><strong>En taller (CDMX):</strong> ${data.tallerAddress || 'Av. Insurgentes Sur #450, Roma Sur, CDMX'} (Lun-Sáb 10:00 - 19:00).</li>
-                <li><strong>Recolección a domicilio:</strong> Responde a este correo o escríbenos por WhatsApp al <strong>${data.tallerPhone || '55 4888 9876'}</strong> para agendar tu chofer de confianza.</li>
-                <li><strong>Garantía:</strong> Todas tus cintas y fotos originales se devuelven intactas junto a tu memoria USB.</li>
-              </ul>
+            <p style="font-size: 14px; line-height: 1.6; color: #292524; margin: 0 0 18px 0;">
+              ¡Hola, <strong>${data.clientName}</strong>! Hemos generado tu presupuesto oficial con entrega en formato digital MP4 y resguardo seguro de tu material original.
+            </p>
+
+            <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 20px;">📎</span>
+              <div style="font-size: 13px; color: #9a3412;">
+                <strong>Documento PDF Oficial Adjunto:</strong> Hemos adjuntado el presupuesto vectorial formal a este correo para tu control y resguardo.
+              </div>
             </div>
 
-            <!-- Botón CTA -->
-            <div style="text-align: center; margin: 32px 0 16px 0;">
-              <a href="${data.trackUrl || 'http://localhost:5173/track'}" class="btn-primary" target="_blank">
-                Rastrear Estado de mi Folio #${data.trackingId} →
+            <table style="margin-bottom: 20px;">
+              <thead>
+                <tr style="border-bottom: 2px solid #1c1917; font-family: 'Courier New', monospace; font-size: 11px; text-transform: uppercase; color: #78716c;">
+                  <th align="left" style="padding: 6px 4px;">Formato</th>
+                  <th align="center" style="padding: 6px 4px;">Cant.</th>
+                  <th align="right" style="padding: 6px 4px;">P. Unit</th>
+                  <th align="right" style="padding: 6px 4px;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsRows}
+              </tbody>
+            </table>
+
+            <div style="background: #ffffff; border: 1px solid #e7e2d9; border-radius: 12px; padding: 18px; margin: 20px 0; font-family: 'Courier New', monospace;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #57534e;">
+                <span>Total Estimado:</span>
+                <strong style="color: #1c1917;">$${data.total.toLocaleString('es-MX')} MXN</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #ea580c; font-weight: 700;">
+                <span>Anticipo Requerido (50%):</span>
+                <span>$${data.depositAmount.toLocaleString('es-MX')} MXN</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: #15803d; border-top: 2px dashed #d6ccc2; padding-top: 10px; margin-top: 6px;">
+                <span>Saldo al Recoger:</span>
+                <span>$${data.remainingAmount.toLocaleString('es-MX')} MXN</span>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0 16px 0;">
+              <a href="${trackUrl}" target="_blank" class="btn-action">
+                📋 Ver Detalle de Orden en el Portal →
               </a>
+            </div>
+
+            <div class="barcode-strip">
+              |||| | || ||||| | ||| |||| | || ||||| || | |||
+              <div style="font-size: 10px; letter-spacing: 1px; color: #a8a29e; margin-top: 2px;">
+                DIGIMEMORIES QUOTE REGISTRY • FOLIO #${data.trackingId}
+              </div>
             </div>
           </div>
 
-          <!-- Footer -->
-          <div class="footer">
-            <p style="margin: 0 0 8px 0; font-weight: 600; color: #57534e;">DigiMemories • Laboratorio de Digitalización y Archivo</p>
-            <p style="margin: 0 0 12px 0;">Taller Central: Av. Insurgentes Sur #450, Col. Roma Sur, CDMX | Tel: 55 4888 9876</p>
-            <p style="margin: 0; font-size: 11px; color: #a8a29e;">Este correo fue generado automáticamente por nuestro sistema interno de preservación digital. Tus datos están 100% protegidos.</p>
+          <div class="ticket-footer">
+            <div style="font-weight: 700; color: #44403c; margin-bottom: 4px;">
+              DIGIMEMORIES — TALLER DE PRESERVACIÓN
+            </div>
+            <div>${data.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}</div>
+            <div style="margin-top: 4px;">WhatsApp: ${data.tallerPhone || '+52 55 4888 9876'}</div>
           </div>
         </div>
       </td>
@@ -176,90 +314,57 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
   </table>
 </body>
 </html>
-  `.trim();
+  `;
 }
 
-/**
- * Template for Order Updates (e.g. In progress, QA, Completed)
- */
 export function getOrderStatusEmailHtml(data: OrderUpdateTemplateData): string {
-  const steps = [
-    { num: 1, label: 'Recepción & Diagnóstico' },
-    { num: 2, label: 'Digitalización 4K/60fps' },
-    { num: 3, label: 'Limpieza & Control Calidad' },
-    { num: 4, label: 'Listo para Entrega' }
-  ];
-
-  const stepsHtml = steps.map(s => {
-    const isCompleted = s.num <= data.stepNumber;
-    const isCurrent = s.num === data.stepNumber;
-    return `
-      <td style="text-align: center; width: 25%; padding: 4px;">
-        <div style="width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 6px auto; line-height: 32px; font-size: 13px; font-weight: 700; background-color: ${isCompleted ? '#ea580c' : '#e7e2d9'}; color: ${isCompleted ? '#ffffff' : '#78716c'}; ${isCurrent ? 'box-shadow: 0 0 0 4px #ffedd5;' : ''}">
-          ${isCompleted ? '✓' : s.num}
-        </div>
-        <div style="font-size: 11px; font-weight: ${isCurrent ? '700' : '500'}; color: ${isCurrent ? '#ea580c' : '#78716c'}; line-height: 1.2;">
-          ${s.label}
-        </div>
-      </td>
-    `;
-  }).join('');
-
   return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Actualización de Orden #${data.trackingId}</title>
-  <style>${BASE_STYLES}</style>
+  <style>${THERMAL_TICKET_STYLES}</style>
 </head>
-<body style="margin: 0; padding: 24px 12px; background-color: #f6f3ee;">
+<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <div class="wrapper">
-          <div class="header">
-            <h1 class="brand-title">DIGIMEMORIES</h1>
-            <div class="brand-sub">Actualización de Estado en Tiempo Real</div>
+        <div class="ticket-wrapper">
+          <div class="ticket-header">
+            <div style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 3px; color: #fed7aa; margin-bottom: 6px; text-transform: uppercase;">
+              *** ACTUALIZACIÓN DE PROCESO DE TALLER ***
+            </div>
+            <div style="font-size: 26px; font-weight: 900; color: #ffffff;">
+              DIGIMEMORIES <span style="color: #ea580c;">LAB</span>
+            </div>
+            <div style="font-family: 'Courier New', monospace; font-size: 12px; color: #ea580c; margin-top: 4px;">
+              ORDEN #${data.trackingId}
+            </div>
           </div>
 
-          <div class="content">
-            <div style="margin-bottom: 20px;">
-              <span class="badge">ORDEN #${data.trackingId}</span>
+          <div class="ticket-body">
+            <div style="background: #ffffff; border: 2px solid #ea580c; border-radius: 14px; padding: 20px; text-align: center; margin-bottom: 24px;">
+              <div style="font-size: 11px; font-family: 'Courier New', monospace; color: #78716c; text-transform: uppercase; letter-spacing: 2px;">
+                ETAPA DEL PROCESO
+              </div>
+              <div style="font-size: 22px; font-weight: 900; color: #1c1917; margin: 8px 0;">
+                ${data.statusTitle}
+              </div>
+              <div style="font-size: 14px; color: #57534e; line-height: 1.5;">
+                ${data.statusDescription}
+              </div>
             </div>
 
-            <h2 style="font-size: 22px; font-weight: 700; color: #1c1917; margin: 0 0 8px 0;">¡Buenas noticias, ${data.clientName}!</h2>
-            <h3 style="font-size: 18px; font-weight: 600; color: #ea580c; margin: 0 0 16px 0;">${data.statusTitle}</h3>
-
-            <p style="font-size: 15px; line-height: 1.6; color: #57534e; margin: 0 0 24px 0;">
-              ${data.statusDescription}
-            </p>
-
-            <!-- Stepper -->
-            <div class="card" style="padding: 24px 16px;">
-              <table style="width: 100%;">
-                <tr>${stepsHtml}</tr>
-              </table>
-            </div>
-
-            ${data.pin ? `
-            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; text-align: center; margin: 24px 0;">
-              <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #15803d; font-weight: 700;">Tu Código PIN de Seguimiento Seguro</div>
-              <div style="font-size: 28px; font-weight: 800; color: #166534; letter-spacing: 4px; margin: 8px 0;">${data.pin}</div>
-              <div style="font-size: 12px; color: #15803d;">Usa este PIN en nuestro portal para ver las notas técnicas de tu digitalización.</div>
-            </div>` : ''}
-
-            <div style="text-align: center; margin: 32px 0 16px 0;">
-              <a href="${data.trackUrl}" class="btn-primary" target="_blank">
-                Ver Progreso en Vivo →
+            <div style="text-align: center; margin: 28px 0 16px 0;">
+              <a href="${data.trackUrl}" target="_blank" class="btn-action">
+                Ver Avance en Tiempo Real →
               </a>
             </div>
           </div>
 
-          <div class="footer">
-            <p style="margin: 0 0 8px 0; font-weight: 600; color: #57534e;">DigiMemories • Laboratorio Central de Digitalización</p>
-            <p style="margin: 0;">¿Dudas sobre tu orden? Escríbenos a soporte@digimemories.mx o por WhatsApp al 55 4888 9876.</p>
+          <div class="ticket-footer">
+            <div>DIGIMEMORIES LAB • Preservación Digital</div>
           </div>
         </div>
       </td>
@@ -267,50 +372,49 @@ export function getOrderStatusEmailHtml(data: OrderUpdateTemplateData): string {
   </table>
 </body>
 </html>
-  `.trim();
+  `;
 }
 
-/**
- * Template for custom direct client messages from Admin
- */
 export function getCustomMessageHtml(data: CustomMessageTemplateData): string {
   return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${data.subject}</title>
-  <style>${BASE_STYLES}</style>
+  <style>${THERMAL_TICKET_STYLES}</style>
 </head>
-<body style="margin: 0; padding: 24px 12px; background-color: #f6f3ee;">
+<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <div class="wrapper">
-          <div class="header">
-            <h1 class="brand-title">DIGIMEMORIES</h1>
-            <div class="brand-sub">Mensaje Directo de Atención al Cliente</div>
+        <div class="ticket-wrapper">
+          <div class="ticket-header">
+            <div style="font-size: 24px; font-weight: 900; color: #ffffff;">
+              DIGIMEMORIES <span style="color: #ea580c;">LAB</span>
+            </div>
+            <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #fed7aa; margin-top: 4px;">
+              COMUNICADO OFICIAL DE TALLER
+            </div>
           </div>
 
-          <div class="content">
-            ${data.trackingId ? `<div style="margin-bottom: 16px;"><span class="badge">FOLIO #${data.trackingId}</span></div>` : ''}
-            
-            <h2 style="font-size: 20px; font-weight: 700; color: #1c1917; margin: 0 0 16px 0;">Hola, ${data.clientName}</h2>
-
-            <div class="card" style="font-size: 15px; line-height: 1.7; color: #292524; white-space: pre-line;">
-              ${data.message}
+          <div class="ticket-body">
+            <div style="font-size: 15px; line-height: 1.65; color: #292524;">
+              <p>Estimado(a) <strong>${data.clientName}</strong>,</p>
+              <div style="background: #ffffff; border: 1px solid #e7e2d9; border-left: 4px solid #ea580c; border-radius: 8px; padding: 18px; margin: 20px 0; font-size: 14px; line-height: 1.7; color: #1c1917; white-space: pre-wrap;">${data.message}</div>
             </div>
 
             ${data.actionUrl ? `
-            <div style="text-align: center; margin: 28px 0 12px 0;">
-              <a href="${data.actionUrl}" class="btn-primary" target="_blank">${data.actionText || 'Ver Detalles'} →</a>
-            </div>` : ''}
+              <div style="text-align: center; margin: 28px 0 16px 0;">
+                <a href="${data.actionUrl}" target="_blank" class="btn-action">
+                  ${data.actionText || 'Consultar Detalles'} →
+                </a>
+              </div>
+            ` : ''}
           </div>
 
-          <div class="footer">
-            <p style="margin: 0 0 6px 0; font-weight: 600; color: #57534e;">DigiMemories • Servicio al Cliente</p>
-            <p style="margin: 0;">Puedes responder directamente a este correo para comunicarte con nuestro equipo técnico.</p>
+          <div class="ticket-footer">
+            <div>DIGIMEMORIES • Taller de Preservación Analógica</div>
           </div>
         </div>
       </td>
@@ -318,63 +422,46 @@ export function getCustomMessageHtml(data: CustomMessageTemplateData): string {
   </table>
 </body>
 </html>
-  `.trim();
+  `;
 }
 
-/**
- * Diagnostic test email for SMTP verification
- */
 export function getTestEmailHtml(data: TestEmailTemplateData): string {
   return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Prueba de Conexión SMTP Exitosa</title>
-  <style>${BASE_STYLES}</style>
+  <title>Prueba Exitosa de Servidor SMTP</title>
+  <style>${THERMAL_TICKET_STYLES}</style>
 </head>
-<body style="margin: 0; padding: 24px 12px; background-color: #f6f3ee;">
+<body style="margin: 0; padding: 24px 12px; background-color: #f2efe9;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <div class="wrapper">
-          <div class="header" style="background: linear-gradient(135deg, #065f46 0%, #047857 100%);">
-            <h1 class="brand-title" style="color: #6ee7b7;">SISTEMA DE CORREO ACTIVO</h1>
-            <div class="brand-sub">Diagnóstico de Conexión SMTP Interno</div>
-          </div>
-
-          <div class="content">
-            <div style="text-align: center; margin-bottom: 24px;">
-              <div style="display: inline-block; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; background-color: #d1fae5; color: #059669; font-size: 32px; font-weight: bold;">✓</div>
-              <h2 style="font-size: 22px; font-weight: 800; color: #065f46; margin: 12px 0 4px 0;">Conexión SMTP Exitosa</h2>
-              <p style="font-size: 14px; color: #57534e; margin: 0;">El servidor interno de correos de DigiMemories se encuentra 100% operativo.</p>
+        <div class="ticket-wrapper">
+          <div class="ticket-header" style="background: #064e3b; border-bottom: 3px dashed #10b981;">
+            <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #a7f3d0; margin-bottom: 4px;">
+              *** DIAGNÓSTICO DE SERVIDOR EXITOSO ***
             </div>
-
-            <div class="card">
-              <h4 style="margin: 0 0 12px 0; color: #1c1917; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Detalles del Servidor</h4>
-              <table style="width: 100%; font-size: 13px;">
-                <tr style="border-bottom: 1px solid #e7e2d9;">
-                  <td style="padding: 8px 0; color: #78716c;">Servidor SMTP:</td>
-                  <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1c1917;">${data.smtpHost}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #e7e2d9;">
-                  <td style="padding: 8px 0; color: #78716c;">Cuenta Remitente:</td>
-                  <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1c1917;">${data.smtpUser}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #e7e2d9;">
-                  <td style="padding: 8px 0; color: #78716c;">Modo de Envío:</td>
-                  <td style="padding: 8px 0; font-weight: 700; text-align: right; color: #059669;">${data.mode === 'gmail_live' ? 'Gmail SMTP en Vivo 🟢' : data.mode === 'custom_smtp' ? 'SMTP Personalizado 🔵' : 'Sandbox de Pruebas 🟡'}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #78716c;">Hora del Diagnóstico:</td>
-                  <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1c1917;">${data.timestamp}</td>
-                </tr>
-              </table>
+            <div style="font-size: 24px; font-weight: 900; color: #ffffff;">
+              SMTP OPERATIVO 🟢
             </div>
           </div>
 
-          <div class="footer">
-            <p style="margin: 0;">DigiMemories Engine • Motor Interno de Mensajería</p>
+          <div class="ticket-body">
+            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 18px; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 13px; color: #065f46;">
+              <div><strong>SERVIDOR HOST:</strong> ${data.smtpHost}</div>
+              <div><strong>CUENTA EMISORA:</strong> ${data.smtpUser}</div>
+              <div><strong>MODO:</strong> ${data.mode === 'gmail_live' ? 'Gmail SMTP en Vivo 🟢' : 'Sandbox de Pruebas 🟡'}</div>
+              <div><strong>TIMESTAMP:</strong> ${data.timestamp}</div>
+            </div>
+            <p style="font-size: 14px; color: #374151; line-height: 1.5; margin: 0;">
+              Tu servidor de correo está despachando mensajes exitosamente. Todas las cotizaciones, comprobantes de anticipo con PIN y avisos de entrega se entregarán de forma inmediata.
+            </p>
+          </div>
+
+          <div class="ticket-footer">
+            <div>DigiMemories Engine • Sistema Interno de Mensajería</div>
           </div>
         </div>
       </td>
@@ -382,5 +469,5 @@ export function getTestEmailHtml(data: TestEmailTemplateData): string {
   </table>
 </body>
 </html>
-  `.trim();
+  `;
 }

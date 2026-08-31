@@ -1,7 +1,8 @@
 import { sendSimulatedEmail } from './store';
-import type { EmailNotification } from './store';
+import type { EmailNotification, Order } from './store';
 import { 
   getQuoteEmailHtml, 
+  getDepositConfirmedPinEmailHtml,
   getOrderStatusEmailHtml, 
   getCustomMessageHtml,
   type QuoteTemplateData,
@@ -171,6 +172,44 @@ export async function sendQuoteEmailWithPdf(params: {
     metadata: {
       total: params.quoteData.total,
       depositAmount: params.quoteData.depositAmount
+    }
+  });
+}
+
+/**
+ * Convenience helper: Send Deposit Confirmation & PIN Notification Email
+ */
+export async function sendDepositConfirmationAndPinEmail(params: {
+  order: Order;
+  pin: string;
+  total: number;
+}): Promise<SendEmailResult> {
+  const depositAmount = Math.round(params.total * 0.5);
+  const remainingAmount = params.total - depositAmount;
+
+  const html = getDepositConfirmedPinEmailHtml({
+    clientName: params.order.clientName,
+    clientEmail: params.order.clientEmail,
+    trackingId: params.order.id,
+    pin: params.pin,
+    total: params.total,
+    depositAmount,
+    remainingAmount,
+    itemsCount: params.order.items.length,
+    trackUrl: typeof window !== 'undefined' ? `${window.location.origin}/track` : 'https://digimemories.vercel.app/track'
+  });
+
+  return sendEmailViaInternalServer({
+    toEmail: params.order.clientEmail,
+    toName: params.order.clientName,
+    subject: `💳 Comprobante de Anticipo y Tu PIN de Rastreo [ #${params.order.id} ]`,
+    html,
+    trackingId: params.order.id,
+    type: 'pin_issued',
+    metadata: {
+      pin: params.pin,
+      depositAmount,
+      total: params.total
     }
   });
 }
