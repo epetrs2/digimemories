@@ -32,7 +32,11 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/email/:match*",
+      "destination": "/api/email"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
