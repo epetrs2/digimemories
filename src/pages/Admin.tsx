@@ -34,7 +34,6 @@ import {
   Mail,
   Eye,
   EyeOff,
-  Sparkles,
   Lock,
   X,
   AlertTriangle
@@ -81,21 +80,21 @@ const Admin: React.FC = () => {
     }
   }, [isAuthenticated]);
 
-  const handleLogin = async (e?: React.FormEvent, directPass?: string) => {
-    if (e) e.preventDefault();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoginError(null);
 
-    const passToTry = (directPass !== undefined ? directPass : password).trim();
+    const cleanPass = password.trim();
 
     // 1. Check lockout status
     const lockout = checkLockoutStatus('admin');
-    if (lockout.locked && !directPass) {
+    if (lockout.locked) {
       setLoginError(`🚫 Acceso bloqueado por seguridad ante múltiples intentos fallidos. Intenta nuevamente en ${lockout.minutesRemaining} minuto(s).`);
       return;
     }
 
-    // 2. Cryptographic password verification
-    const isValid = await verifyAdminPassword(passToTry);
+    // 2. Cryptographic password verification (SHA-256 + Salt)
+    const isValid = await verifyAdminPassword(cleanPass);
     if (isValid) {
       createAdminSession();
       setIsAuthenticated(true);
@@ -109,11 +108,6 @@ const Admin: React.FC = () => {
         setLoginError(`Contraseña incorrecta. Te quedan ${result.remainingAttempts} intento(s) antes del bloqueo de seguridad.`);
       }
     }
-  };
-
-  const handleQuickDemoLogin = () => {
-    resetFailedAttempts('admin');
-    handleLogin(undefined, 'admin123');
   };
 
   const handleLogout = () => {
@@ -223,85 +217,56 @@ const Admin: React.FC = () => {
             <div style={{
               background: '#fef2f2',
               border: '1px solid #fca5a5',
-              padding: '1rem',
-              borderRadius: '14px',
+              padding: '0.9rem 1rem',
+              borderRadius: '12px',
               color: '#991b1b',
               fontSize: '0.85rem',
               fontWeight: 600,
-              marginBottom: '1.5rem',
+              marginBottom: '1.25rem',
               textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.6rem'
+              gap: '0.4rem'
             }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
                 <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#dc2626' }} />
                 <span>{loginError}</span>
               </div>
               
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetFailedAttempts('admin');
-                    setLoginError(null);
-                    setPassword('admin123');
-                  }}
-                  style={{
-                    background: '#dc2626',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.35rem 0.75rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Probar con 'admin123'
-                </button>
-                <button
-                  type="button"
-                  onClick={handleQuickDemoLogin}
-                  style={{
-                    background: '#ffffff',
-                    color: '#dc2626',
-                    border: '1px solid #fca5a5',
-                    borderRadius: '8px',
-                    padding: '0.35rem 0.75rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  ⚡ Entrar Directo
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  resetFailedAttempts('admin');
+                  setLoginError(null);
+                }}
+                style={{
+                  alignSelf: 'flex-start',
+                  background: 'none',
+                  border: 'none',
+                  color: '#dc2626',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: 0,
+                  marginTop: '0.2rem'
+                }}
+              >
+                ↻ Restablecer intentos y desbloquear
+              </button>
             </div>
           )}
 
           <form onSubmit={handleLogin} style={{ textAlign: 'left' }}>
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#292524' }}>
-                  Contraseña de Acceso
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPassword('admin123');
-                    setLoginError(null);
-                  }}
-                  style={{ background: 'none', border: 'none', color: '#ea580c', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
-                >
-                  Autocompletar (admin123)
-                </button>
-              </div>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#292524', marginBottom: '0.4rem' }}>
+                Contraseña de Acceso
+              </label>
 
               <div style={{ position: 'relative' }}>
                 <input 
                   type={showPassword ? 'text' : 'password'} 
-                  placeholder="Escribe tu contraseña..." 
+                  placeholder="••••••••" 
                   className="input-field" 
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -342,21 +307,9 @@ const Admin: React.FC = () => {
               <Lock size={16} /> Ingresar al Panel Seguro
             </button>
           </form>
-
-          {/* 1-Click Fast Pass Alternative */}
-          <div style={{ marginTop: '1rem' }}>
-            <button
-              type="button"
-              onClick={handleQuickDemoLogin}
-              className="btn btn-secondary"
-              style={{ width: '100%', padding: '0.75rem', fontSize: '0.85rem', fontWeight: 700, borderRadius: '12px', background: '#fbf9f5', border: '1px dashed #ea580c', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-            >
-              <Sparkles size={16} /> Entrar con 1 Clic (Acceso Rápido)
-            </button>
-          </div>
           
           <div style={{ marginTop: '1.75rem', padding: '0.75rem', background: '#f5f5f4', borderRadius: '12px', fontSize: '0.75rem', color: '#78716c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-            <span>🔒 Acceso protegido con SHA-256 + Salt y sesión segura.</span>
+            <span>🔒 Acceso protegido con SHA-256 + Salt y defensa anti-fuerza bruta.</span>
           </div>
         </div>
       </div>
