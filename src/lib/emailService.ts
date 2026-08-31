@@ -1,5 +1,6 @@
 import { sendSimulatedEmail } from './store';
 import type { EmailNotification, Order } from './store';
+import { saveSmtpConfigToCloud, fetchSmtpConfigFromCloud } from './supabase';
 import { 
   getQuoteEmailHtml, 
   getDepositConfirmedPinEmailHtml,
@@ -328,10 +329,24 @@ export async function testServerSmtp(targetEmail?: string): Promise<{
 }
 
 /**
- * Get current sanitized SMTP configuration with local storage fallback
+ * Get current sanitized SMTP configuration with local storage & Supabase Cloud sync
  */
 export async function fetchServerEmailConfig(): Promise<{ success: boolean; config: EmailServerConfig }> {
-  const localSaved = getLocalStoredConfig();
+  let localSaved = getLocalStoredConfig();
+
+  // If local is empty, try fetching from Supabase Cloud
+  if (!localSaved.user || !localSaved.pass) {
+    try {
+      const cloudSaved = await fetchSmtpConfigFromCloud();
+      if (cloudSaved && cloudSaved.user) {
+        localSaved = { ...localSaved, ...cloudSaved };
+        try {
+          localStorage.setItem(CLIENT_CONFIG_KEY, JSON.stringify(localSaved));
+        } catch {}
+      }
+    } catch {}
+  }
+
   const hasLocalUser = Boolean(localSaved.user);
   const hasLocalPass = Boolean(localSaved.pass);
   const isLocalConfigured = hasLocalUser && hasLocalPass;
@@ -387,7 +402,7 @@ export async function fetchServerEmailConfig(): Promise<{ success: boolean; conf
 }
 
 /**
- * Save new SMTP credentials to internal server and client vault
+ * Save new SMTP credentials to internal server, client vault, and Supabase Cloud
  */
 export async function updateServerEmailConfig(newConfig: Partial<EmailServerConfig> & { pass?: string }): Promise<{ success: boolean; config: EmailServerConfig; message?: string }> {
   const existing = getLocalStoredConfig();
@@ -408,6 +423,9 @@ export async function updateServerEmailConfig(newConfig: Partial<EmailServerConf
   } catch (e) {
     console.warn('[EmailService] LocalStorage save failed:', e);
   }
+
+  // Persist to Supabase Cloud PostgreSQL in background
+  saveSmtpConfigToCloud(merged).catch(e => console.warn('[EmailService] Supabase Cloud save failed:', e));
 
   const isLive = Boolean(merged.user && merged.pass);
   const updatedConfig: EmailServerConfig = {
@@ -433,13 +451,13 @@ export async function updateServerEmailConfig(newConfig: Partial<EmailServerConf
     return {
       success: true,
       config: data.config || updatedConfig,
-      message: isLive ? 'Configuración de Gmail SMTP guardada y activa en vivo.' : 'Configuración guardada en modo sandbox.'
+      message: isLive ? 'Configuración de Gmail SMTP guardada en la nube y activa en vivo 24/7.' : 'Configuración guardada en modo sandbox.'
     };
   } catch {
     return {
       success: true,
       config: updatedConfig,
-      message: 'Configuración guardada en el panel de administración.'
+      message: 'Configuración guardada en la nube y en el panel.'
     };
   }
 }

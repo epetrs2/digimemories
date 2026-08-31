@@ -240,6 +240,52 @@ export async function saveEmailToCloud(email: EmailNotification): Promise<boolea
 
 /**
  * -------------------------------------------------------------
+ * 4. SYSTEM SMTP CONFIGURATION (Cloud-Native 24/7 Persistence)
+ * -------------------------------------------------------------
+ */
+
+export async function saveSmtpConfigToCloud(config: any): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  try {
+    const row = {
+      id: 'system_smtp_settings',
+      order_id: null,
+      to_email: 'system@digimemories.mx',
+      to_name: 'System Config Vault',
+      subject: 'SMTP_CONFIG_PAYLOAD',
+      snippet: 'Cloud SMTP Vault',
+      sent_at: new Date().toISOString(),
+      type: 'custom',
+      body_html: JSON.stringify(config)
+    };
+    const { error } = await supabase
+      .from('email_logs')
+      .upsert(row, { onConflict: 'id' });
+
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchSmtpConfigFromCloud(): Promise<any | null> {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data, error } = await supabase
+      .from('email_logs')
+      .select('*')
+      .eq('id', 'system_smtp_settings')
+      .maybeSingle();
+
+    if (error || !data || !data.body_html) return null;
+    return JSON.parse(data.body_html);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * -------------------------------------------------------------
  * 4. REALTIME LISTENERS INITIALIZER
  * -------------------------------------------------------------
  */
