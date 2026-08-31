@@ -93,10 +93,10 @@ export function getLocalStoredConfig(): {
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
-    user: '',
-    pass: '',
+    user: 'contactodigimemories@gmail.com',
+    pass: 'eguperkyhqcslpql',
     fromName: 'DigiMemories Preservación',
-    fromEmail: ''
+    fromEmail: 'contactodigimemories@gmail.com'
   };
 }
 

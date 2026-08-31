@@ -11,10 +11,10 @@ let currentConfig = {
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: Number(process.env.SMTP_PORT) || 465,
   secure: process.env.SMTP_SECURE !== 'false',
-  user: process.env.SMTP_USER || '',
-  pass: process.env.SMTP_PASS || '',
+  user: process.env.SMTP_USER || 'contactodigimemories@gmail.com',
+  pass: process.env.SMTP_PASS || 'eguperkyhqcslpql',
   fromName: process.env.SMTP_FROM_NAME || 'DigiMemories Preservación',
-  fromEmail: process.env.SMTP_FROM_EMAIL || '',
+  fromEmail: process.env.SMTP_FROM_EMAIL || 'contactodigimemories@gmail.com',
   enabled: true
 };
 
