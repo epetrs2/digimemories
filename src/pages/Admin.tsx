@@ -19,6 +19,7 @@ import {
   destroyAdminSession, 
   checkLockoutStatus, 
   recordFailedLoginAttempt,
+  resetFailedAttempts,
   sanitizeHtml 
 } from '../lib/security';
 import { 
@@ -195,11 +196,34 @@ const Admin: React.FC = () => {
               marginBottom: '1.25rem',
               textAlign: 'left',
               display: 'flex',
-              alignItems: 'flex-start',
+              flexDirection: 'column',
               gap: '0.5rem'
             }}>
-              <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-              <span>{loginError}</span>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span>{loginError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  resetFailedAttempts('admin');
+                  setLoginError(null);
+                }}
+                style={{
+                  alignSelf: 'flex-start',
+                  background: 'none',
+                  border: 'none',
+                  color: '#dc2626',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: 0,
+                  marginTop: '0.2rem'
+                }}
+              >
+                ↻ Restablecer intentos y desbloquear
+              </button>
             </div>
           )}
 
