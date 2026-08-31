@@ -167,6 +167,11 @@ export interface SendEmailPayload {
   metadata?: Record<string, any>;
 }
 
+function sanitizeHeader(val?: string): string {
+  if (!val) return '';
+  return val.replace(/[\r\n\t%0A%0D]/gi, ' ').trim();
+}
+
 /**
  * Sends an email using the internal mail engine
  */
@@ -180,11 +185,17 @@ export async function sendEmail(payload: SendEmailPayload): Promise<{
   record: OutboxEmailRecord;
 }> {
   const emailId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  const fromAddress = `"${currentConfig.fromName}" <${currentConfig.fromEmail || currentConfig.user || 'notificaciones@digimemories.mx'}>`;
+  const cleanFromName = sanitizeHeader(currentConfig.fromName);
+  const cleanFromEmail = sanitizeHeader(currentConfig.fromEmail || currentConfig.user || 'notificaciones@digimemories.mx');
+  const fromAddress = `"${cleanFromName}" <${cleanFromEmail}>`;
+
+  const cleanTo = sanitizeHeader(payload.to);
+  const cleanToName = sanitizeHeader(payload.toName);
+  const cleanSubject = sanitizeHeader(payload.subject);
 
   // Format attachments for Nodemailer
   const formattedAttachments = (payload.attachments || []).map(att => ({
-    filename: att.filename,
+    filename: sanitizeHeader(att.filename),
     content: att.encoding === 'base64' ? Buffer.from(att.content, 'base64') : att.content,
     contentType: att.contentType
   }));
@@ -194,11 +205,11 @@ export async function sendEmail(payload: SendEmailPayload): Promise<{
 
     const mailOptions: nodemailer.SendMailOptions = {
       from: fromAddress,
-      to: payload.toName ? `"${payload.toName}" <${payload.to}>` : payload.to,
-      subject: payload.subject,
+      to: cleanToName ? `"${cleanToName}" <${cleanTo}>` : cleanTo,
+      subject: cleanSubject,
       html: payload.html,
       text: payload.text || payload.html.replace(/<[^>]*>?/gm, ''),
-      replyTo: payload.replyTo || currentConfig.fromEmail || currentConfig.user,
+      replyTo: sanitizeHeader(payload.replyTo || currentConfig.fromEmail || currentConfig.user),
       attachments: formattedAttachments
     };
 
@@ -208,9 +219,9 @@ export async function sendEmail(payload: SendEmailPayload): Promise<{
 
     const record: OutboxEmailRecord = {
       id: emailId,
-      to: payload.to,
-      toName: payload.toName,
-      subject: payload.subject,
+      to: cleanTo,
+      toName: cleanToName,
+      subject: cleanSubject,
       sentAt: new Date().toISOString(),
       status: isSandbox ? 'sandbox_simulated' : 'delivered',
       mode,

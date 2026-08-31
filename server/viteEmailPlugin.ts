@@ -33,8 +33,29 @@ function readJsonBody(req: IncomingMessage): Promise<any> {
   });
 }
 
+// In-memory rate limiting store (Sliding Window per IP)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function checkRateLimit(ip: string, limit: number, windowMs: number): { allowed: boolean; retryAfter: number } {
+  const now = Date.now();
+  const entry = rateLimitStore.get(ip);
+
+  if (!entry || now > entry.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs });
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  if (entry.count >= limit) {
+    const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  entry.count += 1;
+  return { allowed: true, retryAfter: 0 };
+}
+
 /**
- * Helper to send JSON response
+ * Helper to send JSON response with security headers
  */
 function sendJson(res: ServerResponse, statusCode: number, data: any) {
   res.statusCode = statusCode;
@@ -42,6 +63,9 @@ function sendJson(res: ServerResponse, statusCode: number, data: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.end(JSON.stringify(data));
 }
 
@@ -54,6 +78,7 @@ export function viteEmailPlugin(): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next) => {
         const url = req.url || '';
+        const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
 
         // CORS Preflight
         if (req.method === 'OPTIONS' && url.startsWith('/api/email')) {
@@ -65,8 +90,16 @@ export function viteEmailPlugin(): Plugin {
           return;
         }
 
-        // 1. POST /api/email/send
+        // 1. POST /api/email/send with Rate Limiting (10 requests / minute)
         if (req.method === 'POST' && url.startsWith('/api/email/send')) {
+          const rateCheck = checkRateLimit(`${clientIp}:send`, 10, 60 * 1000);
+          if (!rateCheck.allowed) {
+            return sendJson(res, 429, { 
+              success: false, 
+              error: `Límite de envíos excedido (Anti-Spam). Por favor espera ${rateCheck.retryAfter} segundos.` 
+            });
+          }
+
           try {
             const body = await readJsonBody(req);
             if (!body.to || !body.subject || !body.html) {
@@ -94,8 +127,16 @@ export function viteEmailPlugin(): Plugin {
           }
         }
 
-        // 2. POST /api/email/test
+        // 2. POST /api/email/test (Rate limit: max 3 per 5 minutes)
         if (req.method === 'POST' && url.startsWith('/api/email/test')) {
+          const rateCheck = checkRateLimit(`${clientIp}:test`, 3, 5 * 60 * 1000);
+          if (!rateCheck.allowed) {
+            return sendJson(res, 429, { 
+              success: false, 
+              error: `Has superado el límite de pruebas SMTP. Por favor espera ${rateCheck.retryAfter} segundos.` 
+            });
+          }
+
           try {
             const body = await readJsonBody(req);
             const result = await testSmtpConnection(body.targetEmail);

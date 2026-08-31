@@ -11,6 +11,16 @@ import { getChatThreads } from '../lib/chatStore';
 import type { ChatThread } from '../lib/chatStore';
 import AdminChatManager from '../components/AdminChatManager';
 import AdminEmailManager from '../components/AdminEmailManager';
+import AdminSecurityCenter from '../components/AdminSecurityCenter';
+import { 
+  verifyAdminPassword, 
+  createAdminSession, 
+  validateAdminSession, 
+  destroyAdminSession, 
+  checkLockoutStatus, 
+  recordFailedLoginAttempt,
+  sanitizeHtml 
+} from '../lib/security';
 import { 
   Package, 
   MessageSquare, 
@@ -21,13 +31,15 @@ import {
   LogOut,
   Mail,
   Eye,
-  X
+  X,
+  AlertTriangle
 } from 'lucide-react';
 
 const Admin: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => validateAdminSession());
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'chat' | 'orders' | 'emails' | 'metrics'>('chat');
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'chat' | 'orders' | 'emails' | 'metrics' | 'security'>('chat');
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
@@ -43,7 +55,14 @@ const Admin: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
-      const interval = setInterval(loadData, 2500);
+      const interval = setInterval(() => {
+        if (!validateAdminSession()) {
+          setIsAuthenticated(false);
+          setLoginError('Tu sesión ha expirado por inactividad.');
+        } else {
+          loadData();
+        }
+      }, 3000);
       window.addEventListener('digimemories_chat_sync', loadData);
       window.addEventListener('digimemories_orders_sync', loadData);
       window.addEventListener('digimemories_email_sent', loadData);
@@ -56,13 +75,38 @@ const Admin: React.FC = () => {
     }
   }, [isAuthenticated]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123') {
-      setIsAuthenticated(true);
-    } else {
-      alert('Contraseña incorrecta (Usa: admin123)');
+    setLoginError(null);
+
+    // 1. Check if user is locked out from brute force attacks
+    const lockout = checkLockoutStatus('admin');
+    if (lockout.locked) {
+      setLoginError(`🚫 Acceso bloqueado por seguridad ante múltiples intentos fallidos. Intenta nuevamente en ${lockout.minutesRemaining} minuto(s).`);
+      return;
     }
+
+    // 2. Cryptographic password verification (SHA-256 + Salt)
+    const isValid = await verifyAdminPassword(password);
+    if (isValid) {
+      createAdminSession();
+      setIsAuthenticated(true);
+      setPassword('');
+      setLoginError(null);
+    } else {
+      const result = recordFailedLoginAttempt('admin');
+      if (result.locked) {
+        setLoginError(`🚨 Se alcanzó el límite de 5 intentos fallidos. Tu acceso ha sido bloqueado temporalmente por 15 minutos.`);
+      } else {
+        setLoginError(`Contraseña incorrecta. Te quedan ${result.remainingAttempts} intento(s) antes del bloqueo de seguridad.`);
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    destroyAdminSession();
+    setIsAuthenticated(false);
+    setPassword('');
   };
 
   const handleSetPin = (orderId: string) => {
@@ -139,6 +183,26 @@ const Admin: React.FC = () => {
             Gestiona órdenes, responde chats en vivo y supervisa el taller.
           </p>
 
+          {loginError && (
+            <div style={{
+              background: '#fef2f2',
+              border: '1px solid #fca5a5',
+              padding: '0.85rem 1rem',
+              borderRadius: '12px',
+              color: '#b91c1c',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              marginBottom: '1.25rem',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.5rem'
+            }}>
+              <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span>{loginError}</span>
+            </div>
+          )}
+
           <div style={{ marginBottom: '1.25rem', textAlign: 'left' }}>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>Contraseña de Acceso</label>
             <input 
@@ -153,11 +217,11 @@ const Admin: React.FC = () => {
           </div>
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.9rem' }}>
-            Ingresar al Panel
+            Ingresar al Panel Seguro
           </button>
           
           <div style={{ marginTop: '1.5rem', padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '10px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            💡 Contraseña demo: <strong>admin123</strong>
+            🔒 Acceso protegido con <strong>SHA-256 + Salt</strong> y defensa anti-fuerza bruta.
           </div>
         </form>
       </div>
@@ -173,7 +237,7 @@ const Admin: React.FC = () => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <span className="badge">
-              <ShieldCheck size={14} /> Modo Administrador
+              <ShieldCheck size={14} /> Modo Administrador Autenticado
             </span>
           </div>
           <h1 style={{ fontSize: '2.25rem', marginTop: '0.35rem', letterSpacing: '-0.02em' }}>
@@ -183,7 +247,7 @@ const Admin: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <button 
-            onClick={() => setIsAuthenticated(false)}
+            onClick={handleLogout}
             className="btn btn-secondary"
             style={{ padding: '0.6rem 1.1rem', fontSize: '0.85rem' }}
           >
@@ -292,6 +356,22 @@ const Admin: React.FC = () => {
         >
           <BarChart3 size={18} />
           <span>Métricas</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('security')}
+          className="btn"
+          style={{
+            background: activeTab === 'security' ? '#ffffff' : 'transparent',
+            color: activeTab === 'security' ? 'var(--accent-color)' : 'var(--text-secondary)',
+            boxShadow: activeTab === 'security' ? 'var(--shadow-sm)' : 'none',
+            padding: '0.65rem 1.4rem',
+            fontSize: '0.95rem',
+            borderRadius: '12px'
+          }}
+        >
+          <ShieldCheck size={18} />
+          <span>🛡️ Ciberseguridad</span>
         </button>
       </div>
 
@@ -570,6 +650,11 @@ const Admin: React.FC = () => {
         </div>
       )}
 
+      {/* TAB 5: CYBERSECURITY AUDIT & CONTROLS */}
+      {activeTab === 'security' && (
+        <AdminSecurityCenter />
+      )}
+
       {/* Email Preview Modal */}
       {previewEmail && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
@@ -590,7 +675,7 @@ const Admin: React.FC = () => {
               <div><strong>Fecha de envío:</strong> {new Date(previewEmail.sentAt).toLocaleString('es-MX')}</div>
             </div>
 
-            <div dangerouslySetInnerHTML={{ __html: previewEmail.bodyHtml }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewEmail.bodyHtml) }} />
           </div>
         </div>
       )}

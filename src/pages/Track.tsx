@@ -12,6 +12,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { generateQuotePDF } from '../lib/pdfGenerator';
+import { checkLockoutStatus, recordFailedLoginAttempt, resetFailedAttempts } from '../lib/security';
 
 const Track: React.FC = () => {
   const [trackingId, setTrackingId] = useState('');
@@ -23,8 +24,20 @@ const Track: React.FC = () => {
     e.preventDefault();
     setError('');
     
-    const orders = getOrders();
     const cleanId = trackingId.replace('#', '').trim();
+    if (!cleanId) {
+      setError('Por favor ingresa tu número de rastreo.');
+      return;
+    }
+
+    // Check brute-force lockout for this tracking ID
+    const lockout = checkLockoutStatus(`pin_${cleanId}`);
+    if (lockout.locked) {
+      setError(`🚫 Demasiados intentos fallidos para el folio #${cleanId}. Bloqueo temporal por ${lockout.minutesRemaining} minuto(s).`);
+      return;
+    }
+
+    const orders = getOrders();
     const found = orders.find(o => o.id === cleanId);
 
     if (!found) {
@@ -38,10 +51,17 @@ const Track: React.FC = () => {
     }
 
     if (found.pin !== pin.trim()) {
-      setError('El PIN de 4 dígitos ingresado es incorrecto.');
+      const result = recordFailedLoginAttempt(`pin_${cleanId}`);
+      if (result.locked) {
+        setError(`🚨 Has superado el límite de 5 intentos. El acceso a este folio ha sido bloqueado por 15 minutos por seguridad.`);
+      } else {
+        setError(`El PIN de 4 dígitos es incorrecto. Te quedan ${result.remainingAttempts} intento(s) antes del bloqueo.`);
+      }
       return;
     }
 
+    // Reset failed attempts on success
+    resetFailedAttempts(`pin_${cleanId}`);
     setOrder(found);
   };
 

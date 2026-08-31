@@ -26,6 +26,7 @@ import {
   type ServerOutboxRecord 
 } from '../lib/emailService';
 import type { Order } from '../lib/store';
+import { sanitizeHtml } from '../lib/security';
 
 interface Props {
   orders: Order[];
@@ -747,7 +748,7 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
             {/* Rendered HTML inside container */}
             <div 
               style={{ border: '1px solid #e7e2d9', borderRadius: '12px', overflow: 'hidden' }}
-              dangerouslySetInnerHTML={{ __html: selectedPreview.html }} 
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedPreview.html) }} 
             />
           </div>
         </div>
