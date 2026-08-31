@@ -22,8 +22,25 @@ export interface ChatThread {
   messages: ChatMessage[];
 }
 
+import { saveChatThreadToCloud, fetchChatThreadsFromCloud } from './supabase';
+
 const THREADS_KEY = 'digimemories_chat_threads_v3';
 const CURRENT_VISITOR_KEY = 'digimemories_current_visitor_id';
+
+// Initial background sync
+if (typeof window !== 'undefined') {
+  fetchChatThreadsFromCloud().then(cloudThreads => {
+    if (cloudThreads && cloudThreads.length > 0) {
+      const local = getChatThreads();
+      const map = new Map<string, ChatThread>();
+      local.forEach(t => map.set(t.id, t));
+      cloudThreads.forEach(t => map.set(t.id, t));
+      const merged = Array.from(map.values());
+      localStorage.setItem(THREADS_KEY, JSON.stringify(merged));
+      window.dispatchEvent(new CustomEvent('digimemories_chat_sync'));
+    }
+  });
+}
 
 const DEMO_SEEDS: ChatThread[] = [
   {
@@ -117,6 +134,9 @@ export const saveChatThreads = (threads: ChatThread[]) => {
   try {
     localStorage.setItem(THREADS_KEY, JSON.stringify(threads));
     window.dispatchEvent(new CustomEvent('digimemories_chat_sync'));
+    
+    // Sync top active threads to Supabase in background
+    threads.slice(0, 5).forEach(t => saveChatThreadToCloud(t));
   } catch (err) {
     console.error('Error saving chat threads', err);
   }

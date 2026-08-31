@@ -47,8 +47,33 @@ export interface Order {
   generalNotes: string;
 }
 
+import { 
+  saveOrderToCloud, 
+  fetchOrdersFromCloud, 
+  saveEmailToCloud, 
+  initSupabaseRealtimeListeners 
+} from './supabase';
+
 const ORDERS_KEY = 'digimemories_orders_mock';
 const EMAILS_KEY = 'digimemories_emails_outbox';
+
+// Start Realtime listeners on initial load
+if (typeof window !== 'undefined') {
+  initSupabaseRealtimeListeners();
+  
+  // Background cloud fetch on start
+  fetchOrdersFromCloud().then(cloudOrders => {
+    if (cloudOrders && cloudOrders.length > 0) {
+      const local = getOrders();
+      const mergedMap = new Map<string, Order>();
+      local.forEach(o => mergedMap.set(o.id, o));
+      cloudOrders.forEach(o => mergedMap.set(o.id, o));
+      const merged = Array.from(mergedMap.values());
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(merged));
+      window.dispatchEvent(new CustomEvent('digimemories_orders_sync'));
+    }
+  });
+}
 
 // --- ORDERS STORE ---
 
@@ -71,6 +96,9 @@ export const saveOrder = (order: Order) => {
   }
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
   window.dispatchEvent(new CustomEvent('digimemories_orders_sync'));
+
+  // Sync to Supabase in background
+  saveOrderToCloud(order);
 };
 
 export const getOrderById = (id: string): Order | undefined => {
@@ -139,6 +167,9 @@ export const sendSimulatedEmail = (email: Omit<EmailNotification, 'id' | 'sentAt
   emails.unshift(newEmail);
   localStorage.setItem(EMAILS_KEY, JSON.stringify(emails));
   window.dispatchEvent(new CustomEvent('digimemories_email_sent', { detail: newEmail }));
+  
+  // Sync to Supabase in background
+  saveEmailToCloud(newEmail);
   return newEmail;
 };
 
