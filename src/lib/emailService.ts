@@ -62,6 +62,43 @@ export interface SendEmailResult {
   emailRecord: EmailNotification;
 }
 
+const CLIENT_CONFIG_KEY = 'digimemories_smtp_cfg_v2';
+
+export function getLocalStoredConfig(): {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  fromName: string;
+  fromEmail: string;
+} {
+  try {
+    const raw = localStorage.getItem(CLIENT_CONFIG_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        host: parsed.host || 'smtp.gmail.com',
+        port: Number(parsed.port) || 465,
+        secure: parsed.secure !== false,
+        user: (parsed.user || '').trim(),
+        pass: (parsed.pass || '').trim(),
+        fromName: parsed.fromName || 'DigiMemories Preservación',
+        fromEmail: (parsed.fromEmail || parsed.user || '').trim()
+      };
+    }
+  } catch {}
+  return {
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    user: '',
+    pass: '',
+    fromName: 'DigiMemories Preservación',
+    fromEmail: ''
+  };
+}
+
 /**
  * Helper to dispatch email via internal API /api/email/send
  */
@@ -94,6 +131,8 @@ export async function sendEmailViaInternalServer(options: SendEmailOptions): Pro
     bodyHtml: options.html
   });
 
+  const localConfig = getLocalStoredConfig();
+
   // 3. Dispatch to internal server API
   try {
     const response = await fetch('/api/email/send', {
@@ -109,6 +148,7 @@ export async function sendEmailViaInternalServer(options: SendEmailOptions): Pro
         html: options.html,
         text: options.text,
         attachments,
+        config: localConfig,
         metadata: {
           trackingId: options.trackingId,
           type: options.type,
@@ -141,12 +181,11 @@ export async function sendEmailViaInternalServer(options: SendEmailOptions): Pro
       };
     }
   } catch (err: any) {
-    console.warn('[EmailService] API dispatch error, fallback to local store:', err);
     return {
       success: true,
       status: 'sandbox_simulated',
       mode: 'sandbox',
-      message: 'Correo registrado localmente en la bandeja de salida.',
+      message: 'Despacho registrado en modo fuera de línea / sandbox.',
       emailRecord: localRecord
     };
   }
@@ -252,8 +291,6 @@ export async function sendCustomClientMessage(
   });
 }
 
-const CLIENT_CONFIG_KEY = 'digimemories_smtp_cfg';
-
 /**
  * Check SMTP Connection / Send test diagnostic email
  */
@@ -264,11 +301,12 @@ export async function testServerSmtp(targetEmail?: string): Promise<{
   previewUrl?: string | null;
   details?: any;
 }> {
+  const localConfig = getLocalStoredConfig();
   try {
     const res = await fetch('/api/email/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetEmail })
+      body: JSON.stringify({ targetEmail, config: localConfig })
     });
     const text = await res.text();
     try {
@@ -290,38 +328,61 @@ export async function testServerSmtp(targetEmail?: string): Promise<{
 }
 
 /**
- * Get current sanitized SMTP configuration
+ * Get current sanitized SMTP configuration with local storage fallback
  */
 export async function fetchServerEmailConfig(): Promise<{ success: boolean; config: EmailServerConfig }> {
-  // Check local storage backup
-  let localSaved: any = null;
-  try {
-    const raw = localStorage.getItem(CLIENT_CONFIG_KEY);
-    if (raw) localSaved = JSON.parse(raw);
-  } catch {}
+  const localSaved = getLocalStoredConfig();
+  const hasLocalUser = Boolean(localSaved.user);
+  const hasLocalPass = Boolean(localSaved.pass);
+  const isLocalConfigured = hasLocalUser && hasLocalPass;
 
-  const defaultConfig: EmailServerConfig = {
-    host: localSaved?.host || 'smtp.gmail.com',
-    port: localSaved?.port || 465,
-    secure: localSaved?.secure !== false,
-    user: localSaved?.user || '',
-    fromName: localSaved?.fromName || 'DigiMemories Preservación',
-    fromEmail: localSaved?.fromEmail || localSaved?.user || '',
-    hasPassword: !!(localSaved?.pass || localSaved?.hasPassword),
-    isConfigured: !!(localSaved?.user && (localSaved?.pass || localSaved?.hasPassword)),
-    mode: (localSaved?.user && (localSaved?.pass || localSaved?.hasPassword)) ? 'gmail_live' : 'sandbox'
+  const clientVaultConfig: EmailServerConfig = {
+    host: localSaved.host,
+    port: localSaved.port,
+    secure: localSaved.secure,
+    user: localSaved.user,
+    fromName: localSaved.fromName,
+    fromEmail: localSaved.fromEmail || localSaved.user,
+    hasPassword: hasLocalPass,
+    isConfigured: isLocalConfigured,
+    mode: isLocalConfigured ? 'gmail_live' : 'sandbox'
   };
 
   try {
     const res = await fetch('/api/email/config');
     const text = await res.text();
     const data = JSON.parse(text);
+
     if (data && data.config) {
-      return { success: true, config: { ...defaultConfig, ...data.config } };
+      // Re-hydrate serverless container if it is cold
+      if ((!data.config.user || !data.config.hasPassword) && isLocalConfigured) {
+        fetch('/api/email/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(localSaved)
+        }).catch(() => {});
+        return { success: true, config: clientVaultConfig };
+      }
+
+      const mergedUser = data.config.user || clientVaultConfig.user;
+      const mergedHasPass = Boolean(data.config.hasPassword || clientVaultConfig.hasPassword);
+      const isLive = Boolean(mergedUser && mergedHasPass);
+
+      return {
+        success: true,
+        config: {
+          ...clientVaultConfig,
+          ...data.config,
+          user: mergedUser,
+          hasPassword: mergedHasPass,
+          isConfigured: isLive,
+          mode: isLive ? 'gmail_live' : 'sandbox'
+        }
+      };
     }
-    return { success: true, config: defaultConfig };
+    return { success: true, config: clientVaultConfig };
   } catch {
-    return { success: true, config: defaultConfig };
+    return { success: true, config: clientVaultConfig };
   }
 }
 
@@ -329,46 +390,56 @@ export async function fetchServerEmailConfig(): Promise<{ success: boolean; conf
  * Save new SMTP credentials to internal server and client vault
  */
 export async function updateServerEmailConfig(newConfig: Partial<EmailServerConfig> & { pass?: string }): Promise<{ success: boolean; config: EmailServerConfig; message?: string }> {
-  // Always persist locally
+  const existing = getLocalStoredConfig();
+  const passToSave = newConfig.pass && newConfig.pass.trim() !== '' ? newConfig.pass.trim() : existing.pass;
+
+  const merged = {
+    host: newConfig.host || existing.host || 'smtp.gmail.com',
+    port: Number(newConfig.port) || existing.port || 465,
+    secure: newConfig.secure !== undefined ? Boolean(newConfig.secure) : existing.secure,
+    user: (newConfig.user !== undefined ? newConfig.user : existing.user).trim(),
+    pass: passToSave,
+    fromName: newConfig.fromName || existing.fromName || 'DigiMemories Preservación',
+    fromEmail: (newConfig.fromEmail || existing.fromEmail || newConfig.user || existing.user || '').trim()
+  };
+
   try {
-    const current = localStorage.getItem(CLIENT_CONFIG_KEY);
-    const existing = current ? JSON.parse(current) : {};
-    const merged = { ...existing, ...newConfig };
     localStorage.setItem(CLIENT_CONFIG_KEY, JSON.stringify(merged));
   } catch (e) {
     console.warn('[EmailService] LocalStorage save failed:', e);
   }
 
+  const isLive = Boolean(merged.user && merged.pass);
   const updatedConfig: EmailServerConfig = {
-    host: newConfig.host || 'smtp.gmail.com',
-    port: newConfig.port || 465,
-    secure: newConfig.secure !== false,
-    user: newConfig.user || '',
-    fromName: newConfig.fromName || 'DigiMemories Preservación',
-    fromEmail: newConfig.fromEmail || newConfig.user || '',
-    hasPassword: !!(newConfig.pass),
-    isConfigured: !!(newConfig.user && newConfig.pass),
-    mode: (newConfig.user && newConfig.pass) ? 'gmail_live' : 'sandbox'
+    host: merged.host,
+    port: merged.port,
+    secure: merged.secure,
+    user: merged.user,
+    fromName: merged.fromName,
+    fromEmail: merged.fromEmail,
+    hasPassword: Boolean(merged.pass),
+    isConfigured: isLive,
+    mode: isLive ? 'gmail_live' : 'sandbox'
   };
 
   try {
     const res = await fetch('/api/email/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newConfig)
+      body: JSON.stringify(merged)
     });
     const text = await res.text();
-    try {
-      const data = JSON.parse(text);
-      return { success: true, config: data.config || updatedConfig, message: 'Configuración SMTP guardada con éxito.' };
-    } catch {
-      return { success: true, config: updatedConfig, message: 'Configuración SMTP guardada con éxito.' };
-    }
-  } catch (e: any) {
+    const data = JSON.parse(text);
+    return {
+      success: true,
+      config: data.config || updatedConfig,
+      message: isLive ? 'Configuración de Gmail SMTP guardada y activa en vivo.' : 'Configuración guardada en modo sandbox.'
+    };
+  } catch {
     return {
       success: true,
       config: updatedConfig,
-      message: 'Configuración guardada exitosamente en el panel.'
+      message: 'Configuración guardada en el panel de administración.'
     };
   }
 }

@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import nodemailer from 'nodemailer';
 
-// In-memory / serverless configuration state
+// In-memory serverless cache
 let currentConfig = {
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: Number(process.env.SMTP_PORT) || 465,
@@ -38,6 +38,25 @@ function sendJson(res: ServerResponse, status: number, data: any) {
   res.end(JSON.stringify(data));
 }
 
+function resolveActiveConfig(body: any = {}) {
+  const payloadConfig = body.config || body.smtpConfig || {};
+  const active = {
+    host: payloadConfig.host || currentConfig.host || 'smtp.gmail.com',
+    port: Number(payloadConfig.port) || currentConfig.port || 465,
+    secure: payloadConfig.secure !== undefined ? Boolean(payloadConfig.secure) : currentConfig.secure,
+    user: (payloadConfig.user || currentConfig.user || '').trim(),
+    pass: (payloadConfig.pass || currentConfig.pass || '').trim().replace(/\s+/g, ''),
+    fromName: payloadConfig.fromName || currentConfig.fromName || 'DigiMemories Preservación',
+    fromEmail: (payloadConfig.fromEmail || currentConfig.fromEmail || payloadConfig.user || currentConfig.user || '').trim()
+  };
+
+  if (active.user && active.pass) {
+    currentConfig = { ...currentConfig, ...active };
+  }
+
+  return active;
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const url = req.url || '';
 
@@ -49,7 +68,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return res.end();
   }
 
-  // 1. GET /api/email/config or /api/email?action=config
+  // 1. GET /api/email/config
   if (req.method === 'GET' && (url.includes('config') || url.includes('/api/email'))) {
     return sendJson(res, 200, {
       success: true,
@@ -70,20 +89,20 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   // 2. POST /api/email/config
   if (req.method === 'POST' && url.includes('config')) {
     const body = await readBody(req);
-    currentConfig = { ...currentConfig, ...body };
+    const resolved = resolveActiveConfig(body);
     return sendJson(res, 200, {
       success: true,
       message: 'Configuración SMTP actualizada con éxito.',
       config: {
-        host: currentConfig.host,
-        port: currentConfig.port,
-        secure: currentConfig.secure,
-        user: currentConfig.user,
-        fromName: currentConfig.fromName,
-        fromEmail: currentConfig.fromEmail || currentConfig.user,
-        hasPassword: !!currentConfig.pass,
-        isConfigured: !!(currentConfig.user && currentConfig.pass),
-        mode: currentConfig.user && currentConfig.pass ? 'gmail_live' : 'sandbox'
+        host: resolved.host,
+        port: resolved.port,
+        secure: resolved.secure,
+        user: resolved.user,
+        fromName: resolved.fromName,
+        fromEmail: resolved.fromEmail || resolved.user,
+        hasPassword: !!resolved.pass,
+        isConfigured: !!(resolved.user && resolved.pass),
+        mode: resolved.user && resolved.pass ? 'gmail_live' : 'sandbox'
       }
     });
   }
@@ -91,15 +110,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   // 3. POST /api/email/send
   if (req.method === 'POST' && (url.includes('send') || url.endsWith('/email'))) {
     const body = await readBody(req);
+    const active = resolveActiveConfig(body);
     const emailId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    if (currentConfig.user && currentConfig.pass) {
+    if (active.user && active.pass) {
       try {
         const transporter = nodemailer.createTransport({
-          host: currentConfig.host,
-          port: currentConfig.port,
-          secure: currentConfig.secure,
-          auth: { user: currentConfig.user, pass: currentConfig.pass.replace(/\s+/g, '') }
+          host: active.host,
+          port: active.port,
+          secure: active.secure,
+          auth: { user: active.user, pass: active.pass }
         });
 
         const formattedAttachments = (body.attachments || []).map((att: any) => ({
@@ -109,7 +129,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         }));
 
         const info = await transporter.sendMail({
-          from: `"${currentConfig.fromName}" <${currentConfig.fromEmail || currentConfig.user}>`,
+          from: `"${active.fromName}" <${active.fromEmail || active.user}>`,
           to: body.toName ? `"${body.toName}" <${body.to}>` : body.to,
           subject: body.subject,
           html: body.html,
@@ -133,6 +153,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         outboxLogs.unshift(record);
         return sendJson(res, 200, { success: true, status: 'delivered', mode: 'gmail_live', messageId: info.messageId, record });
       } catch (err: any) {
+        console.warn('[Vercel Serverless SMTP] Live dispatch failed:', err.message);
         return sendJson(res, 200, {
           success: true,
           status: 'sandbox_simulated',
@@ -162,19 +183,20 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   // 4. POST /api/email/test
   if (req.method === 'POST' && url.includes('test')) {
     const body = await readBody(req);
-    const target = body.targetEmail || currentConfig.user || 'cliente@ejemplo.com';
+    const active = resolveActiveConfig(body);
+    const target = body.targetEmail || active.user || 'cliente@ejemplo.com';
 
-    if (currentConfig.user && currentConfig.pass) {
+    if (active.user && active.pass) {
       try {
         const transporter = nodemailer.createTransport({
-          host: currentConfig.host,
-          port: currentConfig.port,
-          secure: currentConfig.secure,
-          auth: { user: currentConfig.user, pass: currentConfig.pass.replace(/\s+/g, '') }
+          host: active.host,
+          port: active.port,
+          secure: active.secure,
+          auth: { user: active.user, pass: active.pass }
         });
         await transporter.verify();
         await transporter.sendMail({
-          from: `"${currentConfig.fromName}" <${currentConfig.fromEmail || currentConfig.user}>`,
+          from: `"${active.fromName}" <${active.fromEmail || active.user}>`,
           to: target,
           subject: '✓ Prueba Exitosa de Servidor SMTP — DigiMemories',
           html: '<h2>¡Conexión SMTP Exitosa!</h2><p>Tu servidor de correo está activo y entregando mensajes en vivo.</p>'
