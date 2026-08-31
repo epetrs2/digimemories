@@ -94,7 +94,7 @@ export function getLocalStoredConfig(): {
     port: 465,
     secure: true,
     user: 'contactodigimemories@gmail.com',
-    pass: 'eguperkyhqcslpql',
+    pass: '',
     fromName: 'DigiMemories Preservación',
     fromEmail: 'contactodigimemories@gmail.com'
   };
