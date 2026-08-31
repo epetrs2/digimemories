@@ -6,6 +6,7 @@ import {
   AlertCircle, 
   RefreshCw, 
   Eye, 
+  EyeOff,
   Key, 
   Server, 
   Paperclip, 
@@ -35,6 +36,8 @@ interface Props {
 export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
   // Server Config State
   const [config, setConfig] = useState<EmailServerConfig | null>(null);
+  const hasInitializedForm = React.useRef(false);
+
   const [smtpForm, setSmtpForm] = useState({
     user: '',
     pass: '',
@@ -57,6 +60,7 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
   const [showHelpGuide, setShowHelpGuide] = useState(false);
+  const [showPass, setShowPass] = useState(false);
 
   // Compose Message State
   const [composeTo, setComposeTo] = useState('');
@@ -67,20 +71,25 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
   const [isSendingCustom, setIsSendingCustom] = useState(false);
   const [composeFeedback, setComposeFeedback] = useState<{ success: boolean; text: string } | null>(null);
 
-  const loadData = async () => {
+  const loadData = async (isManual = false) => {
     try {
       const configRes = await fetchServerEmailConfig();
       if (configRes.success && configRes.config) {
         setConfig(configRes.config);
-        setSmtpForm(prev => ({
-          ...prev,
-          user: configRes.config.user || '',
-          fromName: configRes.config.fromName || 'DigiMemories Preservación',
-          fromEmail: configRes.config.fromEmail || '',
-          host: configRes.config.host || 'smtp.gmail.com',
-          port: configRes.config.port || 465,
-          secure: configRes.config.secure !== false
-        }));
+        
+        // Only initialize form fields once on initial load or manual save
+        if (!hasInitializedForm.current || isManual) {
+          hasInitializedForm.current = true;
+          setSmtpForm(prev => ({
+            ...prev,
+            user: configRes.config.user || prev.user || '',
+            fromName: configRes.config.fromName || prev.fromName || 'DigiMemories Preservación',
+            fromEmail: configRes.config.fromEmail || prev.fromEmail || '',
+            host: configRes.config.host || prev.host || 'smtp.gmail.com',
+            port: configRes.config.port || prev.port || 465,
+            secure: configRes.config.secure !== false
+          }));
+        }
       }
 
       const outboxList = await fetchServerOutbox();
@@ -93,8 +102,8 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
   };
 
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 5000);
+    loadData(true);
+    const interval = setInterval(() => loadData(false), 8000);
     return () => clearInterval(interval);
   }, []);
 
@@ -267,7 +276,7 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
           />
 
           <button 
-            onClick={loadData}
+            onClick={() => loadData(true)}
             className="btn btn-secondary"
             style={{ padding: '0.55rem 0.9rem', fontSize: '0.85rem' }}
             title="Actualizar estado"
@@ -387,13 +396,23 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
               <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
                 Contraseña de Aplicación de Google (16 caracteres)
               </label>
-              <input 
-                type="password"
-                className="input-field"
-                placeholder={config?.hasPassword ? '•••••••••••••••• (Guardada y activa)' : 'Pega aquí tu clave de 16 letras'}
-                value={smtpForm.pass}
-                onChange={e => setSmtpForm({ ...smtpForm, pass: e.target.value })}
-              />
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type={showPass ? 'text' : 'password'}
+                  className="input-field"
+                  placeholder={config?.hasPassword ? '•••••••••••••••• (Guardada y activa)' : 'Pega aquí tu clave de 16 letras'}
+                  value={smtpForm.pass}
+                  onChange={e => setSmtpForm({ ...smtpForm, pass: e.target.value })}
+                  style={{ paddingRight: '2.5rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#78716c' }}
+                >
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
                 No uses tu contraseña habitual de Gmail. Usa la Contraseña de Aplicación generada por Google.
               </span>
@@ -573,7 +592,7 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
 
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button 
-              onClick={loadData}
+              onClick={() => loadData(true)}
               className="btn btn-secondary"
               style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
             >
