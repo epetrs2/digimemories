@@ -84,167 +84,276 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
       setTimeout(() => {
         setSaveSuccess(false);
         onClose();
-      }, 1000);
+      }, 1200);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-4xl max-h-[92vh] bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8">
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(28, 25, 23, 0.75)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '1.5rem',
+      overflowY: 'auto'
+    }}>
+      <div 
+        className="glass animate-on-load"
+        style={{
+          width: '100%',
+          maxWidth: '860px',
+          maxHeight: '90vh',
+          background: '#ffffff',
+          borderRadius: '24px',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3)',
+          border: '1px solid rgba(214, 204, 194, 0.9)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          margin: 'auto'
+        }}
+      >
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950/60 flex items-center justify-center text-orange-600 font-bold text-lg border border-orange-200 dark:border-orange-900">
+        <div style={{
+          padding: '1.25rem 1.75rem',
+          borderBottom: '1px solid var(--glass-border)',
+          background: '#faf8f5',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+              border: '1.5px solid #fed7aa',
+              color: '#ea580c',
+              fontWeight: 900,
+              fontSize: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 10px rgba(234, 88, 12, 0.12)'
+            }}>
               #{order.id}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-stone-900 dark:text-white">
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#1c1917' }}>
                 Editar Datos de la Orden & Logística
               </h2>
-              <p className="text-xs text-stone-500">
+              <p style={{ fontSize: '0.8rem', color: '#78716c', margin: 0, marginTop: '2px' }}>
                 Modifica cliente, dirección de entrega, taller asignado y cintas
               </p>
             </div>
           </div>
+
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 text-stone-400 hover:text-stone-700 dark:hover:text-white rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#78716c',
+              cursor: 'pointer',
+              padding: '0.5rem',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background 0.2s ease'
+            }}
           >
-            <X size={20} />
+            <X size={22} />
           </button>
         </div>
 
-        {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Modal Form Scrollable Area */}
+        <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* SECTION 1: DATOS DEL CLIENTE */}
-          <div className="bg-stone-50 dark:bg-stone-950/50 p-4 rounded-xl border border-stone-200 dark:border-stone-800 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-orange-600 flex items-center gap-2">
+          <div style={{
+            background: '#faf8f5',
+            padding: '1.25rem',
+            borderRadius: '16px',
+            border: '1px solid #e7e2d9',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: '#ea580c', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <User size={16} /> Información del Cliente
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">Nombre Completo</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  Nombre Completo
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.clientName}
                   onChange={e => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.9rem', borderRadius: '10px', background: '#ffffff' }}
                 />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1 flex items-center gap-1">
-                  <Mail size={12} /> Correo Electrónico
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  <Mail size={13} /> Correo Electrónico
                 </label>
                 <input
                   type="email"
                   required
                   value={formData.clientEmail}
                   onChange={e => setFormData(prev => ({ ...prev, clientEmail: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.9rem', borderRadius: '10px', background: '#ffffff' }}
                 />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1 flex items-center gap-1">
-                  <Phone size={12} /> WhatsApp / Teléfono
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  <Phone size={13} /> WhatsApp / Teléfono
                 </label>
                 <input
                   type="text"
                   value={formData.clientPhone}
                   onChange={e => setFormData(prev => ({ ...prev, clientPhone: e.target.value }))}
                   placeholder="+52 55 1234 5678"
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.9rem', borderRadius: '10px', background: '#ffffff' }}
                 />
               </div>
             </div>
           </div>
 
           {/* SECTION 2: LOGÍSTICA & DIRECCIONES */}
-          <div className="bg-stone-50 dark:bg-stone-950/50 p-4 rounded-xl border border-stone-200 dark:border-stone-800 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-orange-600 flex items-center gap-2">
+          <div style={{
+            background: '#faf8f5',
+            padding: '1.25rem',
+            borderRadius: '16px',
+            border: '1px solid #e7e2d9',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: '#ea580c', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Truck size={16} /> Modalidad y Dirección de Entrega
-            </h3>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Delivery Type Selector Buttons */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
               <button
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, deliveryType: 'taller_pickup' }))}
-                className={`p-3 text-left rounded-xl border transition ${
-                  formData.deliveryType === 'taller_pickup'
-                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 font-bold'
-                    : 'border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-400 hover:bg-white dark:hover:bg-stone-900'
-                }`}
+                style={{
+                  padding: '0.9rem',
+                  textAlign: 'left',
+                  borderRadius: '12px',
+                  border: formData.deliveryType === 'taller_pickup' ? '2px solid #ea580c' : '1px solid #d6d3d1',
+                  background: formData.deliveryType === 'taller_pickup' ? '#fff7ed' : '#ffffff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
               >
-                <div className="flex items-center gap-2 font-semibold text-sm">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', color: formData.deliveryType === 'taller_pickup' ? '#ea580c' : '#1c1917' }}>
                   <Building size={16} /> Recoger en Taller
                 </div>
-                <div className="text-xs text-stone-500 mt-1">El cliente acude a la sucursal física</div>
+                <div style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '4px' }}>
+                  El cliente acude a la sucursal física
+                </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, deliveryType: 'home_delivery' }))}
-                className={`p-3 text-left rounded-xl border transition ${
-                  formData.deliveryType === 'home_delivery'
-                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 font-bold'
-                    : 'border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-400 hover:bg-white dark:hover:bg-stone-900'
-                }`}
+                style={{
+                  padding: '0.9rem',
+                  textAlign: 'left',
+                  borderRadius: '12px',
+                  border: formData.deliveryType === 'home_delivery' ? '2px solid #ea580c' : '1px solid #d6d3d1',
+                  background: formData.deliveryType === 'home_delivery' ? '#fff7ed' : '#ffffff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
               >
-                <div className="flex items-center gap-2 font-semibold text-sm">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', color: formData.deliveryType === 'home_delivery' ? '#ea580c' : '#1c1917' }}>
                   <MapPin size={16} /> Entrega Local CDMX
                 </div>
-                <div className="text-xs text-stone-500 mt-1">Chofer o mensajero a domicilio</div>
+                <div style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '4px' }}>
+                  Chofer o mensajero a domicilio
+                </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, deliveryType: 'national_shipping' }))}
-                className={`p-3 text-left rounded-xl border transition ${
-                  formData.deliveryType === 'national_shipping'
-                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 font-bold'
-                    : 'border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-400 hover:bg-white dark:hover:bg-stone-900'
-                }`}
+                style={{
+                  padding: '0.9rem',
+                  textAlign: 'left',
+                  borderRadius: '12px',
+                  border: formData.deliveryType === 'national_shipping' ? '2px solid #ea580c' : '1px solid #d6d3d1',
+                  background: formData.deliveryType === 'national_shipping' ? '#fff7ed' : '#ffffff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
               >
-                <div className="flex items-center gap-2 font-semibold text-sm">
-                  <Truck size={16} /> Envío Nacional (DHL/Estafeta)
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', color: formData.deliveryType === 'national_shipping' ? '#ea580c' : '#1c1917' }}>
+                  <Truck size={16} /> Envío Nacional
                 </div>
-                <div className="text-xs text-stone-500 mt-1">Guía con paquetería express</div>
+                <div style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '4px' }}>
+                  Guía con DHL / Estafeta
+                </div>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Addresses Input Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1 flex items-center gap-1">
-                  <MapPin size={12} /> Dirección de Entrega / Recolección del Cliente
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  <MapPin size={13} /> Dirección de Entrega / Recolección del Cliente
                 </label>
                 <textarea
                   rows={2}
                   value={formData.deliveryAddress}
                   onChange={e => setFormData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
                   placeholder="Calle, Número Ext/Int, Colonia, Alcaldía/Municipio, C.P., Referencias..."
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none resize-none"
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.85rem', borderRadius: '10px', background: '#ffffff', resize: 'none' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1 flex items-center gap-1">
-                  <Building size={12} /> Dirección del Taller / Sucursal Asignada
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  <Building size={13} /> Dirección del Taller / Sucursal Asignada
                 </label>
                 <textarea
                   rows={2}
                   value={formData.tallerAddress}
                   onChange={e => setFormData(prev => ({ ...prev, tallerAddress: e.target.value }))}
                   placeholder="Dirección del taller oficial donde se trabaja el material..."
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none resize-none"
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.85rem', borderRadius: '10px', background: '#ffffff', resize: 'none' }}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
                   Número de Guía / Tracking de Paquetería (Opcional)
                 </label>
                 <input
@@ -252,62 +361,88 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
                   value={formData.trackingCourierNumber}
                   onChange={e => setFormData(prev => ({ ...prev, trackingCourierNumber: e.target.value }))}
                   placeholder="ej. DHL 1849382910 o Uber Flash ID"
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.85rem', borderRadius: '10px', background: '#ffffff' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
                   Instrucciones de Entrega / Notas del Repartidor
                 </label>
                 <input
                   type="text"
                   value={formData.deliveryNotes}
                   onChange={e => setFormData(prev => ({ ...prev, deliveryNotes: e.target.value }))}
-                  placeholder="ej. Tocar timbre blanco, dejar con portería..."
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                  placeholder="ej. Tocar timbre blanco, dejar en portería..."
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.85rem', borderRadius: '10px', background: '#ffffff' }}
                 />
               </div>
             </div>
           </div>
 
           {/* SECTION 3: ESTADO, PIN & FINANZAS */}
-          <div className="bg-stone-50 dark:bg-stone-950/50 p-4 rounded-xl border border-stone-200 dark:border-stone-800 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-orange-600 flex items-center gap-2">
+          <div style={{
+            background: '#faf8f5',
+            padding: '1.25rem',
+            borderRadius: '16px',
+            border: '1px solid #e7e2d9',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: '#ea580c', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <DollarSign size={16} /> Estado Financiero y PIN de Rastreo
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">Estado de la Orden</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  Estado de la Orden
+                </label>
                 <select
                   value={formData.status}
                   onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.85rem', borderRadius: '10px', background: '#ffffff' }}
                 >
-                  <option value="pendiente">Pendiente de Anticipo</option>
-                  <option value="en_proceso">En Proceso de Digitalización</option>
-                  <option value="completada">Completada y Lista para Entrega</option>
+                  <option value="pendiente">⏳ Pendiente de Anticipo</option>
+                  <option value="en_proceso">🔄 En Digitalización</option>
+                  <option value="completada">✓ Completada y Lista</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">Anticipo 50%</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  Anticipo 50%
+                </label>
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, depositPaid: !prev.depositPaid }))}
-                  className={`w-full py-2 px-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 border transition ${
-                    formData.depositPaid
-                      ? 'bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300 border-green-300 dark:border-green-800'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 border-stone-300 dark:border-stone-700'
-                  }`}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    fontSize: '0.85rem',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    border: formData.depositPaid ? '1px solid #86efac' : '1px solid #d6d3d1',
+                    background: formData.depositPaid ? '#dcfce7' : '#f5f5f4',
+                    color: formData.depositPaid ? '#15803d' : '#78716c',
+                    cursor: 'pointer'
+                  }}
                 >
-                  <CheckCircle size={16} /> {formData.depositPaid ? '✓ Pagado' : 'Pendiente'}
+                  <CheckCircle size={15} /> {formData.depositPaid ? '✓ Pagado' : 'Pendiente'}
                 </button>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1 flex items-center gap-1">
-                  <Hash size={12} /> PIN de Rastreo (4 dígitos)
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  <Hash size={13} /> PIN de Rastreo (4 dígitos)
                 </label>
                 <input
                   type="text"
@@ -315,82 +450,140 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
                   value={formData.pin}
                   onChange={e => setFormData(prev => ({ ...prev, pin: e.target.value }))}
                   placeholder="ej. 8492"
-                  className="w-full px-3 py-2 text-sm font-mono tracking-widest text-center bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-orange-600 font-bold focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="input-field"
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.9rem',
+                    fontSize: '0.95rem',
+                    fontFamily: 'monospace',
+                    fontWeight: 900,
+                    textAlign: 'center',
+                    letterSpacing: '3px',
+                    color: '#ea580c',
+                    borderRadius: '10px',
+                    background: '#ffffff'
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">Total Estimado ($ MXN)</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  Total Estimado ($ MXN)
+                </label>
                 <input
                   type="number"
                   value={formData.estimatedTotal}
                   onChange={e => setFormData(prev => ({ ...prev, estimatedTotal: Number(e.target.value) }))}
-                  className="w-full px-3 py-2 text-sm font-bold text-stone-900 dark:text-white bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.9rem', fontWeight: 800, borderRadius: '10px', background: '#ffffff' }}
                 />
               </div>
             </div>
           </div>
 
           {/* SECTION 4: ITEMS / CINTAS */}
-          <div className="bg-stone-50 dark:bg-stone-950/50 p-4 rounded-xl border border-stone-200 dark:border-stone-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-orange-600 flex items-center gap-2">
+          <div style={{
+            background: '#faf8f5',
+            padding: '1.25rem',
+            borderRadius: '16px',
+            border: '1px solid #e7e2d9',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: '#ea580c', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <FileText size={16} /> Lote de Cintas y Material ({items.length})
-              </h3>
+              </div>
               <button
                 type="button"
                 onClick={() => handleAddItem()}
-                className="px-3 py-1.5 text-xs bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg flex items-center gap-1 transition shadow-sm"
+                style={{
+                  padding: '0.4rem 0.85rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  borderRadius: '8px',
+                  background: '#ea580c',
+                  color: '#ffffff',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(234, 88, 12, 0.25)'
+                }}
               >
                 <Plus size={14} /> Añadir Cinta
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {items.map((item, idx) => (
-                <div key={item.id} className="p-3 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                  <div className="md:col-span-1 text-xs font-bold text-stone-400">
+                <div 
+                  key={item.id} 
+                  style={{
+                    padding: '0.75rem',
+                    background: '#ffffff',
+                    border: '1px solid #e7e2d9',
+                    borderRadius: '12px',
+                    display: 'grid',
+                    gridTemplateColumns: '30px 1.5fr 1fr 1fr 36px',
+                    gap: '0.6rem',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#a8a29e' }}>
                     #{idx + 1}
                   </div>
-                  <div className="md:col-span-4">
-                    <input
-                      type="text"
-                      value={item.format}
-                      onChange={e => handleItemChange(item.id, 'format', e.target.value)}
-                      placeholder="Formato (ej. VHS Boda 1995)"
-                      className="w-full px-2.5 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white outline-none"
-                    />
-                  </div>
-                  <div className="md:col-span-3">
-                    <select
-                      value={item.status}
-                      onChange={e => handleItemChange(item.id, 'status', e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white outline-none"
-                    >
-                      <option value="pendiente">⏳ Pendiente</option>
-                      <option value="digitalizando">🔄 En Digitalización</option>
-                      <option value="completada">✓ Completada</option>
-                      <option value="fallida">❌ Fallida / Dañada</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-3">
-                    <input
-                      type="text"
-                      value={item.notes}
-                      onChange={e => handleItemChange(item.id, 'notes', e.target.value)}
-                      placeholder="Notas del técnico..."
-                      className="w-full px-2.5 py-1.5 text-xs bg-stone-50 dark:bg-stone-950 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-white outline-none"
-                    />
-                  </div>
-                  <div className="md:col-span-1 text-right">
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(item.id)}
-                      className="p-1.5 text-stone-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/50 transition"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+
+                  <input
+                    type="text"
+                    value={item.format}
+                    onChange={e => handleItemChange(item.id, 'format', e.target.value)}
+                    placeholder="Formato (ej. VHS Boda 1995)"
+                    className="input-field"
+                    style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem', borderRadius: '8px' }}
+                  />
+
+                  <select
+                    value={item.status}
+                    onChange={e => handleItemChange(item.id, 'status', e.target.value)}
+                    className="input-field"
+                    style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem', borderRadius: '8px' }}
+                  >
+                    <option value="pendiente">⏳ Pendiente</option>
+                    <option value="digitalizando">🔄 En Digitalización</option>
+                    <option value="completada">✓ Completada</option>
+                    <option value="fallida">❌ Fallida</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    value={item.notes}
+                    onChange={e => handleItemChange(item.id, 'notes', e.target.value)}
+                    placeholder="Notas técnicas..."
+                    className="input-field"
+                    style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem', borderRadius: '8px' }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveItem(item.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#a8a29e',
+                      cursor: 'pointer',
+                      padding: '0.4rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '6px'
+                    }}
+                    title="Eliminar ítem"
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -398,30 +591,40 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
         </form>
 
         {/* Modal Footer */}
-        <div className="px-6 py-4 border-t border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 flex items-center justify-between">
+        <div style={{
+          padding: '1.25rem 1.75rem',
+          borderTop: '1px solid var(--glass-border)',
+          background: '#faf8f5',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-800 rounded-xl transition"
+            className="btn btn-secondary"
+            style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
           >
             Cancelar
           </button>
           
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             {saveSuccess && (
-              <span className="text-xs font-bold text-green-600 flex items-center gap-1">
-                <CheckCircle size={14} /> ¡Cambios guardados con éxito!
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <CheckCircle size={16} /> ¡Cambios guardados con éxito!
               </span>
             )}
             <button
               onClick={handleSubmit}
               disabled={isSaving}
-              className="px-6 py-2 text-sm font-bold bg-orange-600 hover:bg-orange-500 text-white rounded-xl shadow-lg shadow-orange-600/20 flex items-center gap-2 transition disabled:opacity-50"
+              className="btn btn-primary"
+              style={{ padding: '0.7rem 1.75rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Save size={16} /> {isSaving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );

@@ -16,7 +16,8 @@ import {
   Zap, 
   Activity, 
   Layers,
-  Smartphone
+  Smartphone,
+  CheckCircle2
 } from 'lucide-react';
 
 interface Props {
@@ -88,8 +89,8 @@ export const AdminTrafficAnalytics: React.FC<Props> = ({ totalOrdersCount }) => 
 
   if (!metrics) {
     return (
-      <div className="p-12 text-center text-stone-500 flex flex-col items-center justify-center gap-3">
-        <RefreshCw size={24} className="animate-spin text-orange-500" />
+      <div style={{ padding: '3rem', textAlign: 'center', color: '#78716c', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+        <RefreshCw size={24} className="animate-spin text-accent" />
         <span>Cargando analíticas en tiempo real desde Supabase...</span>
       </div>
     );
@@ -108,45 +109,74 @@ export const AdminTrafficAnalytics: React.FC<Props> = ({ totalOrdersCount }) => 
     : '0.0';
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       
       {/* Top YouTube Creator Studio Header Bar */}
-      <div className="bg-stone-900 text-white p-6 rounded-2xl border border-stone-800 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div style={{
+        background: 'linear-gradient(135deg, #1c1917 0%, #292524 100%)',
+        color: '#ffffff',
+        padding: '1.75rem',
+        borderRadius: '20px',
+        border: '1px solid #44403c',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
         <div>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-            </span>
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-400">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#3b82f6', display: 'inline-block', boxShadow: '0 0 10px #3b82f6' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#93c5fd' }}>
               YouTube Analytics Engine • Tiempo Real
             </span>
           </div>
-          <h2 className="text-2xl font-black mt-1 text-white tracking-tight">
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 900, margin: '0.4rem 0 0 0', color: '#ffffff', letterSpacing: '-0.02em' }}>
             Rendimiento del Canal & Tráfico en Vivo
           </h2>
-          <p className="text-xs text-stone-400 mt-1">
+          <p style={{ fontSize: '0.8rem', color: '#a8a29e', margin: '0.25rem 0 0 0' }}>
             Métricas de audiencia sincronizadas con WebSockets de Supabase PostgreSQL
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           <button
             onClick={handleSimulateLiveVisit}
-            className={`px-3.5 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 transition ${
-              justSimulated 
-                ? 'bg-green-600 text-white' 
-                : 'bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/25'
-            }`}
+            style={{
+              padding: '0.65rem 1.15rem',
+              fontSize: '0.8rem',
+              fontWeight: 800,
+              borderRadius: '12px',
+              border: 'none',
+              background: justSimulated ? '#16a34a' : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+              color: '#ffffff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
           >
-            <Zap size={14} className={justSimulated ? 'animate-bounce' : ''} />
+            <Zap size={15} />
             {justSimulated ? '✓ ¡Visita Registrada en Vivo!' : '⚡ Simular Visita en Vivo'}
           </button>
 
           <button
             onClick={loadTrafficData}
             disabled={isRefreshing}
-            className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl transition"
+            style={{
+              padding: '0.65rem',
+              borderRadius: '12px',
+              border: '1px solid #57534e',
+              background: '#292524',
+              color: '#e7e5e4',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
             title="Actualizar datos"
           >
             <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
@@ -154,326 +184,382 @@ export const AdminTrafficAnalytics: React.FC<Props> = ({ totalOrdersCount }) => 
         </div>
       </div>
 
-      {/* YOUTUBE STUDIO REAL-TIME HIGHLIGHT CARDS (60 Min & 48 Hours) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* YOUTUBE STUDIO REAL-TIME HIGHLIGHT CARDS (60 Min & 24 Hours) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
         
-        {/* CARD 1: ÚLTIMOS 60 MINUTOS (Histograma Minuto a Minuto) */}
-        <div className="lg:col-span-7 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex justify-between items-start">
+        {/* CARD 1: ÚLTIMOS 60 MINUTOS */}
+        <div className="glass" style={{ padding: '1.75rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-                </span>
-                <h3 className="text-sm font-bold text-stone-900 dark:text-white uppercase tracking-wider">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6', display: 'inline-block' }} />
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#57534e' }}>
                   Tiempo Real: Últimos 60 minutos
-                </h3>
+                </span>
               </div>
-              <div className="flex items-baseline gap-3 mt-1">
-                <span className="text-4xl font-black text-stone-900 dark:text-white">
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.4rem' }}>
+                <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#1c1917', lineHeight: 1 }}>
                   {metrics.viewsLast60Min}
                 </span>
-                <span className="text-xs text-stone-500 font-medium">vistas en la última hora</span>
+                <span style={{ fontSize: '0.8rem', color: '#78716c', fontWeight: 600 }}>vistas en la última hora</span>
               </div>
             </div>
 
             {/* Active Visitors Badge */}
-            <div className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-xs font-extrabold text-emerald-700 dark:text-emerald-400">
+            <div style={{
+              padding: '0.4rem 0.85rem',
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#065f46' }}>
                 {metrics.activeNow} {metrics.activeNow === 1 ? 'activo ahora' : 'activos ahora'}
               </span>
             </div>
           </div>
 
           {/* Interactive 60-Minute Bar Chart */}
-          <div className="space-y-1 pt-2">
-            <div className="h-28 flex items-end gap-[3px] bg-stone-50 dark:bg-stone-950/60 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800 relative">
+          <div style={{ background: '#faf8f5', padding: '0.85rem', borderRadius: '14px', border: '1px solid #e7e2d9' }}>
+            <div style={{ height: '110px', display: 'flex', alignItems: 'flex-end', gap: '2px', position: 'relative' }}>
               {metrics.minuteHistogram.map((m, idx) => {
                 const heightPct = m.count > 0 ? Math.max((m.count / maxMinCount) * 100, 15) : 6;
+                const isCurrent = m.isCurrent;
+
                 return (
                   <div
                     key={idx}
                     onMouseEnter={() => setHoveredMinute({ label: m.label, count: m.count })}
                     onMouseLeave={() => setHoveredMinute(null)}
-                    className="flex-1 flex flex-col justify-end items-center h-full group relative cursor-pointer"
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                      height: '100%',
+                      cursor: 'pointer'
+                    }}
                   >
                     <div
-                      className={`w-full rounded-t-sm transition-all duration-300 ${
-                        m.count > 0 
-                          ? (m.isCurrent ? 'bg-orange-500 shadow-sm' : 'bg-blue-600 dark:bg-blue-500 hover:bg-blue-400')
-                          : 'bg-stone-200 dark:bg-stone-800 hover:bg-stone-300'
-                      }`}
-                      style={{ height: `${heightPct}%` }}
-                    ></div>
+                      style={{
+                        width: '100%',
+                        height: `${heightPct}%`,
+                        borderRadius: '2px 2px 0 0',
+                        background: m.count > 0 
+                          ? (isCurrent ? '#ea580c' : '#2563eb')
+                          : '#e7e5e4',
+                        transition: 'all 0.2s ease'
+                      }}
+                    />
                   </div>
                 );
               })}
             </div>
 
-            {/* Tooltip / Legend */}
-            <div className="flex justify-between items-center text-[11px] text-stone-400 font-mono pt-1 px-1">
+            {/* Tooltip & Time Range Footer */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#a8a29e', marginTop: '0.5rem', fontFamily: 'monospace' }}>
               <span>-60 min</span>
-              <span className="text-xs font-bold text-stone-700 dark:text-stone-300">
-                {hoveredMinute ? `${hoveredMinute.label}: ${hoveredMinute.count} vistas` : 'Pasa el cursor sobre las barras para ver detalles'}
+              <span style={{ fontWeight: 800, color: hoveredMinute ? '#ea580c' : '#78716c', fontSize: '0.8rem' }}>
+                {hoveredMinute ? `${hoveredMinute.label}: ${hoveredMinute.count} vista(s)` : 'Pasa el cursor sobre las barras'}
               </span>
-              <span className="text-orange-600 font-bold">Ahora (0m)</span>
+              <span style={{ fontWeight: 800, color: '#ea580c' }}>Ahora (0m)</span>
             </div>
           </div>
         </div>
 
-        {/* CARD 2: ÚLTIMAS 24/48 HORAS (Histograma Hora por Hora) */}
-        <div className="lg:col-span-5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-6 shadow-sm space-y-4 flex flex-col justify-between">
+        {/* CARD 2: ÚLTIMAS 24 HORAS */}
+        <div className="glass" style={{ padding: '1.75rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.25rem' }}>
           <div>
-            <div className="flex justify-between items-start">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h3 className="text-sm font-bold text-stone-900 dark:text-white uppercase tracking-wider">
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#57534e' }}>
                   Vistas en las Últimas 24 Horas
-                </h3>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-4xl font-black text-stone-900 dark:text-white">
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.4rem' }}>
+                  <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#1c1917', lineHeight: 1 }}>
                     {metrics.viewsLast24Hours}
                   </span>
-                  <span className="text-xs text-stone-500">vistas hoy</span>
+                  <span style={{ fontSize: '0.8rem', color: '#78716c', fontWeight: 600 }}>vistas hoy</span>
                 </div>
               </div>
 
-              <div className="p-2.5 bg-blue-50 dark:bg-blue-950/50 rounded-xl text-blue-600 border border-blue-100 dark:border-blue-900">
-                <Activity size={20} />
+              <div style={{ padding: '0.6rem', background: '#eff6ff', borderRadius: '12px', color: '#2563eb' }}>
+                <Activity size={22} />
               </div>
             </div>
 
             {/* Interactive 24-Hour Bar Chart */}
-            <div className="h-28 flex items-end gap-1 bg-stone-50 dark:bg-stone-950/60 p-2.5 rounded-xl border border-stone-100 dark:border-stone-800 mt-4">
-              {metrics.hourHistogram.map((h, idx) => {
-                const heightPct = h.count > 0 ? Math.max((h.count / maxHourCount) * 100, 15) : 8;
-                return (
-                  <div
-                    key={idx}
-                    onMouseEnter={() => setHoveredHour({ label: h.label, count: h.count })}
-                    onMouseLeave={() => setHoveredHour(null)}
-                    className="flex-1 flex flex-col justify-end items-center h-full cursor-pointer"
-                  >
+            <div style={{ background: '#faf8f5', padding: '0.85rem', borderRadius: '14px', border: '1px solid #e7e2d9', marginTop: '1rem' }}>
+              <div style={{ height: '110px', display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
+                {metrics.hourHistogram.map((h, idx) => {
+                  const heightPct = h.count > 0 ? Math.max((h.count / maxHourCount) * 100, 15) : 8;
+                  return (
                     <div
-                      className={`w-full rounded-t-sm transition-all duration-300 ${
-                        h.count > 0 
-                          ? (h.isCurrent ? 'bg-orange-500' : 'bg-indigo-600 hover:bg-indigo-400')
-                          : 'bg-stone-200 dark:bg-stone-800'
-                      }`}
-                      style={{ height: `${heightPct}%` }}
-                    ></div>
-                  </div>
-                );
-              })}
-            </div>
+                      key={idx}
+                      onMouseEnter={() => setHoveredHour({ label: h.label, count: h.count })}
+                      onMouseLeave={() => setHoveredHour(null)}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        height: '100%',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '100%',
+                          height: `${heightPct}%`,
+                          borderRadius: '3px 3px 0 0',
+                          background: h.count > 0 
+                            ? (h.isCurrent ? '#ea580c' : '#4f46e5')
+                            : '#e7e5e4',
+                          transition: 'all 0.2s ease'
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
 
-            <div className="flex justify-between items-center text-[11px] text-stone-400 font-mono pt-1 px-1">
-              <span>-24 hrs</span>
-              <span className="text-xs font-bold text-stone-700 dark:text-stone-300">
-                {hoveredHour ? `${hoveredHour.label}: ${hoveredHour.count} vistas` : ''}
-              </span>
-              <span>Hora actual</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#a8a29e', marginTop: '0.5rem', fontFamily: 'monospace' }}>
+                <span>-24 hrs</span>
+                <span style={{ fontWeight: 800, color: hoveredHour ? '#4f46e5' : '#78716c', fontSize: '0.8rem' }}>
+                  {hoveredHour ? `${hoveredHour.label}: ${hoveredHour.count} vista(s)` : ''}
+                </span>
+                <span>Hora actual</span>
+              </div>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-stone-100 dark:border-stone-800 flex justify-between text-xs text-stone-500">
+          <div style={{ paddingTop: '0.75rem', borderTop: '1px solid #f0ede6', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#78716c' }}>
             <span>Total Histórico Acumulado:</span>
-            <strong className="text-stone-900 dark:text-white font-bold">{metrics.viewsTotal} vistas</strong>
+            <strong style={{ color: '#1c1917', fontWeight: 800 }}>{metrics.viewsTotal} vistas</strong>
           </div>
         </div>
 
       </div>
 
-      {/* TABS SELECTOR (YouTube Studio View Filters) */}
-      <div className="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2 overflow-x-auto">
+      {/* TABS SELECTOR */}
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e7e2d9', paddingBottom: '0.5rem', overflowX: 'auto' }}>
         <button
           onClick={() => setActiveRange('realtime')}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-            activeRange === 'realtime'
-              ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-md'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-white'
-          }`}
+          style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 800,
+            borderRadius: '10px',
+            border: 'none',
+            background: activeRange === 'realtime' ? '#1c1917' : '#f5f5f4',
+            color: activeRange === 'realtime' ? '#ffffff' : '#78716c',
+            cursor: 'pointer'
+          }}
         >
           ⏱️ Tiempo Real (60 Min)
         </button>
+
         <button
           onClick={() => setActiveRange('24h')}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-            activeRange === '24h'
-              ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-md'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-white'
-          }`}
+          style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 800,
+            borderRadius: '10px',
+            border: 'none',
+            background: activeRange === '24h' ? '#1c1917' : '#f5f5f4',
+            color: activeRange === '24h' ? '#ffffff' : '#78716c',
+            cursor: 'pointer'
+          }}
         >
           📅 Últimas 24 Horas
         </button>
+
         <button
           onClick={() => setActiveRange('7d')}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-            activeRange === '7d'
-              ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-md'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-white'
-          }`}
+          style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 800,
+            borderRadius: '10px',
+            border: 'none',
+            background: activeRange === '7d' ? '#1c1917' : '#f5f5f4',
+            color: activeRange === '7d' ? '#ffffff' : '#78716c',
+            cursor: 'pointer'
+          }}
         >
           📈 Últimos 7 Días
         </button>
+
         <button
           onClick={() => setActiveRange('all')}
-          className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-            activeRange === 'all'
-              ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-md'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-white'
-          }`}
+          style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 800,
+            borderRadius: '10px',
+            border: 'none',
+            background: activeRange === 'all' ? '#1c1917' : '#f5f5f4',
+            color: activeRange === 'all' ? '#ffffff' : '#78716c',
+            cursor: 'pointer'
+          }}
         >
           🌐 Historial Completo
         </button>
       </div>
 
-      {/* GRID OF YOUTUBE ANALYTICS MODULES */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* GRID OF MODULES */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.75rem' }}>
         
-        {/* MODULE 1: CONTENIDO PRINCIPAL (Top Videos/Pages en estilo YT Studio) */}
-        <div className="lg:col-span-2 bg-white dark:bg-stone-900 p-6 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-stone-900 dark:text-white flex items-center gap-2">
-                <Layers size={18} className="text-orange-500" />
+        {/* MODULE 1: TOP PÁGINAS */}
+        <div className="glass" style={{ padding: '1.75rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Layers size={18} className="text-accent" />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
                 Páginas Más Vistas (Contenido Principal)
               </h3>
-              <p className="text-xs text-stone-400 mt-0.5">Distribución de visitas por sección</p>
             </div>
-            <span className="text-xs font-bold text-stone-400">Vistas & %</span>
+            <p style={{ fontSize: '0.8rem', color: '#78716c', margin: '0.2rem 0 0 0' }}>
+              Distribución de visitas por sección
+            </p>
           </div>
 
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {metrics.topPages.map((page, index) => (
-              <div key={page.path} className="p-3.5 bg-stone-50 dark:bg-stone-950/50 rounded-xl border border-stone-200 dark:border-stone-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 truncate pr-2">
-                    <span className="w-6 h-6 rounded-lg bg-orange-100 dark:bg-orange-950/60 text-orange-600 font-extrabold text-xs flex items-center justify-center">
+              <div 
+                key={page.path}
+                style={{
+                  background: '#faf8f5',
+                  padding: '0.85rem 1rem',
+                  borderRadius: '12px',
+                  border: '1px solid #e7e2d9',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.4rem'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <span style={{ width: '22px', height: '22px', borderRadius: '6px', background: '#ffedd5', color: '#c2410c', fontWeight: 900, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       #{index + 1}
                     </span>
-                    <div className="truncate">
-                      <div className="text-xs font-bold text-stone-900 dark:text-white truncate">
-                        {page.title}
-                      </div>
-                      <div className="text-[11px] font-mono text-stone-400">
-                        {page.path}
-                      </div>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1c1917' }}>{page.title}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#a8a29e', fontFamily: 'monospace' }}>{page.path}</div>
                     </div>
                   </div>
-                  <div className="text-right whitespace-nowrap">
-                    <span className="text-sm font-extrabold text-stone-900 dark:text-white">{page.views}</span>
-                    <span className="text-xs text-stone-400 ml-1.5 font-semibold">({page.percentage}%)</span>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#1c1917' }}>{page.views}</span>
+                    <span style={{ fontSize: '0.75rem', color: '#78716c', marginLeft: '4px' }}>({page.percentage}%)</span>
                   </div>
                 </div>
 
-                <div className="w-full bg-stone-200 dark:bg-stone-800 h-1.5 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-orange-500 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.max(page.percentage, 5)}%` }}
-                  ></div>
+                <div style={{ width: '100%', height: '5px', background: '#e7e5e4', borderRadius: '999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.max(page.percentage, 5)}%`, height: '100%', background: '#ea580c', borderRadius: '999px' }} />
                 </div>
               </div>
             ))}
           </div>
 
-          {/* EMBUDO DE CONVERSIÓN EN VIVO */}
-          <div className="pt-4 border-t border-stone-200 dark:border-stone-800">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3 flex items-center gap-1.5">
-              <TrendingUp size={14} className="text-emerald-500" />
-              Embudo de Conversión de Visitante a Cliente
+          {/* EMBUDO DE CONVERSIÓN */}
+          <div style={{ paddingTop: '1rem', borderTop: '1px solid #f0ede6' }}>
+            <h4 style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#78716c', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <TrendingUp size={14} color="#16a34a" /> Embudo de Conversión en Vivo
             </h4>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <div className="p-3 bg-stone-50 dark:bg-stone-950/60 rounded-xl border border-stone-200 dark:border-stone-800 text-center">
-                <div className="text-[11px] font-bold text-stone-500">1. Visitas Web</div>
-                <div className="text-xl font-black text-stone-900 dark:text-white mt-1">{totalViews}</div>
-                <div className="text-[10px] text-stone-400">100% Tráfico</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.5rem' }}>
+              <div style={{ background: '#faf8f5', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e7e2d9', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7rem', color: '#78716c', fontWeight: 700 }}>1. Visitas</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1c1917' }}>{totalViews}</div>
               </div>
 
-              <div className="p-3 bg-stone-50 dark:bg-stone-950/60 rounded-xl border border-stone-200 dark:border-stone-800 text-center">
-                <div className="text-[11px] font-bold text-stone-500">2. Calculadora</div>
-                <div className="text-xl font-black text-blue-600 mt-1">{calculatorViews}</div>
-                <div className="text-[10px] text-blue-500 font-semibold">{totalViews > 0 ? Math.round((calculatorViews / totalViews) * 100) : 0}% Exploraron</div>
+              <div style={{ background: '#faf8f5', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e7e2d9', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7rem', color: '#2563eb', fontWeight: 700 }}>2. Calculadora</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#2563eb' }}>{calculatorViews}</div>
               </div>
 
-              <div className="p-3 bg-stone-50 dark:bg-stone-950/60 rounded-xl border border-stone-200 dark:border-stone-800 text-center">
-                <div className="text-[11px] font-bold text-stone-500">3. Cotizaciones</div>
-                <div className="text-xl font-black text-orange-600 mt-1">{quotesGenerated}</div>
-                <div className="text-[10px] text-orange-500 font-semibold">{conversionRate}% Tasa Final</div>
+              <div style={{ background: '#faf8f5', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e7e2d9', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7rem', color: '#ea580c', fontWeight: 700 }}>3. Cotizaciones</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ea580c' }}>{quotesGenerated}</div>
+                <div style={{ fontSize: '0.65rem', color: '#c2410c', fontWeight: 700 }}>{conversionRate}% conv.</div>
               </div>
 
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 text-center">
-                <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">4. En Producción</div>
-                <div className="text-xl font-black text-emerald-600 mt-1">{totalOrdersCount}</div>
-                <div className="text-[10px] text-emerald-600 font-bold">Anticipos / PINs</div>
+              <div style={{ background: '#ecfdf5', padding: '0.75rem', borderRadius: '10px', border: '1px solid #a7f3d0', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7rem', color: '#065f46', fontWeight: 700 }}>4. En Proceso</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#16a34a' }}>{totalOrdersCount}</div>
+                <div style={{ fontSize: '0.65rem', color: '#15803d', fontWeight: 700 }}>PIN Activo</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* MODULE 2: CÓMO TE ENCUENTRAN LOS USUARIOS (Fuentes de Tráfico) */}
-        <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm space-y-6">
+        {/* MODULE 2: FUENTES & DISPOSITIVOS */}
+        <div className="glass" style={{ padding: '1.75rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <h3 className="text-base font-bold text-stone-900 dark:text-white flex items-center gap-2">
-              <Compass size={18} className="text-orange-500" />
-              Fuentes de Tráfico (Adquisición)
-            </h3>
-            <p className="text-xs text-stone-400 mt-0.5">Canales por donde llegan los clientes</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Compass size={18} className="text-accent" />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
+                Fuentes de Tráfico (Adquisición)
+              </h3>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: '#78716c', margin: '0.2rem 0 0 0' }}>
+              Canales por donde llegan los clientes
+            </p>
           </div>
 
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {metrics.sources.map((src) => (
-              <div key={src.category} className="space-y-1.5">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: src.color }}></span>
+              <div key={src.category} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#292524' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: src.color }} />
                     {src.category}
                   </span>
-                  <span className="text-stone-500">
+                  <span style={{ color: '#78716c' }}>
                     <strong>{src.count}</strong> ({src.percentage}%)
                   </span>
                 </div>
-                <div className="w-full bg-stone-100 dark:bg-stone-800 h-2 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full rounded-full transition-all duration-500" 
-                    style={{ width: `${src.percentage}%`, backgroundColor: src.color }}
-                  ></div>
+                <div style={{ width: '100%', height: '6px', background: '#f5f5f4', borderRadius: '999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${src.percentage}%`, height: '100%', background: src.color, borderRadius: '999px' }} />
                 </div>
               </div>
             ))}
           </div>
 
           {/* AUDIENCIA & CIUDADES */}
-          <div className="pt-4 border-t border-stone-200 dark:border-stone-800 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
-              <MapPin size={14} className="text-orange-500" />
-              Principales Ciudades de México
+          <div style={{ paddingTop: '1rem', borderTop: '1px solid #f0ede6', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <h4 style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#78716c', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <MapPin size={14} color="#ea580c" /> Principales Ciudades
             </h4>
 
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               {metrics.cities.map((c) => (
-                <div key={c.city} className="flex justify-between text-xs font-semibold text-stone-700 dark:text-stone-300">
+                <div key={c.city} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, color: '#44403c' }}>
                   <span>{c.city}</span>
-                  <span className="text-stone-500">{c.percentage}%</span>
+                  <span style={{ color: '#78716c' }}>{c.percentage}%</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* DISPOSITIVOS */}
-          <div className="pt-4 border-t border-stone-200 dark:border-stone-800 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
-              <Smartphone size={14} className="text-blue-500" />
-              Dispositivos
+          <div style={{ paddingTop: '0.75rem', borderTop: '1px solid #f0ede6', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <h4 style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#78716c', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Smartphone size={14} color="#2563eb" /> Dispositivos
             </h4>
 
-            <div className="grid grid-cols-2 gap-2 text-center">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '0.5rem', textAlign: 'center' }}>
               {metrics.devices.map(d => (
-                <div key={d.device} className="p-2.5 bg-stone-50 dark:bg-stone-950/60 rounded-xl border border-stone-200 dark:border-stone-800">
-                  <div className="text-xs font-bold text-stone-900 dark:text-white">{d.device}</div>
-                  <div className="text-sm font-extrabold text-orange-600 mt-0.5">{d.percentage}%</div>
+                <div key={d.device} style={{ background: '#faf8f5', padding: '0.6rem', borderRadius: '10px', border: '1px solid #e7e2d9' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1c1917' }}>{d.device}</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 900, color: '#ea580c', marginTop: '2px' }}>{d.percentage}%</div>
                 </div>
               ))}
             </div>
@@ -482,50 +568,52 @@ export const AdminTrafficAnalytics: React.FC<Props> = ({ totalOrdersCount }) => 
 
       </div>
 
-      {/* FEED EN TIEMPO REAL (Últimos Eventos Entrantes) */}
-      <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock size={18} className="text-orange-500" />
-            <h3 className="text-base font-bold text-stone-900 dark:text-white">
+      {/* FEED EN TIEMPO REAL */}
+      <div className="glass" style={{ padding: '1.75rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Clock size={18} className="text-accent" />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
               Registro de Visitas en Vivo (Streaming en Tiempo Real)
             </h3>
           </div>
-          <span className="text-xs font-mono text-stone-400">Actualizado vía WebSockets</span>
+          <span style={{ fontSize: '0.75rem', color: '#78716c', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <CheckCircle2 size={13} color="#16a34a" /> Conectado a Supabase WebSockets
+          </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
             <thead>
-              <tr className="border-b border-stone-200 dark:border-stone-800 text-stone-400 uppercase text-[10px] tracking-wider">
-                <th className="pb-3 font-semibold">Hora</th>
-                <th className="pb-3 font-semibold">Página Visitada</th>
-                <th className="pb-3 font-semibold">Canal de Origen</th>
-                <th className="pb-3 font-semibold">Dispositivo & SO</th>
-                <th className="pb-3 font-semibold">Ubicación</th>
+              <tr style={{ borderBottom: '1px solid #e7e2d9', color: '#a8a29e', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.5px' }}>
+                <th style={{ padding: '0.6rem 0.5rem' }}>Hora</th>
+                <th style={{ padding: '0.6rem 0.5rem' }}>Página Visitada</th>
+                <th style={{ padding: '0.6rem 0.5rem' }}>Canal de Origen</th>
+                <th style={{ padding: '0.6rem 0.5rem' }}>Dispositivo</th>
+                <th style={{ padding: '0.6rem 0.5rem' }}>Ubicación</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
+            <tbody>
               {metrics.recentVisits.slice(0, 15).map((v) => (
-                <tr key={v.id} className="hover:bg-stone-50 dark:hover:bg-stone-950/40 transition">
-                  <td className="py-3 text-stone-500 whitespace-nowrap">
+                <tr key={v.id} style={{ borderBottom: '1px solid #f5f5f4' }}>
+                  <td style={{ padding: '0.75rem 0.5rem', color: '#78716c', whiteSpace: 'nowrap' }}>
                     {new Date(v.timestamp).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </td>
-                  <td className="py-3">
-                    <span className="font-semibold text-stone-900 dark:text-white">{v.pageTitle}</span>
-                    <span className="block text-[11px] font-mono text-stone-400">{v.path}</span>
+                  <td style={{ padding: '0.75rem 0.5rem' }}>
+                    <span style={{ fontWeight: 700, color: '#1c1917' }}>{v.pageTitle}</span>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: '#a8a29e', fontFamily: 'monospace' }}>{v.path}</span>
                   </td>
-                  <td className="py-3">
-                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900">
+                  <td style={{ padding: '0.75rem 0.5rem' }}>
+                    <span style={{ padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700, background: '#eff6ff', color: '#1d4ed8' }}>
                       {v.referrerCategory}
                     </span>
                   </td>
-                  <td className="py-3 text-stone-600 dark:text-stone-400 whitespace-nowrap">
-                    {v.device} • {v.os} • {v.browser}
+                  <td style={{ padding: '0.75rem 0.5rem', color: '#57534e', whiteSpace: 'nowrap' }}>
+                    {v.device} • {v.browser}
                   </td>
-                  <td className="py-3 text-stone-500 whitespace-nowrap">
-                    <span className="flex items-center gap-1">
-                      <MapPin size={12} className="text-orange-500" /> {v.city || 'México'}
+                  <td style={{ padding: '0.75rem 0.5rem', color: '#78716c', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <MapPin size={12} color="#ea580c" /> {v.city || 'México'}
                     </span>
                   </td>
                 </tr>
