@@ -139,13 +139,13 @@ const Home = () => {
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <span className="badge" style={{ marginBottom: '1rem' }}>
-              <Sparkles size={15} /> Calidad Profesional
+              <Sparkles size={15} /> Transformación Digital 1:1
             </span>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', marginBottom: '1rem' }}>
-              Restaura la vitalidad de tus videos
+              Del Casete Físico a tu Pantalla Moderna
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '640px', margin: '0 auto' }}>
-              No solo transferimos tus cintas: con nuestro servicio opcional de optimización, estabilizamos la señal analógica, corregimos el balance de color y limpiamos el ruido del audio.
+              Desliza para ver cómo transformamos tus antiguas cintas analógicas en videos digitales en Full HD 1080p con audio limpio y colores vivos, listos para reproducir en tu Smart TV, computadora o celular.
             </p>
           </div>
 
@@ -153,8 +153,8 @@ const Home = () => {
             <BeforeAfterSlider 
               beforeImage="/restoration_before.jpg"
               afterImage="/restoration_after.jpg"
-              beforeLabel="Cinta Original VHS (1994)"
-              afterLabel="Remasterización Digital HD (1080p)"
+              beforeLabel="📼 Casete Físico Original"
+              afterLabel="🖥️ Video en Pantalla (MP4 1080p)"
             />
           </div>
         </div>
