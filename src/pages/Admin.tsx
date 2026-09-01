@@ -15,6 +15,7 @@ import AdminEmailManager from '../components/AdminEmailManager';
 import AdminSecurityCenter from '../components/AdminSecurityCenter';
 import AdminTrafficAnalytics from '../components/AdminTrafficAnalytics';
 import AdminOrderEditModal from '../components/AdminOrderEditModal';
+import AdminBusinessSettings from '../components/AdminBusinessSettings';
 import { sendDepositConfirmationAndPinEmail } from '../lib/emailService';
 import { 
   verifyAdminPassword, 
@@ -42,7 +43,8 @@ import {
   Compass,
   Edit,
   Truck,
-  MapPin
+  MapPin,
+  Building
 } from 'lucide-react';
 
 const Admin: React.FC = () => {
@@ -50,7 +52,7 @@ const Admin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chat' | 'orders' | 'traffic' | 'emails' | 'metrics' | 'security'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'orders' | 'business' | 'traffic' | 'emails' | 'metrics' | 'security'>('chat');
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -395,6 +397,22 @@ const Admin: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('business')}
+          className="btn"
+          style={{
+            background: activeTab === 'business' ? '#ffffff' : 'transparent',
+            color: activeTab === 'business' ? 'var(--accent-color)' : 'var(--text-secondary)',
+            boxShadow: activeTab === 'business' ? 'var(--shadow-sm)' : 'none',
+            padding: '0.65rem 1.4rem',
+            fontSize: '0.95rem',
+            borderRadius: '12px'
+          }}
+        >
+          <Building size={18} />
+          <span>Datos del Negocio 🏢</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('traffic')}
           className="btn"
           style={{
@@ -515,8 +533,8 @@ const Admin: React.FC = () => {
 
                       {order.deliveryAddress && (
                         <div style={{ fontSize: '0.75rem', color: '#78716c', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                          <MapPin size={12} className="text-orange-500" />
-                          <span className="truncate">{order.deliveryAddress}</span>
+                          <MapPin size={12} color="#ea580c" />
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '240px' }}>{order.deliveryAddress}</span>
                         </div>
                       )}
 
@@ -538,10 +556,23 @@ const Admin: React.FC = () => {
                               e.stopPropagation();
                               setEditingOrder(order);
                             }}
-                            className="p-1 text-stone-400 hover:text-orange-600 rounded hover:bg-white"
+                            style={{
+                              background: '#ffffff',
+                              border: '1px solid #e7e2d9',
+                              color: '#ea580c',
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: '8px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                            }}
                             title="Editar Datos"
                           >
-                            <Edit size={14} />
+                            <Edit size={12} /> Editar
                           </button>
                         </div>
                       </div>
@@ -562,15 +593,29 @@ const Admin: React.FC = () => {
               <div className="glass" style={{ padding: '2.25rem', background: '#ffffff', borderRadius: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                       <span className="badge">
                         {selectedOrder.status === 'completada' ? '✓ Orden Finalizada' : 'En Gestión'}
                       </span>
                       <button
                         onClick={() => setEditingOrder(selectedOrder)}
-                        className="px-2.5 py-1 text-xs font-bold bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg flex items-center gap-1 transition shadow-sm"
+                        style={{
+                          padding: '0.45rem 0.95rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 800,
+                          background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+                          color: '#c2410c',
+                          border: '1.5px solid #fed7aa',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          boxShadow: '0 2px 6px rgba(234, 88, 12, 0.15)',
+                          transition: 'all 0.2s ease'
+                        }}
                       >
-                        <Edit size={13} /> Editar Dirección & Datos
+                        <Edit size={14} /> Editar Dirección & Datos
                       </button>
                     </div>
                     <h2 style={{ fontSize: '1.85rem', margin: 0 }}>Orden #{selectedOrder.id}</h2>
@@ -730,19 +775,26 @@ const Admin: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: TRAFFIC & AUDIENCE ANALYTICS */}
+      {/* TAB 3: BUSINESS PROFILE & PRICING SETTINGS */}
+      {activeTab === 'business' && (
+        <div className="animate-on-load">
+          <AdminBusinessSettings />
+        </div>
+      )}
+
+      {/* TAB 4: TRAFFIC & AUDIENCE ANALYTICS */}
       {activeTab === 'traffic' && (
         <div className="animate-on-load">
           <AdminTrafficAnalytics totalOrdersCount={orders.length} />
         </div>
       )}
 
-      {/* TAB 4: INTERNAL EMAIL ENGINE & SMTP SERVER */}
+      {/* TAB 5: INTERNAL EMAIL ENGINE & SMTP SERVER */}
       {activeTab === 'emails' && (
         <AdminEmailManager orders={orders} />
       )}
 
-      {/* TAB 5: METRICS */}
+      {/* TAB 6: METRICS */}
       {activeTab === 'metrics' && (
         <div className="animate-on-load">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
@@ -771,7 +823,7 @@ const Admin: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 6: CYBERSECURITY AUDIT & CONTROLS */}
+      {/* TAB 7: CYBERSECURITY AUDIT & CONTROLS */}
       {activeTab === 'security' && (
         <AdminSecurityCenter />
       )}
