@@ -151,10 +151,10 @@ const Home = () => {
 
           <div style={{ maxWidth: '850px', margin: '0 auto' }}>
             <BeforeAfterSlider 
-              beforeImage="/step1.jpg"
-              afterImage="/tapes_stack.jpg"
-              beforeLabel="Cinta Original (Sin procesar)"
-              afterLabel="Captura Optimizada & Remasterizada"
+              beforeImage="/restoration_before.jpg"
+              afterImage="/restoration_after.jpg"
+              beforeLabel="Cinta Original VHS (1994)"
+              afterLabel="Remasterización Digital HD (1080p)"
             />
           </div>
         </div>
