@@ -91,11 +91,11 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
   {
     id: 'formats_supported',
     category: 'formats',
-    keywords: ['formato', 'formatos', 'vhs-c', 'vhsc', '8mm', 'super 8', 'super8', 'cassette', 'audio', 'rollo', 'tipo de cinta'],
+    keywords: ['formato', 'formatos', 'vhs-c', 'vhsc', '8mm', 'super 8', 'super8', 'tipo de cinta', 'que cintas', 'que formatos'],
     response: () => ({
-      text: `Trabajamos con prácticamente **todos los formatos analógicos familiares**:\n\n• **Video Doméstico:** VHS, VHS-C, Betamax, Video8, Hi8, Digital8, MiniDV y MicroMV.\n• **Cine y Carretes:** Super 8 y 8mm (escaneo cuadro por cuadro).\n• **Audio:** Casetes de audio (Cassette Tape), Microcasetes y Carretes de cinta abierta.\n• **Fotografía:** Fotos impresas, Negativos 35mm y Diapositivas en marco.\n\nTodo el material es tratado con guantes de conservación y equipo profesional calibrado.`,
+      text: `Digitalizamos los siguientes formatos oficiales:\n\n📼 **Cintas de Video:** VHS (estándar normal), Betamax, Video8, Hi8, Digital8 y MiniDV.\n💿 **Discos Ópticos:** DVD y Mini DVD.\n📸 **Fotografías:** Fotos impresas en papel y Álbumes familiares completos (alta resolución a 600 DPI).\n\n⚠️ **Aclaración importante:** Únicamente procesamos **VHS estándar normal** (no realizamos VHS-C ni S-VHS). Tampoco procesamos película de cine de carrete/rollo (8mm / Super 8).`,
       quickReplies: [
-        { label: '🔍 Cotizar mis Formatos', action: 'NAVIGATE_CALCULATOR' },
+        { label: '🔍 Cotizar mis Cintas', action: 'NAVIGATE_CALCULATOR' },
         { label: '🛡️ ¿Qué pasa si tienen moho?', action: 'MOLD_SAFETY' }
       ]
     })

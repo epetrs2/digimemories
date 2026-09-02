@@ -523,14 +523,14 @@ export const AdminBusinessSettings: React.FC = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  📽️ Carrete 8mm / Super 8
+                  📸 Foto Suelta en Papel (600 DPI)
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 800, color: '#ea580c' }}>$</span>
                   <input
                     type="number"
-                    value={settings.priceReel}
-                    onChange={e => handleChange('priceReel', Number(e.target.value))}
+                    value={settings.pricePhotoScan}
+                    onChange={e => handleChange('pricePhotoScan', Number(e.target.value))}
                     className="input-field"
                     style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', fontWeight: 800, borderRadius: '10px' }}
                   />
@@ -540,16 +540,16 @@ export const AdminBusinessSettings: React.FC = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  🎙️ Casete de Audio (KCT)
+                  📚 Álbum Familiar Completo
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 800, color: '#ea580c' }}>$</span>
                   <input
                     type="number"
-                    value={settings.priceAudioCassette}
-                    onChange={e => handleChange('priceAudioCassette', Number(e.target.value))}
+                    value={1200}
+                    disabled
                     className="input-field"
-                    style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', fontWeight: 800, borderRadius: '10px' }}
+                    style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', fontWeight: 800, borderRadius: '10px', background: '#f5f5f4' }}
                   />
                   <span style={{ fontSize: '0.8rem', color: '#78716c' }}>MXN</span>
                 </div>

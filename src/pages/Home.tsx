@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { 
   Disc, 
-  Film, 
   CassetteTape, 
   ArrowRight, 
   HelpCircle, 
@@ -172,39 +171,31 @@ const Home = () => {
             </p>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
             {[
               { 
                 icon: <CassetteTape size={36} />, 
                 title: "Cintas de Video", 
                 price: "$200 MXN", 
                 detail: "Por cinta (hasta 2 hrs)",
-                formats: "VHS • Betamax • Hi8 • Video8 • MiniDV", 
-                desc: "Digitalización a velocidad real con reproductores profesionales y tarjetas de captura dedicadas." 
+                formats: "VHS (Estándar) • Betamax • Video8 • Hi8 • Digital8 • MiniDV", 
+                desc: "Digitalización 1:1 a velocidad real con VCRs profesionales calibradas. *Aclaración: Procesamos VHS estándar normal, no realizamos VHS-C ni S-VHS." 
               },
               { 
                 icon: <Disc size={36} />, 
                 title: "Discos Ópticos", 
                 price: "$150 MXN", 
                 detail: "Por disco",
-                formats: "DVD • MiniDVD • CD-ROM • VCD", 
-                desc: "Extracción directa de video sin recodificación innecesaria, listo para guardar en tu disco duro." 
-              },
-              { 
-                icon: <Film size={36} />, 
-                title: "Película de Cine", 
-                price: "$350 MXN", 
-                detail: "Por rollo base",
-                formats: "8mm • Super 8mm", 
-                desc: "Digitalización cuadro por cuadro para preservar cada fotograma histórico con máxima nitidez." 
+                formats: "DVD • Mini DVD", 
+                desc: "Extracción directa de video sin recodificación innecesaria, entregado en archivos digitales MP4 compatibles con Smart TV y computadoras." 
               },
               { 
                 icon: <Sparkles size={36} />, 
                 title: "Fotografías y Álbumes", 
                 price: "$7 MXN", 
                 detail: "Por foto suelta",
-                formats: "Fotos sueltas • Álbumes completos", 
-                desc: "Escaneo óptico en 600 DPI con corrección de contraste para álbumes familiares antiguos." 
+                formats: "Fotos sueltas en papel • Álbumes familiares", 
+                desc: "Escaneo óptico de alta definición a 600 DPI con corrección de contraste y balance para preservar álbumes completos." 
               }
             ].map((item, i) => (
               <div key={i} className="glass glass-hover" style={{ padding: '2.25rem 2rem', display: 'flex', flexDirection: 'column', height: '100%' }}>

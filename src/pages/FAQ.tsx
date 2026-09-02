@@ -24,8 +24,8 @@ const FAQS = [
     answer: "Es un servicio adicional ($150 MXN por cinta) en el cual aplicamos estabilización de señal, corrección digital de balance de blancos/saturación y filtros de reducción de siseo y ruido estático de audio para que tus videos de los 80s y 90s se vean y escuchen con mayor claridad."
   },
   {
-    question: "¿Qué formatos analógicos y digitales reciben?",
-    answer: "Digitalizamos VHS, S-VHS, VHS-C, Betamax, Video8, Hi8, Digital8 y MiniDV. También extraemos video de discos DVD y MiniDVD, así como escaneo de rollos de 8mm/Super 8mm y fotografías en papel."
+    question: "¿Qué formatos analógicos y digitales digitalizan?",
+    answer: "Digitalizamos cintas VHS estándar (normal), Betamax, Video8, Hi8, Digital8 y MiniDV. También extraemos video de discos DVD y Mini DVD, así como escaneo de fotografías en papel y álbumes familiares completos. (Nota importante: Procesamos únicamente VHS estándar normal; no digitalizamos película de cine en rollo de 8mm/Super 8, ni variantes como VHS-C o S-VHS)."
   }
 ];
 
