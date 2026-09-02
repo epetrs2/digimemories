@@ -1,0 +1,36 @@
+{
+  "name": "DigiMemories Admin — Panel de Control Móvil",
+  "short_name": "DigiAdmin",
+  "description": "Panel de control móvil y respuestas de chat en tiempo real para DigiMemories",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1c1917",
+  "theme_color": "#ea580c",
+  "lang": "es-MX",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "💬 Chats en Vivo",
+      "short_name": "Chats",
+      "description": "Atender chats de clientes en tiempo real",
+      "url": "/admin?tab=chat",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "📦 Gestión de Órdenes",
+      "short_name": "Órdenes",
+      "description": "Ver pedidos, anticipos y PINs de entrega",
+      "url": "/admin?tab=orders",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    }
+  ]
+}

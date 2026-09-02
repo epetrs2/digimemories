@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   getOrders, 
   saveOrder, 
@@ -44,21 +45,43 @@ import {
   Edit,
   Truck,
   MapPin,
-  Building
+  Building,
+  Smartphone,
+  Download,
+  Share2,
+  Zap
 } from 'lucide-react';
 
 const Admin: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isAuthenticated, setIsAuthenticated] = useState(() => validateAdminSession());
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chat' | 'orders' | 'business' | 'traffic' | 'emails' | 'metrics' | 'security'>('chat');
+  
+  // Tab sync with URL query param ?tab=chat
+  const initialTab = (searchParams.get('tab') as any) || 'chat';
+  const [activeTab, setActiveTab] = useState<'chat' | 'orders' | 'business' | 'traffic' | 'emails' | 'metrics' | 'security'>(initialTab);
+  
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
   const [sentEmails, setSentEmails] = useState<EmailNotification[]>([]);
   const [previewEmail, setPreviewEmail] = useState<EmailNotification | null>(null);
+  const [showAppModal, setShowAppModal] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleTabChange = (tab: 'chat' | 'orders' | 'business' | 'traffic' | 'emails' | 'metrics' | 'security') => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   const loadData = () => {
     const fetchedOrders = getOrders();
@@ -300,22 +323,44 @@ const Admin: React.FC = () => {
 
   // LOGGED IN DASHBOARD
   return (
-    <div className="container section animate-on-load" style={{ paddingTop: '2.5rem' }}>
+    <div className="container section animate-on-load" style={{ paddingTop: '2rem', paddingBottom: isMobile ? '85px' : '2.5rem' }}>
       
       {/* Top Bar Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <span className="badge">
               <ShieldCheck size={14} /> Modo Administrador Autenticado
             </span>
           </div>
-          <h1 style={{ fontSize: '2.25rem', marginTop: '0.35rem', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.25rem)', marginTop: '0.35rem', letterSpacing: '-0.02em' }}>
             Panel de Control <span className="text-gradient">DigiMemories</span>
           </h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Mobile App & APK Button */}
+          <button
+            onClick={() => setShowAppModal(true)}
+            style={{
+              padding: '0.6rem 1.1rem',
+              fontSize: '0.85rem',
+              fontWeight: 800,
+              borderRadius: '12px',
+              border: '1.5px solid #fed7aa',
+              background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+              color: '#c2410c',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              boxShadow: '0 2px 8px rgba(234, 88, 12, 0.15)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Smartphone size={16} /> 📲 App Móvil / APK
+          </button>
+
           <button 
             onClick={handleLogout}
             className="btn btn-secondary"
@@ -326,156 +371,158 @@ const Admin: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Tab Switcher */}
-      <div style={{
-        display: 'flex',
-        gap: '0.5rem',
-        background: 'var(--bg-secondary)',
-        padding: '0.4rem',
-        borderRadius: '16px',
-        marginBottom: '2.5rem',
-        width: 'fit-content',
-        border: '1px solid rgba(214, 204, 194, 0.6)',
-        flexWrap: 'wrap'
-      }}>
-        <button
-          onClick={() => setActiveTab('chat')}
-          className="btn"
-          style={{
-            background: activeTab === 'chat' ? '#ffffff' : 'transparent',
-            color: activeTab === 'chat' ? 'var(--accent-color)' : 'var(--text-secondary)',
-            boxShadow: activeTab === 'chat' ? 'var(--shadow-sm)' : 'none',
-            padding: '0.65rem 1.4rem',
-            fontSize: '0.95rem',
-            borderRadius: '12px',
-            position: 'relative'
-          }}
-        >
-          <MessageSquare size={18} />
-          <span>Chat en Vivo</span>
-          {totalAttention > 0 ? (
-            <span style={{
-              background: '#ef4444',
-              color: '#ffffff',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              padding: '0.1rem 0.45rem',
-              borderRadius: '999px',
-              marginLeft: '0.4rem'
-            }}>
-              {totalAttention} ⚠️
-            </span>
-          ) : totalUnreadMessages > 0 ? (
-            <span style={{
-              background: '#ea580c',
-              color: '#ffffff',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              padding: '0.1rem 0.45rem',
-              borderRadius: '999px',
-              marginLeft: '0.4rem'
-            }}>
-              {totalUnreadMessages}
-            </span>
-          ) : null}
-        </button>
+      {/* Main Tab Switcher (Desktop Tabs) */}
+      {!isMobile && (
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          background: 'var(--bg-secondary)',
+          padding: '0.4rem',
+          borderRadius: '16px',
+          marginBottom: '2.25rem',
+          width: 'fit-content',
+          border: '1px solid rgba(214, 204, 194, 0.6)',
+          flexWrap: 'wrap'
+        }}>
+          <button
+            onClick={() => handleTabChange('chat')}
+            className="btn"
+            style={{
+              background: activeTab === 'chat' ? '#ffffff' : 'transparent',
+              color: activeTab === 'chat' ? 'var(--accent-color)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'chat' ? 'var(--shadow-sm)' : 'none',
+              padding: '0.65rem 1.4rem',
+              fontSize: '0.95rem',
+              borderRadius: '12px',
+              position: 'relative'
+            }}
+          >
+            <MessageSquare size={18} />
+            <span>Chat en Vivo</span>
+            {totalAttention > 0 ? (
+              <span style={{
+                background: '#ef4444',
+                color: '#ffffff',
+                fontSize: '0.7rem',
+                fontWeight: 800,
+                padding: '0.1rem 0.45rem',
+                borderRadius: '999px',
+                marginLeft: '0.4rem'
+              }}>
+                {totalAttention} ⚠️
+              </span>
+            ) : totalUnreadMessages > 0 ? (
+              <span style={{
+                background: '#ea580c',
+                color: '#ffffff',
+                fontSize: '0.7rem',
+                fontWeight: 800,
+                padding: '0.1rem 0.45rem',
+                borderRadius: '999px',
+                marginLeft: '0.4rem'
+              }}>
+                {totalUnreadMessages}
+              </span>
+            ) : null}
+          </button>
 
-        <button
-          onClick={() => setActiveTab('orders')}
-          className="btn"
-          style={{
-            background: activeTab === 'orders' ? '#ffffff' : 'transparent',
-            color: activeTab === 'orders' ? 'var(--accent-color)' : 'var(--text-secondary)',
-            boxShadow: activeTab === 'orders' ? 'var(--shadow-sm)' : 'none',
-            padding: '0.65rem 1.4rem',
-            fontSize: '0.95rem',
-            borderRadius: '12px'
-          }}
-        >
-          <Package size={18} />
-          <span>Gestión de Órdenes ({orders.length})</span>
-        </button>
+          <button
+            onClick={() => handleTabChange('orders')}
+            className="btn"
+            style={{
+              background: activeTab === 'orders' ? '#ffffff' : 'transparent',
+              color: activeTab === 'orders' ? 'var(--accent-color)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'orders' ? 'var(--shadow-sm)' : 'none',
+              padding: '0.65rem 1.4rem',
+              fontSize: '0.95rem',
+              borderRadius: '12px'
+            }}
+          >
+            <Package size={18} />
+            <span>Gestión de Órdenes ({orders.length})</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('business')}
-          className="btn"
-          style={{
-            background: activeTab === 'business' ? '#ffffff' : 'transparent',
-            color: activeTab === 'business' ? 'var(--accent-color)' : 'var(--text-secondary)',
-            boxShadow: activeTab === 'business' ? 'var(--shadow-sm)' : 'none',
-            padding: '0.65rem 1.4rem',
-            fontSize: '0.95rem',
-            borderRadius: '12px'
-          }}
-        >
-          <Building size={18} />
-          <span>Datos del Negocio 🏢</span>
-        </button>
+          <button
+            onClick={() => handleTabChange('business')}
+            className="btn"
+            style={{
+              background: activeTab === 'business' ? '#ffffff' : 'transparent',
+              color: activeTab === 'business' ? 'var(--accent-color)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'business' ? 'var(--shadow-sm)' : 'none',
+              padding: '0.65rem 1.4rem',
+              fontSize: '0.95rem',
+              borderRadius: '12px'
+            }}
+          >
+            <Building size={18} />
+            <span>Datos del Negocio 🏢</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('traffic')}
-          className="btn"
-          style={{
-            background: activeTab === 'traffic' ? '#ffffff' : 'transparent',
-            color: activeTab === 'traffic' ? 'var(--accent-color)' : 'var(--text-secondary)',
-            boxShadow: activeTab === 'traffic' ? 'var(--shadow-sm)' : 'none',
-            padding: '0.65rem 1.4rem',
-            fontSize: '0.95rem',
-            borderRadius: '12px'
-          }}
-        >
-          <Compass size={18} />
-          <span>Tráfico & Origen 🌐</span>
-        </button>
+          <button
+            onClick={() => handleTabChange('traffic')}
+            className="btn"
+            style={{
+              background: activeTab === 'traffic' ? '#ffffff' : 'transparent',
+              color: activeTab === 'traffic' ? 'var(--accent-color)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'traffic' ? 'var(--shadow-sm)' : 'none',
+              padding: '0.65rem 1.4rem',
+              fontSize: '0.95rem',
+              borderRadius: '12px'
+            }}
+          >
+            <Compass size={18} />
+            <span>Tráfico & Origen 🌐</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('emails')}
-          className="btn"
-          style={{
-            background: activeTab === 'emails' ? '#ffffff' : 'transparent',
-            color: activeTab === 'emails' ? 'var(--accent-color)' : 'var(--text-secondary)',
-            boxShadow: activeTab === 'emails' ? 'var(--shadow-sm)' : 'none',
-            padding: '0.65rem 1.4rem',
-            fontSize: '0.95rem',
-            borderRadius: '12px'
-          }}
-        >
-          <Mail size={18} />
-          <span>Servidor de Correo & SMTP</span>
-        </button>
+          <button
+            onClick={() => handleTabChange('emails')}
+            className="btn"
+            style={{
+              background: activeTab === 'emails' ? '#ffffff' : 'transparent',
+              color: activeTab === 'emails' ? 'var(--accent-color)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'emails' ? 'var(--shadow-sm)' : 'none',
+              padding: '0.65rem 1.4rem',
+              fontSize: '0.95rem',
+              borderRadius: '12px'
+            }}
+          >
+            <Mail size={18} />
+            <span>Servidor de Correo & SMTP</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('metrics')}
-          className="btn"
-          style={{
-            background: activeTab === 'metrics' ? '#ffffff' : 'transparent',
-            color: activeTab === 'metrics' ? 'var(--accent-color)' : 'var(--text-secondary)',
-            boxShadow: activeTab === 'metrics' ? 'var(--shadow-sm)' : 'none',
-            padding: '0.65rem 1.4rem',
-            fontSize: '0.95rem',
-            borderRadius: '12px'
-          }}
-        >
-          <BarChart3 size={18} />
-          <span>Métricas</span>
-        </button>
+          <button
+            onClick={() => handleTabChange('metrics')}
+            className="btn"
+            style={{
+              background: activeTab === 'metrics' ? '#ffffff' : 'transparent',
+              color: activeTab === 'metrics' ? 'var(--accent-color)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'metrics' ? 'var(--shadow-sm)' : 'none',
+              padding: '0.65rem 1.4rem',
+              fontSize: '0.95rem',
+              borderRadius: '12px'
+            }}
+          >
+            <BarChart3 size={18} />
+            <span>Métricas</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('security')}
-          className="btn"
-          style={{
-            background: activeTab === 'security' ? '#ffffff' : 'transparent',
-            color: activeTab === 'security' ? 'var(--accent-color)' : 'var(--text-secondary)',
-            boxShadow: activeTab === 'security' ? 'var(--shadow-sm)' : 'none',
-            padding: '0.65rem 1.4rem',
-            fontSize: '0.95rem',
-            borderRadius: '12px'
-          }}
-        >
-          <ShieldCheck size={18} />
-          <span>🛡️ Ciberseguridad</span>
-        </button>
-      </div>
+          <button
+            onClick={() => handleTabChange('security')}
+            className="btn"
+            style={{
+              background: activeTab === 'security' ? '#ffffff' : 'transparent',
+              color: activeTab === 'security' ? 'var(--accent-color)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'security' ? 'var(--shadow-sm)' : 'none',
+              padding: '0.65rem 1.4rem',
+              fontSize: '0.95rem',
+              borderRadius: '12px'
+            }}
+          >
+            <ShieldCheck size={18} />
+            <span>🛡️ Ciberseguridad</span>
+          </button>
+        </div>
+      )}
 
       {/* TAB 1: LIVE CHAT MANAGER */}
       {activeTab === 'chat' && (
@@ -828,6 +875,132 @@ const Admin: React.FC = () => {
         <AdminSecurityCenter />
       )}
 
+      {/* Mobile Bottom Navigation Bar (Fixed for Cellphones) */}
+      {isMobile && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '66px',
+          background: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(214, 204, 194, 0.8)',
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          zIndex: 998,
+          padding: '0 0.5rem'
+        }}>
+          <button
+            onClick={() => handleTabChange('chat')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px',
+              color: activeTab === 'chat' ? '#ea580c' : '#78716c',
+              cursor: 'pointer',
+              position: 'relative',
+              flex: 1
+            }}
+          >
+            <MessageSquare size={20} />
+            <span style={{ fontSize: '0.7rem', fontWeight: activeTab === 'chat' ? 800 : 600 }}>Chats</span>
+            {totalAttention > 0 ? (
+              <span style={{ position: 'absolute', top: '-4px', right: '18px', background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 900, width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                !
+              </span>
+            ) : totalUnreadMessages > 0 ? (
+              <span style={{ position: 'absolute', top: '-4px', right: '18px', background: '#ea580c', color: '#fff', fontSize: '0.65rem', fontWeight: 900, width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {totalUnreadMessages}
+              </span>
+            ) : null}
+          </button>
+
+          <button
+            onClick={() => handleTabChange('orders')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px',
+              color: activeTab === 'orders' ? '#ea580c' : '#78716c',
+              cursor: 'pointer',
+              flex: 1
+            }}
+          >
+            <Package size={20} />
+            <span style={{ fontSize: '0.7rem', fontWeight: activeTab === 'orders' ? 800 : 600 }}>Órdenes</span>
+          </button>
+
+          <button
+            onClick={() => handleTabChange('business')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px',
+              color: activeTab === 'business' ? '#ea580c' : '#78716c',
+              cursor: 'pointer',
+              flex: 1
+            }}
+          >
+            <Building size={20} />
+            <span style={{ fontSize: '0.7rem', fontWeight: activeTab === 'business' ? 800 : 600 }}>Negocio</span>
+          </button>
+
+          <button
+            onClick={() => handleTabChange('traffic')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px',
+              color: activeTab === 'traffic' ? '#ea580c' : '#78716c',
+              cursor: 'pointer',
+              flex: 1
+            }}
+          >
+            <Compass size={20} />
+            <span style={{ fontSize: '0.7rem', fontWeight: activeTab === 'traffic' ? 800 : 600 }}>Tráfico</span>
+          </button>
+
+          <button
+            onClick={() => handleTabChange('security')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px',
+              color: activeTab === 'security' ? '#ea580c' : '#78716c',
+              cursor: 'pointer',
+              flex: 1
+            }}
+          >
+            <ShieldCheck size={20} />
+            <span style={{ fontSize: '0.7rem', fontWeight: activeTab === 'security' ? 800 : 600 }}>Seguridad</span>
+          </button>
+        </div>
+      )}
+
       {/* Edit Order Modal */}
       {editingOrder && (
         <AdminOrderEditModal
@@ -839,6 +1012,83 @@ const Admin: React.FC = () => {
             setSelectedOrder(updated);
           }}
         />
+      )}
+
+      {/* App Móvil & APK Guide Modal */}
+      {showAppModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(28, 25, 23, 0.75)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '1rem' }}>
+          <div className="glass animate-on-load" style={{ maxWidth: '560px', width: '100%', maxHeight: '90vh', overflowY: 'auto', background: '#ffffff', padding: '2rem', borderRadius: '24px', position: 'relative', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ea580c' }}>
+                  <Smartphone size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#1c1917' }}>
+                    Acceso Móvil & Instalación en Celular
+                  </h3>
+                  <p style={{ fontSize: '0.75rem', color: '#78716c', margin: 0 }}>
+                    Gestiona chats y órdenes directamente desde tu smartphone
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowAppModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#78716c', padding: '0.4rem' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              
+              {/* Option 1: PWA Instant Install */}
+              <div style={{ background: '#faf8f5', padding: '1.25rem', borderRadius: '16px', border: '1.5px solid #fed7aa' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <Zap size={18} color="#ea580c" />
+                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#c2410c' }}>
+                    Opción 1: Instalación Instantánea (PWA Recomendada)
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#44403c', lineHeight: 1.5, margin: '0 0 0.75rem 0' }}>
+                  No requiere descargar archivos APK pesados ni tiendas de apps. Se instala como aplicación independiente con icono propio:
+                </p>
+                <div style={{ fontSize: '0.8rem', color: '#57534e', display: 'flex', flexDirection: 'column', gap: '0.4rem', background: '#ffffff', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e7e2d9' }}>
+                  <div><strong>📱 En Android (Google Chrome):</strong> Abre <code style={{ color: '#ea580c' }}>https://digimemories.vercel.app/admin</code>, toca los tres puntos <code style={{ fontWeight: 800 }}>⋮</code> y selecciona <strong>"Instalar aplicación"</strong> o <strong>"Añadir a pantalla principal"</strong>.</div>
+                  <div style={{ marginTop: '0.3rem' }}><strong>🍎 En iPhone (Safari):</strong> Abre la página, toca el botón de compartir <Share2 size={13} style={{ display: 'inline' }} /> y selecciona <strong>"Añadir a pantalla de inicio"</strong>.</div>
+                </div>
+              </div>
+
+              {/* Option 2: Standalone Native APK via Capacitor */}
+              <div style={{ background: '#faf8f5', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e7e2d9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <Download size={18} color="#0284c7" />
+                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0369a1' }}>
+                    Opción 2: Compilación de APK Nativo (Android Studio)
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#44403c', lineHeight: 1.5, margin: '0 0 0.75rem 0' }}>
+                  El proyecto ya tiene configurado <strong>Capacitor Android</strong> en la raíz (<code style={{ color: '#0369a1' }}>android/</code>). Para generar el archivo <code style={{ color: '#0369a1' }}>.apk</code> instalable:
+                </p>
+                <pre style={{ background: '#1c1917', color: '#86efac', padding: '0.75rem', borderRadius: '10px', fontSize: '0.75rem', overflowX: 'auto', fontFamily: 'monospace' }}>
+npm run build:apk
+# O abrir en Android Studio:
+npm run cap:open
+                </pre>
+              </div>
+
+              <div style={{ padding: '0.75rem', background: '#ecfdf5', borderRadius: '12px', border: '1px solid #a7f3d0', fontSize: '0.75rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <CheckCircle2 size={16} color="#16a34a" />
+                <span>Incluye notificaciones sonoras en tiempo real al recibir mensajes de clientes.</span>
+              </div>
+
+              <button
+                onClick={() => setShowAppModal(false)}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', fontWeight: 800, borderRadius: '12px' }}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Email Preview Modal */}
