@@ -1039,39 +1039,60 @@ const Admin: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               
-              {/* Option 1: PWA Instant Install */}
+              {/* Direct APK Download Button */}
+              <div style={{ background: '#f0fdf4', padding: '1.25rem', borderRadius: '16px', border: '1.5px solid #86efac' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <Download size={18} color="#16a34a" />
+                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#166534' }}>
+                    📦 Archivo APK Compilado y Listo para Instalar
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#15803d', lineHeight: 1.5, margin: '0 0 0.85rem 0' }}>
+                  Ya compilamos el paquete instalador <strong>.apk</strong> para tu celular Android. Puedes descargarlo e instalarlo con 1 clic:
+                </p>
+
+                <a
+                  href="/DigiMemories-Admin.apk"
+                  download="DigiMemories-Admin.apk"
+                  style={{
+                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                    color: '#ffffff',
+                    padding: '0.85rem 1.25rem',
+                    borderRadius: '12px',
+                    fontWeight: 800,
+                    fontSize: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 14px rgba(22, 163, 74, 0.35)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Download size={18} /> Descargar APK Instalador (11 MB)
+                </a>
+
+                <div style={{ fontSize: '0.75rem', color: '#166534', marginTop: '0.65rem' }}>
+                  💡 <em>Al abrir el archivo en tu celular Android, selecciona "Instalar" (o "Permitir instalación desde este origen" si te lo solicita).</em>
+                </div>
+              </div>
+
+              {/* Option 2: PWA Instant Install */}
               <div style={{ background: '#faf8f5', padding: '1.25rem', borderRadius: '16px', border: '1.5px solid #fed7aa' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <Zap size={18} color="#ea580c" />
                   <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#c2410c' }}>
-                    Opción 1: Instalación Instantánea (PWA Recomendada)
+                    Opción 2: Instalación Web Instantánea (PWA)
                   </span>
                 </div>
                 <p style={{ fontSize: '0.8rem', color: '#44403c', lineHeight: 1.5, margin: '0 0 0.75rem 0' }}>
-                  No requiere descargar archivos APK pesados ni tiendas de apps. Se instala como aplicación independiente con icono propio:
+                  No requiere descargar archivos:
                 </p>
                 <div style={{ fontSize: '0.8rem', color: '#57534e', display: 'flex', flexDirection: 'column', gap: '0.4rem', background: '#ffffff', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e7e2d9' }}>
-                  <div><strong>📱 En Android (Google Chrome):</strong> Abre <code style={{ color: '#ea580c' }}>https://digimemories.vercel.app/admin</code>, toca los tres puntos <code style={{ fontWeight: 800 }}>⋮</code> y selecciona <strong>"Instalar aplicación"</strong> o <strong>"Añadir a pantalla principal"</strong>.</div>
+                  <div><strong>📱 En Android (Google Chrome):</strong> Abre <code style={{ color: '#ea580c' }}>https://digimemories.vercel.app/admin</code>, toca los tres puntos <code style={{ fontWeight: 800 }}>⋮</code> y selecciona <strong>"Instalar aplicación"</strong>.</div>
                   <div style={{ marginTop: '0.3rem' }}><strong>🍎 En iPhone (Safari):</strong> Abre la página, toca el botón de compartir <Share2 size={13} style={{ display: 'inline' }} /> y selecciona <strong>"Añadir a pantalla de inicio"</strong>.</div>
                 </div>
-              </div>
-
-              {/* Option 2: Standalone Native APK via Capacitor */}
-              <div style={{ background: '#faf8f5', padding: '1.25rem', borderRadius: '16px', border: '1px solid #e7e2d9' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <Download size={18} color="#0284c7" />
-                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0369a1' }}>
-                    Opción 2: Compilación de APK Nativo (Android Studio)
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: '#44403c', lineHeight: 1.5, margin: '0 0 0.75rem 0' }}>
-                  El proyecto ya tiene configurado <strong>Capacitor Android</strong> en la raíz (<code style={{ color: '#0369a1' }}>android/</code>). Para generar el archivo <code style={{ color: '#0369a1' }}>.apk</code> instalable:
-                </p>
-                <pre style={{ background: '#1c1917', color: '#86efac', padding: '0.75rem', borderRadius: '10px', fontSize: '0.75rem', overflowX: 'auto', fontFamily: 'monospace' }}>
-npm run build:apk
-# O abrir en Android Studio:
-npm run cap:open
-                </pre>
               </div>
 
               <div style={{ padding: '0.75rem', background: '#ecfdf5', borderRadius: '12px', border: '1px solid #a7f3d0', fontSize: '0.75rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
