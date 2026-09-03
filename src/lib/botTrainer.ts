@@ -143,16 +143,16 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
     })
   },
 
-  // 7. Ubicación, Taller y Horarios
+  // 7. Ubicación, Recepción y Envíos
   {
     id: 'location_workshop',
     category: 'location',
     keywords: ['donde estan', 'ubicacion', 'direccion', 'sucursal', 'taller', 'horario', 'cdmx', 'donde entrego', 'local'],
     response: () => ({
-      text: `📍 **Taller Principal DigiMemories:**\n**Av. Insurgentes Sur #450, Col. Roma Sur, Alcaldía Cuauhtémoc, CDMX (C.P. 06760).**\n\n⏰ **Horario de Atención:**\n• Lunes a Viernes: 10:00 AM a 6:30 PM\n• Sábados: 10:30 AM a 3:00 PM\n\n📱 **WhatsApp Directo:** +52 55 4888 9876\n\n¿Prefieres traerlas al taller o solicitar que un chofer las recoja en tu domicilio?`,
+      text: `🚚 **Logística Sin Contacto DigiMemories:**\nPor seguridad y conveniencia de todos nuestros clientes, operamos como laboratorio privado con **dos modalidades de entrega 100% sin contacto:**\n\n1. 🛵 **Uber Flash / Didi (CDMX):** Pides el chofer desde tu app hacia la dirección de recepción coordinada por WhatsApp.\n2. 📦 **Paquetería Nacional (DHL / FedEx):** Despachas desde tu sucursal más cercana en cualquier estado del país.\n\n📱 **WhatsApp Oficial:** +52 55 4888 9876\n\n¿Te gustaría cotizar tus cintas o recuerdos?`,
       quickReplies: [
-        { label: '🚚 Solicitar Recolección a Domicilio', action: 'HOME_PICKUP_INFO' },
-        { label: '📍 Ver Mapa en Contacto', action: 'NAVIGATE_CONTACT' }
+        { label: '📊 Calcular Cotización', action: 'NAVIGATE_CONTACT' },
+        { label: '💬 Escribir por WhatsApp', action: 'WHATSAPP_CONTACT' }
       ]
     })
   },

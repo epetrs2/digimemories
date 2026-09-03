@@ -279,14 +279,28 @@ export const markOrderAsCompletedAndNotify = (orderId: string): { order: Order; 
             </div>
           </div>
 
-          <h3 style="color: #1c1917; font-size: 15px; margin: 16px 0 8px 0;">📍 Instrucciones de Entrega y Recolección:</h3>
-          <ul style="color: #57534e; font-size: 14px; line-height: 1.6; padding-left: 20px; margin: 0 0 20px 0;">
-            <li>Puedes pasar a recoger tu memoria USB y tus cintas originales en nuestro taller: <strong>Av. Insurgentes Sur #450, Col. Roma Sur, CDMX</strong> (Lunes a Sábado de 10:00 a 18:00 hrs).</li>
-            <li>Si prefieres entrega a domicilio por Uber Flash o mensajería privada, escríbenos por WhatsApp al <strong>55 4888 9876</strong> para coordinar el envío.</li>
-          </ul>
+          <div style="background: #fff7ed; border: 1.5px solid #fdba74; border-radius: 12px; padding: 18px; margin: 20px 0;">
+            <h3 style="color: #9a3412; font-size: 15px; margin: 0 0 8px 0;">🚚 Coordinación de Despacho y Retorno:</h3>
+            <p style="color: #431407; font-size: 14px; line-height: 1.6; margin: 0 0 12px 0;">
+              ${order.deliveryType === 'home_delivery' 
+                ? 'Tus recuerdos originales y tu memoria USB están empacados de forma segura. Escríbenos por WhatsApp para coordinar el horario de recepción o despacho vía <strong>Uber Flash / Didi en CDMX</strong>.' 
+                : 'Tus recuerdos y memoria USB están embalados en su caja reforzada. Escríbenos por WhatsApp para confirmar los datos finales de tu domicilio y emitir tu <strong>guía de Paquetería Nacional (DHL / FedEx)</strong>.'}
+            </p>
+            ${order.qualifiesForFreeReturn ? `
+              <div style="background: #dcfce7; border: 1px solid #86efac; border-radius: 8px; padding: 8px 12px; color: #166534; font-size: 13px; font-weight: bold; margin-bottom: 12px;">
+                🎉 ¡Tu orden superó el monto mínimo y cuenta con Retorno GRATIS a tu domicilio!
+              </div>
+            ` : ''}
+            <div style="text-align: center; margin-top: 10px;">
+              <a href="https://wa.me/525548889876?text=${encodeURIComponent(`¡Hola DigiMemories! Soy ${order.clientName}. Recibí el correo de que mi orden #${order.id} está completada. ¿Me ayudan a coordinar el envío de retorno de mis recuerdos y memoria USB?`)}" 
+                 style="background: #25d366; color: #ffffff; padding: 10px 22px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
+                💬 Coordinar Despacho por WhatsApp →
+              </a>
+            </div>
+          </div>
 
           <div style="text-align: center; margin-top: 24px;">
-            <a href="http://localhost:5173/track" style="background: #ea580c; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 15px; display: inline-block;">
+            <a href="https://digimemories.vercel.app/track" style="background: #ea580c; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 15px; display: inline-block;">
               Consultar Detalles en Portal de Rastreo
             </a>
           </div>

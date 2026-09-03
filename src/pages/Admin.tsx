@@ -996,6 +996,35 @@ const Admin: React.FC = () => {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <a
+                        href={`https://wa.me/${selectedOrder.clientPhone ? (selectedOrder.clientPhone.replace(/\D/g, '').startsWith('52') ? selectedOrder.clientPhone.replace(/\D/g, '') : '52' + selectedOrder.clientPhone.replace(/\D/g, '')) : '525548889876'}?text=${encodeURIComponent(
+                          `¡Hola ${selectedOrder.clientName}! Te escribimos de DigiMemories. Nos alegra informarte que tu orden #${selectedOrder.id} ha finalizado con éxito.\n\n` +
+                          `📼 *Artículos digitalizados:* ${selectedOrder.items.length} unidades en MP4 HD\n` +
+                          `💰 *Total Final:* $${calculateFinalTotal(selectedOrder)} MXN\n` +
+                          `💳 *Saldo Restante a Liquidar:* $${calculateFinalTotal(selectedOrder) - Math.round(calculateFinalTotal(selectedOrder) * 0.5)} MXN\n` +
+                          `🚚 *Modalidad:* ${selectedOrder.deliveryType === 'home_delivery' ? '🛵 Uber Flash (CDMX)' : '📦 Paquetería Nacional (DHL / FedEx)'}\n` +
+                          (selectedOrder.qualifiesForFreeReturn ? `🎉 *Retorno GRATIS incluido a tu domicilio*\n\n` : '\n') +
+                          `¿En qué horario te gustaría coordinar el despacho de tus recuerdos y memoria USB?`
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          borderRadius: '10px',
+                          background: '#25d366',
+                          color: '#ffffff',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)'
+                        }}
+                      >
+                        💬 WhatsApp al Cliente
+                      </a>
+
                       <button 
                         onClick={() => {
                           const email = sentEmails.find(e => e.orderId === selectedOrder.id);

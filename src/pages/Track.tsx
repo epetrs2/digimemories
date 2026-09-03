@@ -184,7 +184,7 @@ const Track: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <span className="badge" style={{ marginBottom: '0.4rem' }}>
-            {isCompleted ? '✓ 100% Completado' : 'En Proceso en Taller'}
+            {isCompleted ? '✓ 100% Completado' : 'En Proceso de Digitalización'}
           </span>
           <h1 style={{ fontSize: '2.35rem', margin: 0, letterSpacing: '-0.02em' }}>
             Orden <span className="text-gradient">#{order.id}</span>
@@ -223,13 +223,23 @@ const Track: React.FC = () => {
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <a 
-              href="https://wa.me/525548889876?text=¡Hola!%20Mi%20orden%20es%20#${order.id}%20y%20ya%20está%20lista.%20¿A%20qué%20hora%20puedo%20pasar%20al%20taller?" 
+              href={`https://wa.me/525548889876?text=${encodeURIComponent(
+                `¡Hola DigiMemories! Soy ${order.clientName}. Veo en el portal que mi orden #${order.id} ya está finalizada con éxito.\n\n` +
+                `📌 *Folio:* #${order.id}\n` +
+                `📼 *Total de artículos:* ${order.items.length} unidades\n` +
+                `💰 *Total Final:* $${finalTotal} MXN\n` +
+                `💳 *Saldo Restante:* $${remainingBalance} MXN\n` +
+                `🚚 *Modalidad:* ${order.deliveryType === 'home_delivery' ? '🛵 Uber Flash (CDMX)' : '📦 Paquetería Nacional (DHL / FedEx)'}\n` +
+                (order.qualifiesForFreeReturn ? `🎉 *¡Califica para Retorno GRATIS a mi domicilio!*\n` : '') +
+                (order.deliveryAddress ? `📍 *Dirección de Entrega:* ${order.deliveryAddress}\n\n` : '\n') +
+                `¿Me ayudan a coordinar el despacho/recepción de mis recuerdos y memoria USB? ¡Muchas gracias!`
+              )}`}
               target="_blank" 
               rel="noreferrer"
               className="btn btn-primary"
-              style={{ fontSize: '0.9rem', padding: '0.65rem 1.3rem' }}
+              style={{ fontSize: '0.9rem', padding: '0.65rem 1.3rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              Coordinar Entrega por WhatsApp
+              💬 Coordinar Entrega por WhatsApp
             </a>
           </div>
         </div>

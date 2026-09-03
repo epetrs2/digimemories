@@ -267,7 +267,7 @@ export const AdminBusinessSettings: React.FC = () => {
                   type="text"
                   value={settings.tallerAddress}
                   onChange={e => handleChange('tallerAddress', e.target.value)}
-                  placeholder="Av. Insurgentes Sur #450, Piso 2, Int. 204"
+                  placeholder="Recepción vía Uber Flash (CDMX) y Paquetería"
                   className="input-field"
                   style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
                 />
@@ -281,7 +281,7 @@ export const AdminBusinessSettings: React.FC = () => {
                   type="text"
                   value={settings.tallerNeighborhood}
                   onChange={e => handleChange('tallerNeighborhood', e.target.value)}
-                  placeholder="Col. Roma Sur, Alcaldía Cuauhtémoc"
+                  placeholder="Laboratorio Privado"
                   className="input-field"
                   style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
                 />

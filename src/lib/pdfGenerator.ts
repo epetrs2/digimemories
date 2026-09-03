@@ -51,7 +51,7 @@ export const generateQuotePDF = (data: QuotePDFData): jsPDF => {
   doc.setFontSize(9);
   doc.setTextColor(...mutedGray);
   doc.text('PRESERVACIÓN DIGITAL Y RESCATE ANALÓGICO', 14, 28);
-  doc.text('Taller: Av. Insurgentes Sur #450, Col. Roma Sur, CDMX | Tel: 55 4888 9876', 14, 33);
+  doc.text('Recepción Segura por Uber Flash (CDMX) y Paquetería Nacional | Tel: 55 4888 9876', 14, 33);
 
   // Quote Folio Badge (Right aligned)
   doc.setFillColor(...warmBg);

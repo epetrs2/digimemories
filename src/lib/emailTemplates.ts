@@ -31,6 +31,8 @@ export interface DepositConfirmedTemplateData {
   depositAmount: number;
   remainingAmount: number;
   itemsCount: number;
+  deliveryType?: 'home_delivery' | 'national_shipping' | 'taller_pickup';
+  qualifiesForFreeReturn?: boolean;
   trackUrl?: string;
   tallerAddress?: string;
   tallerPhone?: string;
@@ -132,6 +134,34 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
               </div>
             </div>
 
+            <!-- Next Step Instructions: Send tapes via WhatsApp -->
+            <div style="background: #fff7ed; border: 1.5px solid #fdba74; border-radius: 14px; padding: 20px; margin: 24px 0; text-align: left;">
+              <div style="font-weight: 800; font-size: 15px; color: #9a3412; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                🚚 Siguiente Paso: Haznos llegar tus recuerdos
+              </div>
+              <p style="font-size: 14px; line-height: 1.6; color: #431407; margin: 0 0 14px 0;">
+                Tu turno en el laboratorio está asegurado. Para enviarnos tus cintas de forma rápida y segura, por favor escríbenos por WhatsApp para proporcionarte la dirección de recepción y coordinar el arribo de tu paquete:
+              </p>
+              
+              <div style="background: #ffffff; border-radius: 10px; padding: 14px; border: 1px solid #fed7aa; margin-bottom: 16px; font-size: 13px; color: #7c2d12; line-height: 1.5;">
+                ${data.deliveryType === 'national_shipping' ? `
+                  <strong>📦 Envío por Paquetería Nacional (DHL / FedEx / Estafeta):</strong><br>
+                  Escríbenos a WhatsApp para darte los datos completos del destinatario en CDMX para documentar tu paquete en la sucursal de tu colonia.
+                ` : `
+                  <strong>🛵 Envío local vía Uber Flash / Didi (CDMX):</strong><br>
+                  Escríbenos a WhatsApp para darte la dirección de recepción y el nombre de quien recibe para que pidas el chofer desde tu app de Uber/Didi en la ventana de horario acordada.
+                `}
+              </div>
+
+              <div style="text-align: center;">
+                <a href="https://wa.me/525548889876?text=${encodeURIComponent(`¡Hola DigiMemories! Soy ${data.clientName}. Ya confirmé mi anticipo de la orden #${data.trackingId}. ¿Me pueden compartir la dirección exacta para coordinar el envío de mis cintas?`)}" 
+                   target="_blank" 
+                   style="display: inline-block; background: #25d366; color: #ffffff; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 10px; text-decoration: none; box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);">
+                  💬 Solicitar Dirección por WhatsApp →
+                </a>
+              </div>
+            </div>
+
             <!-- Financial Summary Box -->
             <div class="card">
               <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #78716c; margin: 0 0 12px 0;">
@@ -143,10 +173,10 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; color: #15803d; font-weight: 700;">
                 <span>Anticipo Abonado (50%):</span>
-                <span>-$${data.depositAmount.toLocaleString('es-MX')} MXN (Pagado)</span>
+                <span>-$${data.depositAmount.toLocaleString('es-MX')} MXN (Confirmado)</span>
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; color: #ea580c; border-top: 1px dashed #d6ccc2; padding-top: 10px; margin-top: 6px;">
-                <span>Saldo al Recoger:</span>
+                <span>Saldo al Finalizar:</span>
                 <span>$${data.remainingAmount.toLocaleString('es-MX')} MXN</span>
               </div>
             </div>
@@ -165,8 +195,8 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
             <div style="font-weight: 700; color: #44403c; margin-bottom: 4px;">
               DigiMemories — Preservación de Memorias Familiares
             </div>
-            <div>${data.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}</div>
-            <div style="margin-top: 4px;">WhatsApp Taller: ${data.tallerPhone || '+52 55 4888 9876'}</div>
+            <div>Recepción y Despacho Seguro por Uber Flash (CDMX) y Paquetería Nacional</div>
+            <div style="margin-top: 4px;">WhatsApp Oficial: ${data.tallerPhone || '+52 55 4888 9876'}</div>
           </div>
 
         </div>
@@ -327,8 +357,8 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
             <div style="font-weight: 700; color: #44403c; margin-bottom: 4px;">
               DigiMemories — Preservación de Memorias Familiares
             </div>
-            <div>${data.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}</div>
-            <div style="margin-top: 4px;">WhatsApp Taller: ${data.tallerPhone || '+52 55 4888 9876'}</div>
+            <div>Recepción y Despacho Seguro por Uber Flash (CDMX) y Paquetería Nacional</div>
+            <div style="margin-top: 4px;">WhatsApp Oficial: ${data.tallerPhone || '+52 55 4888 9876'}</div>
           </div>
 
         </div>

@@ -236,6 +236,8 @@ export async function sendDepositConfirmationAndPinEmail(params: {
     depositAmount,
     remainingAmount,
     itemsCount: params.order.items.length,
+    deliveryType: params.order.deliveryType,
+    qualifiesForFreeReturn: params.order.qualifiesForFreeReturn,
     trackUrl: typeof window !== 'undefined' ? `${window.location.origin}/track` : 'https://digimemories.vercel.app/track'
   });
 

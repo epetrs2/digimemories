@@ -31,8 +31,8 @@ const QUICK_TEMPLATES = [
     text: '¡Hola! Con mucho gusto te atendemos. ¿Cuántas cintas o recuerdos te gustaría digitalizar?'
   },
   {
-    title: '📍 Dirección Taller CDMX',
-    text: 'Nuestro taller se ubica en Av. Insurgentes Sur #450, Col. Roma Sur, Cuauhtémoc, CDMX (frente a Metrobús Chilpancingo). Horario: Lun-Vie 9am-7pm, Sáb 10am-3pm.'
+    title: '🚚 Logística y Recepción',
+    text: 'Operamos con recepción y despacho 100% sin contacto por Uber Flash / Didi (CDMX) y Paquetería Nacional (DHL / FedEx). Al confirmar tu orden, te compartimos la dirección de recepción exacta para tu chofer de Uber o guía de paquetería.'
   },
   {
     title: '💰 Precios y Tarifas',
