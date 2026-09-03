@@ -6,7 +6,9 @@ import {
   calculateFinalTotal, 
   markOrderAsCompletedAndNotify,
   getSentEmails,
-  updateItem
+  updateItem,
+  archiveOrder,
+  deleteOrder
 } from '../lib/store';
 import type { Order, EmailNotification, OrderItem } from '../lib/store';
 import { getChatThreads } from '../lib/chatStore';
@@ -49,7 +51,10 @@ import {
   Smartphone,
   Download,
   Share2,
-  Zap
+  Zap,
+  Archive,
+  ArchiveRestore,
+  Trash2
 } from 'lucide-react';
 
 const Admin: React.FC = () => {
@@ -65,6 +70,7 @@ const Admin: React.FC = () => {
   
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orderFilter, setOrderFilter] = useState<'activas' | 'completadas' | 'archivadas' | 'todas'>('activas');
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
   const [sentEmails, setSentEmails] = useState<EmailNotification[]>([]);
@@ -195,8 +201,35 @@ const Admin: React.FC = () => {
   };
 
   const updateOrderItemField = (orderId: string, itemId: string, field: keyof OrderItem, value: any) => {
-    updateItem(orderId, itemId, { [field]: value });
+    if (field === 'status' && value === 'fallida') {
+      const order = orders.find(o => o.id === orderId);
+      const item = order?.items.find(i => i.id === itemId);
+      updateItem(orderId, itemId, { 
+        status: 'fallida', 
+        failureReason: item?.failureReason || 'Cinta en blanco / sin señal grabada' 
+      });
+    } else {
+      updateItem(orderId, itemId, { [field]: value });
+    }
     loadData();
+  };
+
+  const handleArchiveOrder = (orderId: string, archive: boolean = true) => {
+    archiveOrder(orderId, archive);
+    loadData();
+    if (selectedOrder?.id === orderId) {
+      setSelectedOrder(prev => prev ? { ...prev, isArchived: archive } : null);
+    }
+  };
+
+  const handleDeleteOrder = (orderId: string) => {
+    if (window.confirm(`¿Estás seguro de eliminar permanentemente la orden #${orderId}? Esta acción no se puede deshacer.`)) {
+      deleteOrder(orderId);
+      loadData();
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder(null);
+      }
+    }
   };
 
   const totalUnreadMessages = chatThreads.reduce((acc, t) => acc + (t.unreadByAdmin || 0), 0);
@@ -538,13 +571,89 @@ const Admin: React.FC = () => {
             
             {/* Orders List Column */}
             <div className="glass" style={{ padding: '1.75rem', background: '#ffffff', borderRadius: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h3 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Órdenes Registradas</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{orders.length} totales</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  {orders.filter(order => {
+                    if (orderFilter === 'activas') return !order.isArchived && order.status !== 'completada';
+                    if (orderFilter === 'completadas') return order.status === 'completada' && !order.isArchived;
+                    if (orderFilter === 'archivadas') return !!order.isArchived;
+                    return true;
+                  }).length} de {orders.length}
+                </span>
+              </div>
+
+              {/* Filter Tabs */}
+              <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '1.15rem', flexWrap: 'wrap' }}>
+                <button 
+                  onClick={() => setOrderFilter('activas')}
+                  style={{
+                    padding: '0.4rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: orderFilter === 'activas' ? '#ea580c' : '#f5f5f4',
+                    color: orderFilter === 'activas' ? '#ffffff' : '#78716c',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Activas ({orders.filter(o => !o.isArchived && o.status !== 'completada').length})
+                </button>
+                <button 
+                  onClick={() => setOrderFilter('completadas')}
+                  style={{
+                    padding: '0.4rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: orderFilter === 'completadas' ? '#16a34a' : '#f5f5f4',
+                    color: orderFilter === 'completadas' ? '#ffffff' : '#78716c',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✓ Completadas ({orders.filter(o => o.status === 'completada' && !o.isArchived).length})
+                </button>
+                <button 
+                  onClick={() => setOrderFilter('archivadas')}
+                  style={{
+                    padding: '0.4rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: orderFilter === 'archivadas' ? '#57534e' : '#f5f5f4',
+                    color: orderFilter === 'archivadas' ? '#ffffff' : '#78716c',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📁 Archivadas ({orders.filter(o => o.isArchived).length})
+                </button>
+                <button 
+                  onClick={() => setOrderFilter('todas')}
+                  style={{
+                    padding: '0.4rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: orderFilter === 'todas' ? '#292524' : '#f5f5f4',
+                    color: orderFilter === 'todas' ? '#ffffff' : '#78716c',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Todas ({orders.length})
+                </button>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '620px', overflowY: 'auto' }}>
-                {orders.map(order => {
+                {orders.filter(order => {
+                  if (orderFilter === 'activas') return !order.isArchived && order.status !== 'completada';
+                  if (orderFilter === 'completadas') return order.status === 'completada' && !order.isArchived;
+                  if (orderFilter === 'archivadas') return !!order.isArchived;
+                  return true;
+                }).map(order => {
                   const isSelected = selectedOrder?.id === order.id;
                   const finalTotal = calculateFinalTotal(order);
                   const isCompleted = order.status === 'completada';
@@ -556,19 +665,27 @@ const Admin: React.FC = () => {
                       style={{ 
                         textAlign: 'left', 
                         padding: '1.15rem', 
-                        background: isSelected ? 'var(--accent-light)' : 'var(--bg-secondary)',
+                        background: isSelected ? 'var(--accent-light)' : (order.isArchived ? '#f5f5f4' : 'var(--bg-secondary)'),
                         border: isSelected ? '2px solid var(--accent-color)' : '1px solid rgba(214, 204, 194, 0.6)',
                         borderRadius: '14px',
                         color: 'var(--text-primary)',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
-                        position: 'relative'
+                        position: 'relative',
+                        opacity: order.isArchived && !isSelected ? 0.75 : 1
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                        <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--accent-color)' }}>
-                          #{order.id}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--accent-color)' }}>
+                            #{order.id}
+                          </span>
+                          {order.isArchived && (
+                            <span style={{ fontSize: '0.65rem', background: '#e7e5e4', color: '#57534e', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                              📁 Archivada
+                            </span>
+                          )}
+                        </div>
                         <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>
                           ${finalTotal} MXN
                         </span>
@@ -585,7 +702,7 @@ const Admin: React.FC = () => {
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <span style={{
                           padding: '0.15rem 0.5rem',
                           borderRadius: '999px',
@@ -596,8 +713,9 @@ const Admin: React.FC = () => {
                           {isCompleted ? '✓ Completada' : order.depositPaid ? 'En Proceso' : 'Esperando Anticipo'}
                         </span>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span>PIN: <strong>{order.pin || 'Sin asignar'}</strong></span>
+                          
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -607,7 +725,7 @@ const Admin: React.FC = () => {
                               background: '#ffffff',
                               border: '1px solid #e7e2d9',
                               color: '#ea580c',
-                              padding: '0.35rem 0.65rem',
+                              padding: '0.35rem 0.55rem',
                               borderRadius: '8px',
                               fontSize: '0.75rem',
                               fontWeight: 700,
@@ -621,15 +739,90 @@ const Admin: React.FC = () => {
                           >
                             <Edit size={12} /> Editar
                           </button>
+
+                          {order.isArchived ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleArchiveOrder(order.id, false);
+                              }}
+                              style={{
+                                background: '#ffffff',
+                                border: '1px solid #d6d3d1',
+                                color: '#44403c',
+                                padding: '0.35rem 0.55rem',
+                                borderRadius: '8px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}
+                              title="Desarchivar"
+                            >
+                              <ArchiveRestore size={12} />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleArchiveOrder(order.id, true);
+                              }}
+                              style={{
+                                background: '#ffffff',
+                                border: '1px solid #e7e2d9',
+                                color: '#57534e',
+                                padding: '0.35rem 0.55rem',
+                                borderRadius: '8px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}
+                              title="Archivar orden"
+                            >
+                              <Archive size={12} />
+                            </button>
+                          )}
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteOrder(order.id);
+                            }}
+                            style={{
+                              background: '#ffffff',
+                              border: '1px solid #fecaca',
+                              color: '#dc2626',
+                              padding: '0.35rem 0.55rem',
+                              borderRadius: '8px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                            title="Eliminar orden permanentemente"
+                          >
+                            <Trash2 size={12} />
+                          </button>
                         </div>
                       </div>
                     </div>
                   );
                 })}
 
-                {orders.length === 0 && (
+                {orders.filter(order => {
+                  if (orderFilter === 'activas') return !order.isArchived && order.status !== 'completada';
+                  if (orderFilter === 'completadas') return order.status === 'completada' && !order.isArchived;
+                  if (orderFilter === 'archivadas') return !!order.isArchived;
+                  return true;
+                }).length === 0 && (
                   <div style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No hay órdenes en la base de datos aún.
+                    No hay órdenes en la categoría "{orderFilter}".
                   </div>
                 )}
               </div>
@@ -644,6 +837,13 @@ const Admin: React.FC = () => {
                       <span className="badge">
                         {selectedOrder.status === 'completada' ? '✓ Orden Finalizada' : 'En Gestión'}
                       </span>
+
+                      {selectedOrder.isArchived && (
+                        <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '8px', background: '#e7e5e4', color: '#44403c', fontWeight: 700 }}>
+                          📁 Archivada
+                        </span>
+                      )}
+
                       <button
                         onClick={() => setEditingOrder(selectedOrder)}
                         style={{
@@ -663,6 +863,68 @@ const Admin: React.FC = () => {
                         }}
                       >
                         <Edit size={14} /> Editar Dirección & Datos
+                      </button>
+
+                      {selectedOrder.isArchived ? (
+                        <button
+                          onClick={() => handleArchiveOrder(selectedOrder.id, false)}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            border: '1px solid #d6d3d1',
+                            background: '#ffffff',
+                            color: '#44403c',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem'
+                          }}
+                          title="Sacar de archivo y volver a activar"
+                        >
+                          <ArchiveRestore size={13} /> Desarchivar
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleArchiveOrder(selectedOrder.id, true)}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            border: '1px solid #e7e5e4',
+                            background: '#fafaf9',
+                            color: '#57534e',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem'
+                          }}
+                          title="Archivar para despejar la lista activa"
+                        >
+                          <Archive size={13} /> Archivar
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDeleteOrder(selectedOrder.id)}
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          borderRadius: '10px',
+                          border: '1px solid #fecaca',
+                          background: '#fff1f2',
+                          color: '#e11d48',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
+                        }}
+                        title="Eliminar permanentemente esta orden"
+                      >
+                        <Trash2 size={13} /> Eliminar
                       </button>
                     </div>
                     <h2 style={{ fontSize: '1.85rem', margin: 0 }}>Orden #{selectedOrder.id}</h2>
@@ -712,23 +974,58 @@ const Admin: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <CheckCircle2 size={26} color="#16a34a" />
                       <div>
-                        <div style={{ fontSize: '0.9rem', color: '#166534', fontWeight: 700 }}>Orden Finalizada y Notificada</div>
+                        <div style={{ fontSize: '0.9rem', color: '#166534', fontWeight: 700 }}>
+                          Orden Finalizada {selectedOrder.isArchived ? '• (Archivada)' : ''}
+                        </div>
                         <div style={{ fontSize: '0.8rem', color: '#15803d' }}>
                           Correo de entrega enviado a {selectedOrder.clientEmail}
                         </div>
                       </div>
                     </div>
 
-                    <button 
-                      onClick={() => {
-                        const email = sentEmails.find(e => e.orderId === selectedOrder.id);
-                        if (email) setPreviewEmail(email);
-                      }}
-                      className="btn btn-secondary"
-                      style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem' }}
-                    >
-                      <Eye size={14} /> Ver Correo de Notificación
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button 
+                        onClick={() => {
+                          const email = sentEmails.find(e => e.orderId === selectedOrder.id);
+                          if (email) setPreviewEmail(email);
+                        }}
+                        className="btn btn-secondary"
+                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        <Eye size={14} /> Ver Correo
+                      </button>
+
+                      {selectedOrder.isArchived ? (
+                        <button
+                          onClick={() => handleArchiveOrder(selectedOrder.id, false)}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
+                          title="Sacar de archivo y regresar a activas"
+                        >
+                          <ArchiveRestore size={14} /> Desarchivar
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleArchiveOrder(selectedOrder.id, true)}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            border: '1px solid #fed7aa',
+                            background: '#fff7ed',
+                            color: '#c2410c',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem'
+                          }}
+                          title="Archivar para despejar la lista activa"
+                        >
+                          <Archive size={14} /> Archivar Orden
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : !selectedOrder.depositPaid ? (
                   <div style={{ background: 'var(--accent-light)', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem', border: '1.5px dashed var(--accent-color)' }}>
@@ -804,6 +1101,64 @@ const Admin: React.FC = () => {
                               value={item.extraHours || 0}
                               onChange={e => updateOrderItemField(selectedOrder.id, item.id, 'extraHours', parseInt(e.target.value) || 0)}
                             />
+                          </div>
+                        )}
+
+                        {/* MOTIVOS PREESTABLECIDOS DE FALLA */}
+                        {item.status === 'fallida' && (
+                          <div style={{
+                            gridColumn: '1 / -1',
+                            background: '#fef2f2',
+                            border: '1px solid #fca5a5',
+                            borderRadius: '12px',
+                            padding: '1rem',
+                            marginTop: '0.5rem'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#991b1b', fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.65rem' }}>
+                              <AlertTriangle size={16} color="#dc2626" />
+                              <span>Motivo de Falla / Diagnóstico Técnico:</span>
+                            </div>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+                              <div>
+                                <label style={{ fontSize: '0.75rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700, color: '#7f1d1d' }}>
+                                  Razón Preestablecida *
+                                </label>
+                                <select
+                                  className="input-field"
+                                  style={{ padding: '0.5rem 0.65rem', fontSize: '0.85rem', borderColor: '#f87171', background: '#ffffff', color: '#1c1917' }}
+                                  value={item.failureReason || 'Cinta en blanco / sin señal grabada'}
+                                  onChange={e => updateOrderItemField(selectedOrder.id, item.id, 'failureReason', e.target.value)}
+                                >
+                                  <option value="Cinta en blanco / sin señal grabada">📼 Cinta en blanco / sin señal grabada</option>
+                                  <option value="Cinta rota o desprendida del carrete">✂️ Cinta rota o desprendida del carrete</option>
+                                  <option value="Moho u hongo severo (adhesión química)">🦠 Moho u hongo severo (adhesión química)</option>
+                                  <option value="Desmagnetización severa / pérdida total de señal">🧲 Desmagnetización / señal irrecuperable</option>
+                                  <option value="Mecanismo de cartucho trabado / carcasa rota">⚙️ Mecanismo de cartucho trabado o roto</option>
+                                  <option value="Disco con rayas profundas / errores de lectura I/O">💿 Disco rayado con error de lectura I/O</option>
+                                  <option value="Daño por humedad o calor extremo">🔥 Daño por humedad o calor extremo</option>
+                                  <option value="Otro motivo técnico">🔍 Otro motivo técnico (especificar al lado)</option>
+                                </select>
+                              </div>
+
+                              <div>
+                                <label style={{ fontSize: '0.75rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700, color: '#7f1d1d' }}>
+                                  Detalle para el Cliente (Visible en Portal de Rastreo)
+                                </label>
+                                <input
+                                  type="text"
+                                  className="input-field"
+                                  style={{ padding: '0.5rem 0.65rem', fontSize: '0.85rem', borderColor: '#f87171', background: '#ffffff' }}
+                                  placeholder="Ej: Se probó en 2 videocaseteras. No se cobrará esta cinta."
+                                  value={item.failureNote || ''}
+                                  onChange={e => updateOrderItemField(selectedOrder.id, item.id, 'failureNote', e.target.value)}
+                                />
+                              </div>
+                            </div>
+
+                            <div style={{ fontSize: '0.75rem', color: '#991b1b', marginTop: '0.6rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>💡 <strong>Garantía de Satisfacción:</strong> Este formato no se cobra y el importe fue descontado automáticamente del total final de la orden.</span>
+                            </div>
                           </div>
                         )}
                       </div>

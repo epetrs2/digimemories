@@ -63,7 +63,8 @@ export const AdminChatManager: React.FC = () => {
   const [showMobileChat, setShowMobileChat] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const mainContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevUnreadCountRef = useRef<number>(0);
 
@@ -98,10 +99,12 @@ export const AdminChatManager: React.FC = () => {
     }
     prevUnreadCountRef.current = currentUnread;
 
-    // If desktop and no selection, pick first
-    if (!selectedThreadId && list.length > 0 && !isMobile) {
-      setSelectedThreadId(list[0].id);
-      markThreadAsReadByAdmin(list[0].id);
+    // If desktop and no selection or selectedThread is missing, auto-pick first available
+    const currentStillValid = list.some(t => t.id === selectedThreadId);
+    if ((!selectedThreadId || !currentStillValid) && list.length > 0 && !isMobile) {
+      const firstActive = list.find(t => t.status !== 'archived') || list[0];
+      setSelectedThreadId(firstActive.id);
+      markThreadAsReadByAdmin(firstActive.id);
     }
   };
 
@@ -126,7 +129,13 @@ export const AdminChatManager: React.FC = () => {
   useEffect(() => {
     if (selectedThreadId) {
       markThreadAsReadByAdmin(selectedThreadId);
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      // Safe vertical-only scroll without horizontal grid distortion
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+      if (mainContainerRef.current) {
+        mainContainerRef.current.scrollLeft = 0;
+      }
     }
   }, [selectedThread?.messages.length, selectedThreadId, showMobileChat]);
 
@@ -288,25 +297,38 @@ export const AdminChatManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Chat Hub Container (Responsive: 2-column on Desktop, Split/Slide on Mobile) */}
+      {/* Main Chat Hub Container (Responsive: Flex Row on Desktop, Single View on Mobile) */}
       <div 
+        ref={mainContainerRef}
         className="glass"
         style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '340px 1fr',
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           minHeight: '620px',
           height: isMobile ? 'calc(100vh - 200px)' : '680px',
           borderRadius: '20px',
           overflow: 'hidden',
           background: '#ffffff',
           boxShadow: 'var(--shadow-lg)',
-          border: '1px solid rgba(214, 204, 194, 0.9)'
+          border: '1px solid rgba(214, 204, 194, 0.9)',
+          position: 'relative'
         }}
       >
         
         {/* LEFT COLUMN: Inbox Threads List (Hidden on Mobile when Chat View is Active) */}
         {(!isMobile || !showMobileChat) && (
-          <div style={{ borderRight: isMobile ? 'none' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', background: '#faf8f5', height: '100%' }}>
+          <div style={{
+            width: isMobile ? '100%' : '350px',
+            minWidth: isMobile ? '100%' : '350px',
+            maxWidth: isMobile ? '100%' : '350px',
+            flexShrink: 0,
+            borderRight: isMobile ? 'none' : '1px solid var(--glass-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            background: '#faf8f5',
+            height: '100%',
+            overflow: 'hidden'
+          }}>
             
             {/* Search & Filter Header */}
             <div style={{ padding: '1.15rem', borderBottom: '1px solid var(--glass-border)', background: '#ffffff' }}>
@@ -465,8 +487,17 @@ export const AdminChatManager: React.FC = () => {
 
         {/* RIGHT COLUMN: Active Chat Conversation (Full screen on Mobile when Active) */}
         {(!isMobile || showMobileChat) && (
-          selectedThread ? (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#faf8f5' }}>
+          <div style={{
+            flex: 1,
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            background: '#faf8f5',
+            overflow: 'hidden'
+          }}>
+            {selectedThread ? (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden' }}>
               
               {/* Thread Header */}
               <div style={{
@@ -599,15 +630,17 @@ export const AdminChatManager: React.FC = () => {
               )}
 
               {/* Messages Scroll Area */}
-              <div style={{
-                flex: 1,
-                padding: '1.25rem',
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.85rem',
-                background: '#faf8f5'
-              }}>
+              <div 
+                ref={messagesContainerRef}
+                style={{
+                  flex: 1,
+                  padding: '1.25rem',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.85rem',
+                  background: '#faf8f5'
+                }}>
                 {selectedThread.messages.map(msg => {
                   const isAdmin = msg.sender === 'admin';
                   const isBot = msg.sender === 'bot';
@@ -662,7 +695,6 @@ export const AdminChatManager: React.FC = () => {
                     </div>
                   );
                 })}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Quick Templates Bar (Scrollable Pills for 1-Tap Answers on Mobile) */}
@@ -767,8 +799,9 @@ export const AdminChatManager: React.FC = () => {
               <MessageSquare size={36} color="#d6d3d1" />
               <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>Selecciona una conversación para responder</div>
             </div>
-          )
-        )}
+          )}
+        </div>
+      )}
 
       </div>
     </div>

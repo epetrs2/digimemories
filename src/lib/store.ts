@@ -52,6 +52,10 @@ export interface Order {
   deliveryNotes?: string;
   tallerAddress?: string;
   trackingCourierNumber?: string;
+
+  // Archiving & Organization
+  isArchived?: boolean;
+  archivedAt?: string;
 }
 
 import { 
@@ -143,10 +147,28 @@ export const updateItem = (orderId: string, itemId: string, updates: Partial<Ord
   }
 };
 
+export const archiveOrder = (orderId: string, isArchived: boolean = true) => {
+  const order = getOrderById(orderId);
+  if (order) {
+    order.isArchived = isArchived;
+    order.archivedAt = isArchived ? new Date().toISOString() : undefined;
+    saveOrder(order);
+  }
+};
+
+export const deleteOrder = (orderId: string) => {
+  const orders = getOrders().filter(o => o.id !== orderId);
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+  window.dispatchEvent(new CustomEvent('digimemories_orders_sync'));
+};
+
 export const calculateFinalTotal = (order: Order) => {
   let total = 0;
   
   order.items.forEach(item => {
+    // Si el material falló por daño físico o desmagnetización, no se le cobra al cliente
+    if (item.status === 'fallida') return;
+
     if (item.format === 'Cintas') total += 200;
     if (item.format === 'Discos') total += 150;
     if (item.format === 'Fotos (Sueltas)') total += 7;
