@@ -7,7 +7,10 @@ import {
   Check, 
   RefreshCw,
   Mail,
-  Download
+  Download,
+  MapPin,
+  Truck,
+  Car
 } from 'lucide-react';
 import { generateQuotePDF } from '../lib/pdfGenerator';
 import { saveOrder } from '../lib/store';
@@ -57,6 +60,28 @@ const Contact = () => {
 
   // Form
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', details: '' });
+  const [deliveryMethod, setDeliveryMethod] = useState<'meeting_point' | 'uber_flash' | 'national_shipping'>('meeting_point');
+
+  // Cálculo de dimensiones de caja y peso aproximado para envíos
+  const calculatePackageSpecs = () => {
+    const tapes = quantities['cintas'] || 0;
+    const discs = quantities['discos'] || 0;
+    const photos = quantities['fotos'] || 0;
+    const albums = quantities['album'] || 0;
+
+    const rawWeight = (tapes * 0.25) + (discs * 0.05) + ((photos / 100) * 0.3) + (albums * 1.5);
+    const packagingWeight = rawWeight > 0 ? 0.2 : 0;
+    const totalWeightKg = Math.max(0.5, Math.ceil((rawWeight + packagingWeight) * 10) / 10);
+
+    let boxSize = 'Caja Chica (22 x 15 x 10 cm)';
+    if (tapes > 15 || albums > 2 || totalWeightKg > 4.5) {
+      boxSize = 'Caja Grande reforzada (40 x 30 x 25 cm)';
+    } else if (tapes > 5 || albums > 0 || totalWeightKg > 2.0) {
+      boxSize = 'Caja Mediana (30 x 20 x 15 cm)';
+    }
+
+    return { totalWeightKg, boxSize };
+  };
   
   // Status
   const [isGenerated, setIsGenerated] = useState(false);
@@ -207,7 +232,8 @@ const Contact = () => {
       status: 'pendiente' as any,
       items: orderItems,
       addAudioVideoEnhancement: enhanceAudioVideo,
-      generalNotes: formData.details
+      generalNotes: formData.details,
+      deliveryType: (deliveryMethod === 'meeting_point' ? 'taller_pickup' : deliveryMethod === 'uber_flash' ? 'home_delivery' : 'national_shipping') as 'taller_pickup' | 'home_delivery' | 'national_shipping'
     };
     saveOrder(newOrder);
 
@@ -226,7 +252,7 @@ const Contact = () => {
         items: itemsForPdf,
         enhanceAudioVideo,
         notes: formData.details,
-        tallerAddress: 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX',
+        tallerAddress: 'Puntos de Encuentro Seguros / Recepción por Uber Flash y Paquetería',
         tallerPhone: '55 4888 9876',
         trackUrl: `${window.location.origin}/track`
       },
@@ -238,6 +264,12 @@ const Contact = () => {
 
     // 5. WhatsApp Redirection
     const waNumber = '525548889876';
+    const deliveryMethodLabels: Record<string, string> = {
+      meeting_point: '📍 Punto de Encuentro Seguro en CDMX (Agendar cita por WhatsApp)',
+      uber_flash: '🛵 Envío local vía Uber Flash / Didi (CDMX)',
+      national_shipping: '📦 Envío por Paquetería Nacional (DHL / FedEx / Estafeta)'
+    };
+
     let waText = `¡Hola DigiMemories! Soy ${formData.name}. Acabo de generar una cotización en su sitio web.\n\n` +
       `📌 *Número de Rastreo:* #${newTrackingId}\n` +
       `💰 *Total Estimado:* $${total} MXN\n\n` +
@@ -253,11 +285,13 @@ const Contact = () => {
       if (enhanceAudioVideo) waText += `• Servicio Premium de mejora de color y audio incluido.\n`;
     }
 
+    waText += `\n🚚 *Modalidad de entrega preferida:* ${deliveryMethodLabels[deliveryMethod] || 'Punto de Encuentro'}\n`;
+
     if (formData.details) {
-      waText += `\nNotas adicionales: ${formData.details}\n`;
+      waText += `Notas adicionales: ${formData.details}\n`;
     }
     
-    waText += `\n¿Me indican los horarios del taller para llevar mi material? ¡Gracias!`;
+    waText += `\n¿Me ayudan a coordinar la entrega y recepción de mi material? ¡Muchas gracias!`;
 
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`;
     window.open(waUrl, '_blank');
@@ -554,6 +588,97 @@ const Contact = () => {
               </label>
             </div>
           )}
+
+          {/* Modalidad de Entrega / Logística */}
+          <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '2.5rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.4rem', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Truck size={22} className="text-accent" /> ¿Cómo prefieres entregar tu material?
+              </h3>
+              {totalItemsCount > 0 && (
+                <span style={{ fontSize: '0.78rem', background: '#f5f5f4', color: '#57534e', padding: '4px 12px', borderRadius: '20px', fontWeight: 700, border: '1px solid #e7e5e4' }}>
+                  📦 {calculatePackageSpecs().boxSize} • ~{calculatePackageSpecs().totalWeightKg} kg
+                </span>
+              )}
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+              Sin cobros ocultos ni cargos automáticos. Tú eliges la opción más cómoda y segura para tus recuerdos.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+              {/* Opción 1: Punto de Encuentro Seguro */}
+              <div 
+                onClick={() => setDeliveryMethod('meeting_point')}
+                style={{
+                  padding: '1.15rem',
+                  borderRadius: '16px',
+                  border: deliveryMethod === 'meeting_point' ? '2px solid var(--accent-color)' : '1px solid #e7e2d9',
+                  background: deliveryMethod === 'meeting_point' ? '#fff7ed' : '#ffffff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  textAlign: 'left'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '0.95rem', color: deliveryMethod === 'meeting_point' ? '#c2410c' : 'var(--text-primary)', marginBottom: '0.35rem' }}>
+                  <MapPin size={18} /> Punto de Encuentro (CDMX)
+                </div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
+                  Entrega y recepción personal agendando cita vía WhatsApp en puntos céntricos y vigilados (Parque Delta, Reforma 222, WTC, etc.).
+                </p>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#15803d', marginTop: '0.6rem' }}>
+                  ✓ Sin costo de envío
+                </div>
+              </div>
+
+              {/* Opción 2: Uber Flash / Didi */}
+              <div 
+                onClick={() => setDeliveryMethod('uber_flash')}
+                style={{
+                  padding: '1.15rem',
+                  borderRadius: '16px',
+                  border: deliveryMethod === 'uber_flash' ? '2px solid var(--accent-color)' : '1px solid #e7e2d9',
+                  background: deliveryMethod === 'uber_flash' ? '#fff7ed' : '#ffffff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  textAlign: 'left'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '0.95rem', color: deliveryMethod === 'uber_flash' ? '#c2410c' : 'var(--text-primary)', marginBottom: '0.35rem' }}>
+                  <Car size={18} /> Uber Flash / Didi (CDMX)
+                </div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
+                  Envía tu material el mismo día solicitando un chofer desde tu app de Uber o Didi a la dirección coordinada por WhatsApp.
+                </p>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0369a1', marginTop: '0.6rem' }}>
+                  🛵 Pagas directo en tu app de Uber
+                </div>
+              </div>
+
+              {/* Opción 3: Paquetería Nacional */}
+              <div 
+                onClick={() => setDeliveryMethod('national_shipping')}
+                style={{
+                  padding: '1.15rem',
+                  borderRadius: '16px',
+                  border: deliveryMethod === 'national_shipping' ? '2px solid var(--accent-color)' : '1px solid #e7e2d9',
+                  background: deliveryMethod === 'national_shipping' ? '#fff7ed' : '#ffffff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  textAlign: 'left'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '0.95rem', color: deliveryMethod === 'national_shipping' ? '#c2410c' : 'var(--text-primary)', marginBottom: '0.35rem' }}>
+                  <Truck size={18} /> Paquetería (Toda la República)
+                </div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
+                  Si estás en CDMX o cualquier estado, empacas tu material y lo despachas por DHL, FedEx o Estafeta pagando tu guía en ventanilla.
+                </p>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b45309', marginTop: '0.6rem' }}>
+                  📦 Pago directo en sucursal
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Contact Details Form */}
           <div id="contact-form" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '2.5rem' }}>

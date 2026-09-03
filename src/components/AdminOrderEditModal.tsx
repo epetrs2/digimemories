@@ -15,7 +15,8 @@ import {
   Trash2, 
   CheckCircle,
   Hash,
-  DollarSign
+  DollarSign,
+  Car
 } from 'lucide-react';
 
 interface Props {
@@ -270,10 +271,10 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', color: formData.deliveryType === 'taller_pickup' ? '#ea580c' : '#1c1917' }}>
-                  <Building size={16} /> Recoger en Taller
+                  <MapPin size={16} /> Punto de Encuentro (CDMX)
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '4px' }}>
-                  El cliente acude a la sucursal física
+                  Cita agendada vía WhatsApp en punto seguro
                 </div>
               </button>
 
@@ -291,10 +292,10 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', color: formData.deliveryType === 'home_delivery' ? '#ea580c' : '#1c1917' }}>
-                  <MapPin size={16} /> Entrega Local CDMX
+                  <Car size={16} /> Uber Flash / Didi (CDMX)
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '4px' }}>
-                  Chofer o mensajero a domicilio
+                  Chofer pagado por cliente en su app
                 </div>
               </button>
 
@@ -312,10 +313,10 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', color: formData.deliveryType === 'national_shipping' ? '#ea580c' : '#1c1917' }}>
-                  <Truck size={16} /> Envío Nacional
+                  <Truck size={16} /> Paquetería (DHL / FedEx / Estafeta)
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '4px' }}>
-                  Guía con DHL / Estafeta
+                  Nacional o CDMX pagado en sucursal
                 </div>
               </button>
             </div>

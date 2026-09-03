@@ -951,7 +951,7 @@ const Admin: React.FC = () => {
                       <Truck size={14} /> Logística y Entrega
                     </div>
                     <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#ffedd5', color: '#9a3412' }}>
-                      {selectedOrder.deliveryType === 'home_delivery' ? '🛵 Entrega CDMX' : (selectedOrder.deliveryType === 'national_shipping' ? '📦 Envío Nacional' : '🏢 Recoger en Taller')}
+                      {selectedOrder.deliveryType === 'home_delivery' ? '🛵 Uber Flash / Didi (CDMX)' : (selectedOrder.deliveryType === 'national_shipping' ? '📦 Paquetería (DHL / FedEx)' : '📍 Punto de Encuentro (CDMX)')}
                     </span>
                   </div>
 

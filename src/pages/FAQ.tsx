@@ -12,6 +12,10 @@ const FAQS = [
     answer: "Por políticas estrictas de privacidad y debido al alto peso de los videos sin comprimir, la entrega se realiza de forma física. Puedes entregarnos una memoria USB (mínimo 50GB recomendados) o un Disco Duro externo al traer tus cintas, o bien adquirir uno directamente con nosotros a precio de costo."
   },
   {
+    question: "¿Cómo hago llegar mis casetes y recuerdos a DigiMemories?",
+    answer: "Manejamos 3 modalidades muy cómodas: 1) Punto de Encuentro Seguro (CDMX): Agendamos una cita vía WhatsApp en una plaza o punto céntrico con vigilancia (Parque Delta, Reforma 222, WTC, etc.) para entrega y recepción personal sin costo de envío. 2) Uber Flash / Didi (CDMX): Envías tus casetes el mismo día solicitando un chofer desde tu app de Uber o Didi a la dirección coordinada por WhatsApp (el viaje lo pagas tú directamente en tu app). 3) Paquetería Nacional (DHL, FedEx, Estafeta): Si estás en CDMX o en cualquier estado de la República, empacas tu material y lo despachas desde tu sucursal más cercana pagando tu guía en ventanilla."
+  },
+  {
     question: "¿Qué sucede si mi cinta dura más de 2 horas?",
     answer: "Nuestra tarifa base de $200 MXN cubre las primeras 2 horas completas de digitalización (tiempo estándar de la mayoría de cintas domésticas). Si la cinta dura más de 2 horas, cada hora adicional se cobra a solo $50 MXN. Podrás ver el desglose exacto de horas en tu portal de rastreo."
   },
