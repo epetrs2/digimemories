@@ -52,6 +52,10 @@ export interface Order {
   deliveryNotes?: string;
   tallerAddress?: string;
   trackingCourierNumber?: string;
+  qualifiesForFreeReturn?: boolean;
+
+  // Payments
+  preferredPaymentMethod?: 'mercadopago' | 'spei';
 
   // Archiving & Organization
   isArchived?: boolean;

@@ -948,22 +948,34 @@ const Admin: React.FC = () => {
                 <div style={{ background: '#faf8f5', border: '1px solid #e7e2d9', borderRadius: '14px', padding: '1.25rem', marginBottom: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: '#c2410c', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Truck size={14} /> Logística y Entrega
+                      <Truck size={14} /> Logística y Pagos
                     </div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#ffedd5', color: '#9a3412' }}>
-                      {selectedOrder.deliveryType === 'home_delivery' ? '🛵 Uber Flash / Didi (CDMX)' : (selectedOrder.deliveryType === 'national_shipping' ? '📦 Paquetería (DHL / FedEx)' : '📍 Punto de Encuentro (CDMX)')}
-                    </span>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#ffedd5', color: '#9a3412' }}>
+                        {selectedOrder.deliveryType === 'home_delivery' ? '🛵 Uber Flash (CDMX)' : '📦 Paquetería (DHL / FedEx)'}
+                      </span>
+                      {selectedOrder.preferredPaymentMethod && (
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: selectedOrder.preferredPaymentMethod === 'mercadopago' ? '#e0f2fe' : '#fef3c7', color: selectedOrder.preferredPaymentMethod === 'mercadopago' ? '#0369a1' : '#92400e' }}>
+                          {selectedOrder.preferredPaymentMethod === 'mercadopago' ? '💙 Mercado Pago' : '🏦 SPEI BBVA'}
+                        </span>
+                      )}
+                      {selectedOrder.qualifiesForFreeReturn && (
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#dcfce7', color: '#15803d' }}>
+                          🎁 Retorno GRATIS
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div style={{ fontSize: '0.85rem', color: '#44403c', marginBottom: '4px' }}>
-                    <strong>Dirección del Cliente:</strong> {selectedOrder.deliveryAddress || 'No especificada (Recolección en sucursal)'}
+                    <strong>Dirección del Cliente:</strong> {selectedOrder.deliveryAddress || 'Coordinar por WhatsApp'}
                   </div>
                   <div style={{ fontSize: '0.85rem', color: '#44403c' }}>
-                    <strong>Taller Asignado:</strong> {selectedOrder.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}
+                    <strong>Dirección de Recepción:</strong> {selectedOrder.tallerAddress || 'Recepción por Uber Flash (CDMX) y Paquetería Nacional'}
                   </div>
                   {selectedOrder.trackingCourierNumber && (
                     <div style={{ fontSize: '0.85rem', color: '#0369a1', marginTop: '4px' }}>
-                      <strong>Guía de Paquetería:</strong> {selectedOrder.trackingCourierNumber}
+                      <strong>Guía de Paquetería / Rastreo:</strong> {selectedOrder.trackingCourierNumber}
                     </div>
                   )}
                 </div>

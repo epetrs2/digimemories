@@ -37,11 +37,13 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
     estimatedTotal: order.estimatedTotal || 0,
     generalNotes: order.generalNotes || '',
     addAudioVideoEnhancement: order.addAudioVideoEnhancement || false,
-    deliveryType: order.deliveryType || 'taller_pickup',
+    deliveryType: order.deliveryType || 'home_delivery',
     deliveryAddress: order.deliveryAddress || '',
     deliveryNotes: order.deliveryNotes || '',
-    tallerAddress: order.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, Cuauhtémoc, CDMX',
-    trackingCourierNumber: order.trackingCourierNumber || ''
+    tallerAddress: order.tallerAddress || 'Recepción y Despacho vía Uber Flash (CDMX) y Paquetería Nacional (DHL / FedEx / Estafeta)',
+    trackingCourierNumber: order.trackingCourierNumber || '',
+    preferredPaymentMethod: order.preferredPaymentMethod || 'mercadopago',
+    qualifiesForFreeReturn: order.qualifiesForFreeReturn ?? ((order.deliveryType === 'home_delivery' ? (order.estimatedTotal || 0) >= 1500 : (order.estimatedTotal || 0) >= 2000))
   });
 
   const [items, setItems] = useState<OrderItem[]>(order.items ? JSON.parse(JSON.stringify(order.items)) : []);
@@ -259,28 +261,11 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
               <button
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, deliveryType: 'taller_pickup' }))}
-                style={{
-                  padding: '0.9rem',
-                  textAlign: 'left',
-                  borderRadius: '12px',
-                  border: formData.deliveryType === 'taller_pickup' ? '2px solid #ea580c' : '1px solid #d6d3d1',
-                  background: formData.deliveryType === 'taller_pickup' ? '#fff7ed' : '#ffffff',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', color: formData.deliveryType === 'taller_pickup' ? '#ea580c' : '#1c1917' }}>
-                  <MapPin size={16} /> Punto de Encuentro (CDMX)
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '4px' }}>
-                  Cita agendada vía WhatsApp en punto seguro
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, deliveryType: 'home_delivery' }))}
+                onClick={() => setFormData(prev => ({ 
+                  ...prev, 
+                  deliveryType: 'home_delivery',
+                  qualifiesForFreeReturn: prev.estimatedTotal >= 1500
+                }))}
                 style={{
                   padding: '0.9rem',
                   textAlign: 'left',
@@ -292,16 +277,20 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', color: formData.deliveryType === 'home_delivery' ? '#ea580c' : '#1c1917' }}>
-                  <Car size={16} /> Uber Flash / Didi (CDMX)
+                  <Car size={16} /> 1. Uber Flash / Didi (CDMX)
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '4px' }}>
-                  Chofer pagado por cliente en su app
+                  Viaje pagado por cliente en su app • Retorno gratis &gt; $1,500 MXN
                 </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, deliveryType: 'national_shipping' }))}
+                onClick={() => setFormData(prev => ({ 
+                  ...prev, 
+                  deliveryType: 'national_shipping',
+                  qualifiesForFreeReturn: prev.estimatedTotal >= 2000
+                }))}
                 style={{
                   padding: '0.9rem',
                   textAlign: 'left',
@@ -313,12 +302,76 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', color: formData.deliveryType === 'national_shipping' ? '#ea580c' : '#1c1917' }}>
-                  <Truck size={16} /> Paquetería (DHL / FedEx / Estafeta)
+                  <Truck size={16} /> 2. Paquetería (DHL / FedEx)
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '4px' }}>
-                  Nacional o CDMX pagado en sucursal
+                  En sucursal toda la República • Retorno gratis &gt; $2,000 MXN
                 </div>
               </button>
+            </div>
+
+            {/* Free Return & Payment Method Settings */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', background: '#ffffff', padding: '1rem', borderRadius: '12px', border: '1px solid #e7e2d9' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  🎁 Beneficio de Retorno Gratis a Domicilio
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', color: formData.qualifiesForFreeReturn ? '#15803d' : '#78716c', fontWeight: 600 }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.qualifiesForFreeReturn}
+                    onChange={e => setFormData(prev => ({ ...prev, qualifiesForFreeReturn: e.target.checked }))}
+                    style={{ width: '18px', height: '18px', accentColor: '#16a34a' }}
+                  />
+                  <span>
+                    {formData.qualifiesForFreeReturn 
+                      ? '✓ Califica para Retorno GRATIS absorbido por DigiMemories' 
+                      : '✗ Retorno cubierto por el cliente (No alcanza umbral)'}
+                  </span>
+                </label>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  💳 Método de Pago Preferido para Anticipo
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, preferredPaymentMethod: 'mercadopago' }))}
+                    style={{
+                      flex: 1,
+                      padding: '0.45rem',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      borderRadius: '8px',
+                      border: formData.preferredPaymentMethod === 'mercadopago' ? '2px solid #009ee3' : '1px solid #d6d3d1',
+                      background: formData.preferredPaymentMethod === 'mercadopago' ? '#f0f9ff' : '#ffffff',
+                      color: formData.preferredPaymentMethod === 'mercadopago' ? '#0284c7' : '#57534e',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    💙 Mercado Pago
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, preferredPaymentMethod: 'spei' }))}
+                    style={{
+                      flex: 1,
+                      padding: '0.45rem',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      borderRadius: '8px',
+                      border: formData.preferredPaymentMethod === 'spei' ? '2px solid #ea580c' : '1px solid #d6d3d1',
+                      background: formData.preferredPaymentMethod === 'spei' ? '#fff7ed' : '#ffffff',
+                      color: formData.preferredPaymentMethod === 'spei' ? '#c2410c' : '#57534e',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🏦 Transferencia SPEI
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Addresses Input Grid */}

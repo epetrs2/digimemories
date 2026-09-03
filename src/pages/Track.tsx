@@ -314,11 +314,20 @@ const Track: React.FC = () => {
           </div>
 
           <div style={{ marginTop: '1.75rem', padding: '1.25rem', background: 'var(--accent-light)', borderRadius: '14px', border: '1px solid rgba(234, 88, 12, 0.2)' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-color)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Truck size={16} /> Logística y Entrega:
+            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-color)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Truck size={16} /> Modalidad: {order.deliveryType === 'home_delivery' ? '🛵 Uber Flash (CDMX)' : '📦 Paquetería Nacional (DHL / FedEx)'}
+              </div>
+              {order.qualifiesForFreeReturn && (
+                <span style={{ fontSize: '0.75rem', background: '#dcfce7', color: '#166534', border: '1px solid #86efac', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
+                  🎉 Retorno GRATIS Incluido
+                </span>
+              )}
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-              Coordinación y despacho por <strong>Uber Flash (CDMX)</strong> o <strong>Paquetería Nacional (DHL / FedEx / Estafeta)</strong>. El seguimiento se te envía por WhatsApp y correo.
+              {order.qualifiesForFreeReturn 
+                ? '¡Tu orden califica para Retorno GRATIS! DigiMemories absorbe el flete de entrega de tus cintas y memoria USB a tu domicilio.' 
+                : 'Coordinación y despacho por Uber Flash (CDMX) o Paquetería Nacional (DHL / FedEx / Estafeta). El número de guía o seguimiento se te comparte vía WhatsApp.'}
             </p>
           </div>
         </div>

@@ -9,7 +9,8 @@ import {
   Mail,
   Download,
   Truck,
-  Car
+  Car,
+  CreditCard
 } from 'lucide-react';
 import { generateQuotePDF } from '../lib/pdfGenerator';
 import { saveOrder } from '../lib/store';
@@ -60,6 +61,7 @@ const Contact = () => {
   // Form
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', details: '' });
   const [deliveryMethod, setDeliveryMethod] = useState<'uber_flash' | 'national_shipping'>('uber_flash');
+  const [preferredPaymentMethod, setPreferredPaymentMethod] = useState<'mercadopago' | 'spei'>('mercadopago');
 
   // Cálculo de dimensiones de caja y peso aproximado para envíos
   const calculatePackageSpecs = () => {
@@ -203,6 +205,8 @@ const Contact = () => {
       }
     });
 
+    const qualifiesForFreeReturn = deliveryMethod === 'uber_flash' ? total >= 1500 : total >= 2000;
+
     // 2. Generate and Download Redesigned Luxury PDF
     const pdfDoc = generateQuotePDF({
       trackingId: newTrackingId,
@@ -210,6 +214,9 @@ const Contact = () => {
       clientEmail: formData.email,
       clientPhone: formData.phone,
       notes: formData.details,
+      deliveryMethod,
+      preferredPaymentMethod,
+      qualifiesForFreeReturn,
       items: itemsForPdf,
       extraHours,
       enhanceAudioVideo,
@@ -232,7 +239,9 @@ const Contact = () => {
       items: orderItems,
       addAudioVideoEnhancement: enhanceAudioVideo,
       generalNotes: formData.details,
-      deliveryType: (deliveryMethod === 'uber_flash' ? 'home_delivery' : 'national_shipping') as 'home_delivery' | 'national_shipping'
+      deliveryType: (deliveryMethod === 'uber_flash' ? 'home_delivery' : 'national_shipping') as 'home_delivery' | 'national_shipping',
+      preferredPaymentMethod,
+      qualifiesForFreeReturn
     };
     saveOrder(newOrder);
 
@@ -251,6 +260,9 @@ const Contact = () => {
         items: itemsForPdf,
         enhanceAudioVideo,
         notes: formData.details,
+        deliveryMethod,
+        preferredPaymentMethod,
+        qualifiesForFreeReturn,
         tallerAddress: 'Recepción por Uber Flash (CDMX) y Paquetería Nacional (DHL / FedEx / Estafeta)',
         tallerPhone: '55 4888 9876',
         trackUrl: `${window.location.origin}/track`
@@ -267,10 +279,15 @@ const Contact = () => {
       uber_flash: '🛵 Envío local vía Uber Flash / Didi (CDMX)',
       national_shipping: '📦 Envío por Paquetería Nacional (DHL / FedEx / Estafeta)'
     };
+    const paymentMethodLabels: Record<string, string> = {
+      mercadopago: '💙 Mercado Pago (Tarjeta en línea / OXXO)',
+      spei: '🏦 Transferencia Bancaria Directa (SPEI BBVA)'
+    };
 
     let waText = `¡Hola DigiMemories! Soy ${formData.name}. Acabo de generar una cotización en su sitio web.\n\n` +
       `📌 *Número de Rastreo:* #${newTrackingId}\n` +
-      `💰 *Total Estimado:* $${total} MXN\n\n` +
+      `💰 *Total Estimado:* $${total} MXN\n` +
+      `💳 *Anticipo del 50%:* $${depositAmount} MXN\n\n` +
       `*Detalle de formatos:*\n`;
     
     FORMATS.forEach(f => {
@@ -283,7 +300,9 @@ const Contact = () => {
       if (enhanceAudioVideo) waText += `• Servicio Premium de mejora de color y audio incluido.\n`;
     }
 
-    waText += `\n🚚 *Modalidad de entrega preferida:* ${deliveryMethodLabels[deliveryMethod] || 'Punto de Encuentro'}\n`;
+    waText += `\n🚚 *Modalidad de entrega:* ${deliveryMethodLabels[deliveryMethod]}\n` +
+      `💳 *Método de pago del anticipo:* ${paymentMethodLabels[preferredPaymentMethod]}\n` +
+      (qualifiesForFreeReturn ? `🎉 *¡Califica para Retorno GRATIS a domicilio!*\n` : '');
 
     if (formData.details) {
       waText += `Notas adicionales: ${formData.details}\n`;
@@ -733,12 +752,106 @@ const Contact = () => {
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
                   Si estás en CDMX o en cualquier estado de la República, empacas tu material con la caja sugerida y lo despachas por DHL, FedEx o Estafeta.
                 </p>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b45309', marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span>📦 <strong>Pagas tu guía directo en la sucursal</strong> al entregar tu paquete</span>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b45309', marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>📦 <strong>Pagas tu guía directo en la sucursal</strong> al entregar tu paquete</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Free Return Threshold Callout */}
+              {deliveryMethod === 'uber_flash' ? (
+                total >= 1500 ? (
+                  <div style={{ marginTop: '1rem', padding: '0.85rem 1.15rem', background: '#dcfce7', border: '1.5px solid #86efac', borderRadius: '12px', color: '#166534', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🎉 ¡Felicidades! Tu cotización (${total} MXN) califica para <strong>Retorno GRATIS a tu domicilio vía Uber Flash en CDMX</strong> (Mínimo $1,500 MXN).</span>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: '1rem', padding: '0.85rem 1.15rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#64748b', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>💡 <strong>Beneficio VIP CDMX:</strong> Si tu orden alcanza <strong>$1,500 MXN</strong>, DigiMemories cubre y te regala el viaje de regreso de tus cintas y USB (Te faltan ${1500 - total} MXN).</span>
+                  </div>
+                )
+              ) : (
+                total >= 2000 ? (
+                  <div style={{ marginTop: '1rem', padding: '0.85rem 1.15rem', background: '#dcfce7', border: '1.5px solid #86efac', borderRadius: '12px', color: '#166534', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🎉 ¡Felicidades! Tu cotización (${total} MXN) califica para <strong>Retorno GRATIS por DHL / FedEx a cualquier estado de la República</strong> (Mínimo $2,000 MXN).</span>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: '1rem', padding: '0.85rem 1.15rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#64748b', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>💡 <strong>Beneficio Envío Nacional:</strong> Si tu orden alcanza <strong>$2,000 MXN</strong>, DigiMemories absorbe la guía de retorno por DHL a tu domicilio (Te faltan ${2000 - total} MXN).</span>
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* Selector de Método de Pago del Anticipo (50%) */}
+            <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '2.25rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.35rem', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <CreditCard size={22} className="text-accent" /> ¿Cómo prefieres pagar tu anticipo del 50%?
+                </h3>
+                <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--accent-color)', background: 'var(--accent-light)', padding: '3px 12px', borderRadius: '20px' }}>
+                  Anticipo: ${Math.round(total * 0.5)} MXN
+                </span>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+                Este método quedará registrado en tu presupuesto en PDF y en tu confirmación por correo.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div
+                  onClick={() => setPreferredPaymentMethod('mercadopago')}
+                  style={{
+                    padding: '1.15rem',
+                    borderRadius: '16px',
+                    border: preferredPaymentMethod === 'mercadopago' ? '2px solid #009ee3' : '1px solid #e2e8f0',
+                    background: preferredPaymentMethod === 'mercadopago' ? '#f0f9ff' : '#ffffff',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.95rem', color: preferredPaymentMethod === 'mercadopago' ? '#0284c7' : 'var(--text-primary)' }}>
+                      💙 Mercado Pago (En Línea)
+                    </span>
+                    {preferredPaymentMethod === 'mercadopago' && (
+                      <span style={{ fontSize: '0.72rem', background: '#0284c7', color: '#ffffff', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                        Seleccionado
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
+                    Paga con Tarjeta de Débito, Crédito (meses), Saldo Mercado Pago o en efectivo en tiendas OXXO.
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => setPreferredPaymentMethod('spei')}
+                  style={{
+                    padding: '1.15rem',
+                    borderRadius: '16px',
+                    border: preferredPaymentMethod === 'spei' ? '2px solid var(--accent-color)' : '1px solid #e2e8f0',
+                    background: preferredPaymentMethod === 'spei' ? '#fff7ed' : '#ffffff',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.95rem', color: preferredPaymentMethod === 'spei' ? '#c2410c' : 'var(--text-primary)' }}>
+                      🏦 Transferencia SPEI (BBVA)
+                    </span>
+                    {preferredPaymentMethod === 'spei' && (
+                      <span style={{ fontSize: '0.72rem', background: '#ea580c', color: '#ffffff', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                        Seleccionado
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
+                    0% comisiones. Transferencia directa desde tu aplicación móvil de cualquier banco a cuenta BBVA.
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
 
           {/* Contact Details Form */}
           <div id="contact-form" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '2.5rem' }}>

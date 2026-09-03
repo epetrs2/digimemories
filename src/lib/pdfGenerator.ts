@@ -16,6 +16,9 @@ export interface QuotePDFData {
   }[];
   extraHours?: number;
   enhanceAudioVideo?: boolean;
+  deliveryMethod?: 'uber_flash' | 'national_shipping';
+  preferredPaymentMethod?: 'mercadopago' | 'spei';
+  qualifiesForFreeReturn?: boolean;
   total: number;
 }
 
@@ -178,9 +181,9 @@ export const generateQuotePDF = (data: QuotePDFData): jsPDF => {
   const remainingAmount = data.total - depositAmount;
 
   doc.setFillColor(...warmBg);
-  doc.roundedRect(14, finalTableY + 8, 90, 36, 3, 3, 'F');
+  doc.roundedRect(14, finalTableY + 8, 90, 42, 3, 3, 'F');
   doc.setDrawColor(220, 215, 205);
-  doc.roundedRect(14, finalTableY + 8, 90, 36, 3, 3, 'D');
+  doc.roundedRect(14, finalTableY + 8, 90, 42, 3, 3, 'D');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
@@ -188,16 +191,17 @@ export const generateQuotePDF = (data: QuotePDFData): jsPDF => {
   doc.text('CONDICIONES DE PAGO:', 18, finalTableY + 15);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(...darkStone);
-  doc.text(`• Anticipo de inicio (50%): $${depositAmount.toLocaleString('es-MX')} MXN`, 18, finalTableY + 22);
-  doc.text(`• Saldo contra-entrega (50%): $${remainingAmount.toLocaleString('es-MX')} MXN`, 18, finalTableY + 28);
-  doc.text('• Banco: BBVA | CLABE: 012180001234567890', 18, finalTableY + 34);
-  doc.text('• Efectivo o Transferencia en taller', 18, finalTableY + 40);
+  doc.text(`• Anticipo de inicio (50%): $${depositAmount.toLocaleString('es-MX')} MXN`, 18, finalTableY + 21);
+  doc.text(`• Saldo contra-entrega (50%): $${remainingAmount.toLocaleString('es-MX')} MXN`, 18, finalTableY + 27);
+  doc.text(`• Método elegido: ${data.preferredPaymentMethod === 'mercadopago' ? 'Mercado Pago (Tarjeta/OXXO)' : 'Transferencia SPEI (BBVA)'}`, 18, finalTableY + 33);
+  doc.text(`• BBVA CLABE: 012180015492837190 | Ref: #${data.trackingId}`, 18, finalTableY + 39);
+  doc.text('• Beneficiario: DigiMemories México', 18, finalTableY + 45);
 
   // Delivery & Tracking Notice (Right)
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(108, finalTableY + 8, 88, 36, 3, 3, 'FD');
+  doc.roundedRect(108, finalTableY + 8, 88, 42, 3, 3, 'FD');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
@@ -205,25 +209,34 @@ export const generateQuotePDF = (data: QuotePDFData): jsPDF => {
   doc.text('ENTREGA Y RASTREO:', 112, finalTableY + 15);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(...darkStone);
-  doc.text('• Entrega en Memoria USB (mínimo 50GB)', 112, finalTableY + 22);
-  doc.text('• Devolución de cintas originales intactas', 112, finalTableY + 28);
-  doc.text(`• Rastrear orden en: digimemories.mx/track`, 112, finalTableY + 34);
-  doc.text(`• Tu PIN se generará al registrar tu anticipo`, 112, finalTableY + 40);
+  doc.text(`• Modalidad: ${data.deliveryMethod === 'uber_flash' ? 'Uber Flash / Didi (CDMX)' : 'Paquetería Nacional (DHL/FedEx)'}`, 112, finalTableY + 21);
+  if (data.qualifiesForFreeReturn) {
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(21, 128, 61); // Green
+    doc.text('• ¡Califica para Retorno GRATIS a tu domicilio!', 112, finalTableY + 27);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...darkStone);
+  } else {
+    doc.text(`• Retorno gratis en pedidos de $${data.deliveryMethod === 'uber_flash' ? '1,500' : '2,000'}+ MXN`, 112, finalTableY + 27);
+  }
+  doc.text('• Entrega en Memoria USB y devolución de cintas', 112, finalTableY + 33);
+  doc.text('• Rastrear orden con PIN en: digimemories.mx/track', 112, finalTableY + 39);
+  doc.text('• Despacho seguro coordinado vía WhatsApp', 112, finalTableY + 45);
 
   // 6. Legal Terms & Guarantees
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...mutedGray);
-  doc.text('TÉRMINOS Y GARANTÍA DE PRESERVACIÓN:', 14, finalTableY + 52);
+  doc.text('TÉRMINOS Y GARANTÍA DE PRESERVACIÓN:', 14, finalTableY + 56);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
-  doc.text('1. Cotización válida por 15 días a partir de la fecha de emisión.', 14, finalTableY + 57);
-  doc.text('2. El costo final se ajusta de acuerdo a la duración real comprobada de cada cinta durante la digitalización.', 14, finalTableY + 62);
-  doc.text('3. Si una cinta no puede reproducirse por daño físico extremo o moho severo, se te notificará y NO se cobrará esa unidad.', 14, finalTableY + 67);
-  doc.text('4. Estricta confidencialidad: tus videos se procesan de forma local y se eliminan temporalmente tras tu confirmación de entrega.', 14, finalTableY + 72);
+  doc.text('1. Cotización válida por 15 días a partir de la fecha de emisión.', 14, finalTableY + 61);
+  doc.text('2. El costo final se ajusta de acuerdo a la duración real comprobada de cada cinta durante la digitalización.', 14, finalTableY + 66);
+  doc.text('3. Si una cinta no puede reproducirse por daño físico extremo o moho severo, se te notificará y NO se cobrará esa unidad.', 14, finalTableY + 71);
+  doc.text('4. Estricta confidencialidad: tus videos se procesan de forma local y se eliminan temporalmente tras tu confirmación de entrega.', 14, finalTableY + 76);
 
   // 7. Footer Stamp / Verification
   doc.setFillColor(...primaryColor);

@@ -14,6 +14,9 @@ export interface QuoteTemplateData {
   }[];
   enhanceAudioVideo?: boolean;
   notes?: string;
+  deliveryMethod?: 'uber_flash' | 'national_shipping';
+  preferredPaymentMethod?: 'mercadopago' | 'spei';
+  qualifiesForFreeReturn?: boolean;
   tallerAddress?: string;
   tallerPhone?: string;
   trackUrl?: string;
@@ -259,9 +262,54 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
                 <span>Anticipo para Iniciar (50%):</span>
                 <span>$${data.depositAmount.toLocaleString('es-MX')} MXN</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 14px; color: #15803d; border-top: 1px dashed #d6ccc2; padding-top: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 14px; color: #15803d; border-top: 1px dashed #d6ccc2; padding-top: 8px; margin-bottom: 14px;">
                 <span>Saldo Restante contra-entrega:</span>
                 <span>$${data.remainingAmount.toLocaleString('es-MX')} MXN</span>
+              </div>
+
+              <!-- Logistics & Shipping Selection -->
+              <div style="background: #ffffff; border: 1px solid #e7e2d9; border-radius: 10px; padding: 12px; margin-bottom: 12px; font-size: 13px;">
+                <div style="font-weight: 700; color: #292524; margin-bottom: 4px;">
+                  🚚 Modalidad de Envío Seleccionada:
+                </div>
+                <div style="color: #44403c;">
+                  ${data.deliveryMethod === 'uber_flash' 
+                    ? '🛵 <strong>Uber Flash / Didi (CDMX):</strong> Solicita tu chofer a nuestra dirección coordinada por WhatsApp.' 
+                    : '📦 <strong>Paquetería Nacional:</strong> Despacha por DHL, FedEx o Estafeta desde tu sucursal más cercana.'}
+                </div>
+                <div style="font-size: 12px; margin-top: 6px; color: ${data.qualifiesForFreeReturn ? '#15803d' : '#78716c'}; font-weight: ${data.qualifiesForFreeReturn ? '700' : 'normal'};">
+                  ${data.qualifiesForFreeReturn 
+                    ? '🎉 ¡Tu pedido califica para Retorno GRATIS a tu domicilio!' 
+                    : `💡 Retorno gratis aplica en pedidos mayores a $${data.deliveryMethod === 'uber_flash' ? '1,500' : '2,000'} MXN.`}
+                </div>
+              </div>
+
+              <!-- Payment Method Selection -->
+              <div style="background: #ffffff; border: 1px solid #e7e2d9; border-radius: 10px; padding: 12px; font-size: 13px;">
+                <div style="font-weight: 700; color: #292524; margin-bottom: 4px;">
+                  💳 Método de Pago del Anticipo (50%):
+                </div>
+                ${data.preferredPaymentMethod === 'mercadopago' ? `
+                  <div style="color: #0369a1; font-weight: 600; margin-bottom: 4px;">
+                    💙 Mercado Pago (En Línea con Tarjeta de Débito/Crédito o en OXXO)
+                  </div>
+                  <div style="font-size: 12px; color: #57534e; margin-bottom: 8px;">
+                    Puedes abonar tu anticipo de $${data.depositAmount.toLocaleString('es-MX')} MXN de forma 100% segura con el enlace:
+                  </div>
+                  <a href="https://link.mercadopago.com.mx/digimemories?amount=${data.depositAmount}&description=Anticipo+Orden+${data.trackingId}" target="_blank" style="display: inline-block; background: #009ee3; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 12px; text-decoration: none;">
+                    Pagar $${data.depositAmount.toLocaleString('es-MX')} con Mercado Pago →
+                  </a>
+                ` : `
+                  <div style="color: #1e293b; font-weight: 600; margin-bottom: 4px;">
+                    🏦 Transferencia Bancaria Directa (SPEI)
+                  </div>
+                  <div style="font-size: 12px; color: #475569; line-height: 1.5; background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
+                    <strong>Banco:</strong> BBVA México<br>
+                    <strong>CLABE:</strong> 012180015492837190<br>
+                    <strong>Beneficiario:</strong> DigiMemories México<br>
+                    <strong>Concepto:</strong> #${data.trackingId}
+                  </div>
+                `}
               </div>
             </div>
 
