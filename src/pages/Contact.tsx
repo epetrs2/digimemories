@@ -7,15 +7,11 @@ import {
   Check, 
   RefreshCw,
   Mail,
-  Download,
-  Eye,
-  X,
-  ExternalLink
+  Download
 } from 'lucide-react';
 import { generateQuotePDF } from '../lib/pdfGenerator';
 import { saveOrder } from '../lib/store';
 import { sendQuoteEmailWithPdf } from '../lib/emailService';
-import type { EmailNotification } from '../lib/store';
 
 const FORMATS = [
   { 
@@ -68,8 +64,6 @@ const Contact = () => {
   const [emailStatusText, setEmailStatusText] = useState('');
   const [trackingId, setTrackingId] = useState('');
   const [copied, setCopied] = useState(false);
-  const [sentEmailData, setSentEmailData] = useState<EmailNotification | null>(null);
-  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const updateQuantity = (id: string, amount: number) => {
     const newQty = Math.max(0, amount);
@@ -133,18 +127,6 @@ const Contact = () => {
     });
 
     pdfDoc.save(`Cotizacion_DigiMemories_#${trackingId}.pdf`);
-  };
-
-  const handleOpenMailto = () => {
-    const subject = encodeURIComponent(`Presupuesto DigiMemories #${trackingId}`);
-    const body = encodeURIComponent(
-      `Hola ${formData.name},\n\n` +
-      `Tu cotización oficial con DigiMemories ha sido generada con el Folio #${trackingId}.\n` +
-      `Total Estimado: $${total} MXN.\n\n` +
-      `Puedes consultar el avance en: http://localhost:5173/track\n` +
-      `Taller: Av. Insurgentes Sur #450, Col. Roma Sur, CDMX.\nTel: 55 4888 9876`
-    );
-    window.open(`mailto:${formData.email}?subject=${subject}&body=${body}`, '_blank');
   };
 
   const generatePDFAndSend = async () => {
@@ -251,7 +233,6 @@ const Contact = () => {
       pdfDoc
     });
 
-    setSentEmailData(emailResult.emailRecord);
     setIsSendingEmail(false);
     setEmailStatusText(emailResult.message || 'Despachado a tu correo');
 
@@ -311,14 +292,14 @@ const Contact = () => {
           {/* Tracking ID Box */}
           <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '16px', marginBottom: '2rem', border: '1px solid rgba(214, 204, 194, 0.8)' }}>
             <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-              Tu Número de Rastreo Oficial:
+              Tu Número de Rastreo:
             </span>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
               <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--accent-color)', letterSpacing: '3px' }}>
                 #{trackingId}
               </div>
               <button 
-                onClick={handleCopyId}
+                onClick={handleCopyId} 
                 className="btn btn-secondary"
                 style={{ padding: '0.5rem 0.85rem', fontSize: '0.85rem' }}
                 title="Copiar ID"
@@ -333,33 +314,14 @@ const Contact = () => {
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: '0.85rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
             <button 
               onClick={handleDownloadPDF} 
               className="btn btn-primary"
               style={{ fontSize: '0.95rem' }}
             >
-              <Download size={16} /> Descargar PDF Oficial
+              <Download size={16} /> Descargar PDF
             </button>
-
-            <button 
-              onClick={handleOpenMailto} 
-              className="btn btn-secondary"
-              style={{ fontSize: '0.95rem' }}
-              title="Abrir en tu app de correo electrónico"
-            >
-              <ExternalLink size={16} /> Abrir en mi Correo
-            </button>
-
-            {sentEmailData && (
-              <button 
-                onClick={() => setShowEmailModal(true)} 
-                className="btn btn-secondary"
-                style={{ fontSize: '0.95rem' }}
-              >
-                <Eye size={16} /> Ver Vista Previa del Mail
-              </button>
-            )}
 
             <button 
               onClick={() => {
@@ -382,31 +344,6 @@ const Contact = () => {
             </a>
           </div>
         </div>
-
-        {/* Email Preview Modal */}
-        {showEmailModal && sentEmailData && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-            <div className="glass animate-on-load" style={{ maxWidth: '650px', width: '100%', maxHeight: '85vh', overflowY: 'auto', background: '#ffffff', padding: '2rem', borderRadius: '20px', position: 'relative' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  <Mail size={18} className="text-accent" />
-                  <span>Notificación por Correo Electrónico</span>
-                </div>
-                <button onClick={() => setShowEmailModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: '8px' }}>
-                <div><strong>Para:</strong> {sentEmailData.toName} &lt;{sentEmailData.toEmail}&gt;</div>
-                <div><strong>Asunto:</strong> {sentEmailData.subject}</div>
-                <div><strong>Fecha:</strong> {new Date(sentEmailData.sentAt).toLocaleString('es-MX')}</div>
-              </div>
-
-              <div dangerouslySetInnerHTML={{ __html: sentEmailData.bodyHtml }} />
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -621,10 +558,10 @@ const Contact = () => {
           {/* Contact Details Form */}
           <div id="contact-form" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '2.5rem' }}>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
-              ¿A dónde enviamos tu presupuesto oficial por correo?
+              ¿A dónde enviamos tu presupuesto por correo?
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem' }}>
-              Te enviaremos el documento oficial en PDF con validez de 15 días y tu folio de seguimiento.
+              Te enviaremos el documento en PDF con validez de 15 días y tu folio de seguimiento.
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
