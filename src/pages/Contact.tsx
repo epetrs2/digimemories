@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Mail,
   Download,
-  MapPin,
   Truck,
   Car
 } from 'lucide-react';
@@ -60,7 +59,7 @@ const Contact = () => {
 
   // Form
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', details: '' });
-  const [deliveryMethod, setDeliveryMethod] = useState<'meeting_point' | 'uber_flash' | 'national_shipping'>('meeting_point');
+  const [deliveryMethod, setDeliveryMethod] = useState<'uber_flash' | 'national_shipping'>('uber_flash');
 
   // Cálculo de dimensiones de caja y peso aproximado para envíos
   const calculatePackageSpecs = () => {
@@ -233,7 +232,7 @@ const Contact = () => {
       items: orderItems,
       addAudioVideoEnhancement: enhanceAudioVideo,
       generalNotes: formData.details,
-      deliveryType: (deliveryMethod === 'meeting_point' ? 'taller_pickup' : deliveryMethod === 'uber_flash' ? 'home_delivery' : 'national_shipping') as 'taller_pickup' | 'home_delivery' | 'national_shipping'
+      deliveryType: (deliveryMethod === 'uber_flash' ? 'home_delivery' : 'national_shipping') as 'home_delivery' | 'national_shipping'
     };
     saveOrder(newOrder);
 
@@ -252,7 +251,7 @@ const Contact = () => {
         items: itemsForPdf,
         enhanceAudioVideo,
         notes: formData.details,
-        tallerAddress: 'Puntos de Encuentro Seguros / Recepción por Uber Flash y Paquetería',
+        tallerAddress: 'Recepción por Uber Flash (CDMX) y Paquetería Nacional (DHL / FedEx / Estafeta)',
         tallerPhone: '55 4888 9876',
         trackUrl: `${window.location.origin}/track`
       },
@@ -265,7 +264,6 @@ const Contact = () => {
     // 5. WhatsApp Redirection
     const waNumber = '525548889876';
     const deliveryMethodLabels: Record<string, string> = {
-      meeting_point: '📍 Punto de Encuentro Seguro en CDMX (Agendar cita por WhatsApp)',
       uber_flash: '🛵 Envío local vía Uber Flash / Didi (CDMX)',
       national_shipping: '📦 Envío por Paquetería Nacional (DHL / FedEx / Estafeta)'
     };
@@ -345,6 +343,92 @@ const Contact = () => {
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.5rem', margin: 0 }}>
               Podrás consultar el estado de cada cinta en tiempo real desde la pestaña <strong>Rastrear</strong>.
             </p>
+          </div>
+
+          {/* Anticipo del 50% y Métodos de Pago */}
+          <div style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '18px', padding: '1.5rem', marginBottom: '2rem', textAlign: 'left' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1e293b' }}>
+                💳 Pago de Anticipo del 50% para Activar tu Orden
+              </div>
+              <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0369a1', background: '#e0f2fe', padding: '3px 12px', borderRadius: '20px' }}>
+                ${Math.round(total * 0.5)} MXN
+              </span>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+              Para asegurar tu turno en el laboratorio y recibir tu PIN de seguimiento en vivo, puedes liquidar tu anticipo mediante cualquiera de las siguientes opciones seguras:
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+              {/* Método 1: Mercado Pago */}
+              <div style={{ background: '#ffffff', border: '1.5px solid #38bdf8', borderRadius: '14px', padding: '1.15rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.95rem', color: '#0284c7', marginBottom: '0.35rem' }}>
+                    <span>💙 Mercado Pago (En Línea)</span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#475569', lineHeight: 1.45 }}>
+                    Paga con Tarjeta de Débito, Crédito, Dinero en Mercado Pago o en efectivo en cualquier OXXO.
+                  </div>
+                </div>
+
+                <a 
+                  href={`https://link.mercadopago.com.mx/digimemories?amount=${Math.round(total * 0.5)}&description=Anticipo+Orden+${trackingId}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    background: '#009ee3',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    padding: '0.65rem 1rem',
+                    borderRadius: '10px',
+                    textDecoration: 'none',
+                    marginTop: '1rem',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 6px rgba(0, 158, 227, 0.25)'
+                  }}
+                >
+                  Pagar ${Math.round(total * 0.5)} con Mercado Pago →
+                </a>
+              </div>
+
+              {/* Método 2: Transferencia SPEI */}
+              <div style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '14px', padding: '1.15rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.95rem', color: '#334155', marginBottom: '0.35rem' }}>
+                  <span>🏦 Transferencia Bancaria (SPEI)</span>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#475569', lineHeight: 1.45 }}>
+                  Sin comisiones intermediarias. Transferencia directa desde tu banca móvil.
+                </div>
+
+                <div style={{ background: '#f1f5f9', borderRadius: '8px', padding: '0.65rem', marginTop: '0.75rem', fontSize: '0.78rem' }}>
+                  <div><strong>Banco:</strong> BBVA México</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
+                    <span><strong>CLABE:</strong> 012180015492837190</span>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        navigator.clipboard.writeText('012180015492837190');
+                        alert('CLABE copiada al portapapeles: 012180015492837190');
+                      }}
+                      style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 6px', fontSize: '0.7rem', cursor: 'pointer' }}
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                  <div style={{ marginTop: '2px' }}><strong>Beneficiario:</strong> DigiMemories México</div>
+                  <div style={{ marginTop: '2px' }}><strong>Concepto:</strong> #{trackingId}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.85rem' }}>
+              💬 Una vez realizado tu pago, envíanos tu comprobante por WhatsApp para validar y activar tu PIN de rastreo.
+            </div>
           </div>
 
           {/* Actions */}
@@ -605,36 +689,12 @@ const Contact = () => {
               Sin cobros ocultos ni cargos automáticos. Tú eliges la opción más cómoda y segura para tus recuerdos.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-              {/* Opción 1: Punto de Encuentro Seguro */}
-              <div 
-                onClick={() => setDeliveryMethod('meeting_point')}
-                style={{
-                  padding: '1.15rem',
-                  borderRadius: '16px',
-                  border: deliveryMethod === 'meeting_point' ? '2px solid var(--accent-color)' : '1px solid #e7e2d9',
-                  background: deliveryMethod === 'meeting_point' ? '#fff7ed' : '#ffffff',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '0.95rem', color: deliveryMethod === 'meeting_point' ? '#c2410c' : 'var(--text-primary)', marginBottom: '0.35rem' }}>
-                  <MapPin size={18} /> Punto de Encuentro (CDMX)
-                </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
-                  Entrega y recepción personal agendando cita vía WhatsApp en puntos céntricos y vigilados (Parque Delta, Reforma 222, WTC, etc.).
-                </p>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#15803d', marginTop: '0.6rem' }}>
-                  ✓ Sin costo de envío
-                </div>
-              </div>
-
-              {/* Opción 2: Uber Flash / Didi */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+              {/* Opción 1: Uber Flash / Didi (CDMX) */}
               <div 
                 onClick={() => setDeliveryMethod('uber_flash')}
                 style={{
-                  padding: '1.15rem',
+                  padding: '1.25rem',
                   borderRadius: '16px',
                   border: deliveryMethod === 'uber_flash' ? '2px solid var(--accent-color)' : '1px solid #e7e2d9',
                   background: deliveryMethod === 'uber_flash' ? '#fff7ed' : '#ffffff',
@@ -643,22 +703,22 @@ const Contact = () => {
                   textAlign: 'left'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '0.95rem', color: deliveryMethod === 'uber_flash' ? '#c2410c' : 'var(--text-primary)', marginBottom: '0.35rem' }}>
-                  <Car size={18} /> Uber Flash / Didi (CDMX)
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '1rem', color: deliveryMethod === 'uber_flash' ? '#c2410c' : 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                  <Car size={20} /> 1. Envío por Uber Flash / Didi (CDMX)
                 </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
-                  Envía tu material el mismo día solicitando un chofer desde tu app de Uber o Didi a la dirección coordinada por WhatsApp.
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                  Envía tus recuerdos el mismo día solicitando un chofer desde tu app de Uber o Didi a la dirección coordinada por WhatsApp.
                 </p>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0369a1', marginTop: '0.6rem' }}>
-                  🛵 Pagas directo en tu app de Uber
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0369a1', marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>🛵 <strong>Tú pagas el viaje directo en tu app de Uber</strong> (Sin cobros intermediarios)</span>
                 </div>
               </div>
 
-              {/* Opción 3: Paquetería Nacional */}
+              {/* Opción 2: Paquetería Nacional (DHL / FedEx / Estafeta) */}
               <div 
                 onClick={() => setDeliveryMethod('national_shipping')}
                 style={{
-                  padding: '1.15rem',
+                  padding: '1.25rem',
                   borderRadius: '16px',
                   border: deliveryMethod === 'national_shipping' ? '2px solid var(--accent-color)' : '1px solid #e7e2d9',
                   background: deliveryMethod === 'national_shipping' ? '#fff7ed' : '#ffffff',
@@ -667,14 +727,14 @@ const Contact = () => {
                   textAlign: 'left'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '0.95rem', color: deliveryMethod === 'national_shipping' ? '#c2410c' : 'var(--text-primary)', marginBottom: '0.35rem' }}>
-                  <Truck size={18} /> Paquetería (Toda la República)
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '1rem', color: deliveryMethod === 'national_shipping' ? '#c2410c' : 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                  <Truck size={20} /> 2. Paquetería Nacional (Toda la República)
                 </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
-                  Si estás en CDMX o cualquier estado, empacas tu material y lo despachas por DHL, FedEx o Estafeta pagando tu guía en ventanilla.
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                  Si estás en CDMX o en cualquier estado de la República, empacas tu material con la caja sugerida y lo despachas por DHL, FedEx o Estafeta.
                 </p>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b45309', marginTop: '0.6rem' }}>
-                  📦 Pago directo en sucursal
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b45309', marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>📦 <strong>Pagas tu guía directo en la sucursal</strong> al entregar tu paquete</span>
                 </div>
               </div>
             </div>

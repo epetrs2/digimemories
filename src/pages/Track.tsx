@@ -9,7 +9,7 @@ import {
   Clock, 
   Sparkles, 
   Download, 
-  MapPin
+  Truck
 } from 'lucide-react';
 import { generateQuotePDF } from '../lib/pdfGenerator';
 import { checkLockoutStatus, recordFailedLoginAttempt, resetFailedAttempts } from '../lib/security';
@@ -260,18 +260,65 @@ const Track: React.FC = () => {
               <span style={{ color: 'var(--accent-color)' }}>${remainingBalance} MXN</span>
             </div>
 
+            {remainingBalance > 0 && (
+              <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px dashed rgba(0, 0, 0, 0.12)' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.6rem' }}>
+                  💳 Opciones para Liquidar Saldo (${remainingBalance} MXN):
+                </div>
+                <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+                  <a
+                    href={`https://link.mercadopago.com.mx/digimemories?amount=${remainingBalance}&description=Liquidacion+Orden+${order.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: '0.55rem 0.95rem',
+                      background: '#009ee3',
+                      color: '#ffffff',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    Pagar con Mercado Pago →
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText('012180015492837190');
+                      alert(`CLABE BBVA copiada: 012180015492837190 (Monto: $${remainingBalance} MXN, Concepto: #${order.id})`);
+                    }}
+                    style={{
+                      padding: '0.55rem 0.95rem',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#334155',
+                      borderRadius: '10px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Copiar CLABE BBVA para SPEI
+                  </button>
+                </div>
+              </div>
+            )}
+
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.75rem', margin: '0.75rem 0 0 0' }}>
-              * Se liquida al recibir tu memoria USB y tus cintas en taller o contra-entrega.
+              * Se liquida al concluir la digitalización para autorizar el despacho de tu paquete con memoria USB.
             </p>
           </div>
 
           <div style={{ marginTop: '1.75rem', padding: '1.25rem', background: 'var(--accent-light)', borderRadius: '14px', border: '1px solid rgba(234, 88, 12, 0.2)' }}>
             <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-color)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <MapPin size={16} /> Taller de Recolección en CDMX:
+              <Truck size={16} /> Logística y Entrega:
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-              Av. Insurgentes Sur #450, Col. Roma Sur, CDMX.<br />
-              Horario: Lunes a Sábado de 10:00 a 18:00 hrs.
+              Coordinación y despacho por <strong>Uber Flash (CDMX)</strong> o <strong>Paquetería Nacional (DHL / FedEx / Estafeta)</strong>. El seguimiento se te envía por WhatsApp y correo.
             </p>
           </div>
         </div>
