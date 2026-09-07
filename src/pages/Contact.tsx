@@ -900,7 +900,7 @@ const Contact = () => {
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.875rem', fontWeight: 600 }}>Comentarios o notas adicionales (Opcional)</label>
                 <textarea 
                   className="input-field" 
-                  placeholder="Ej. ¿Puedo pasar al taller en sábado a dejar las cintas?" 
+                  placeholder="Ej. ¿Cuánto tardan 5 cintas de video? o especificaciones de entrega..." 
                   rows={2} 
                   value={formData.details} 
                   onChange={e => setFormData({ ...formData, details: e.target.value })}

@@ -6,14 +6,12 @@ import {
   type BusinessSettings 
 } from '../lib/businessSettings';
 import { 
-  Building, 
-  MapPin, 
+  Truck,
   CreditCard, 
   DollarSign, 
   Phone, 
   Mail, 
   Clock, 
-  Globe, 
   Save, 
   CheckCircle2, 
   Megaphone, 
@@ -127,7 +125,7 @@ export const AdminBusinessSettings: React.FC = () => {
             gap: '0.4rem'
           }}
         >
-          <Building size={16} /> Ubicación & Taller
+          <Truck size={16} /> Identidad & Logística
         </button>
 
         <button
@@ -214,18 +212,18 @@ export const AdminBusinessSettings: React.FC = () => {
       {/* Main Settings Form */}
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
-        {/* SECTION 1: UBICACIÓN Y TALLER */}
+        {/* SECTION 1: IDENTIDAD Y LOGÍSTICA */}
         {activeSection === 'location' && (
           <div className="glass animate-on-load" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Building size={20} className="text-accent" />
+                <Truck size={20} className="text-accent" />
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
-                  Ubicación del Taller & Laboratorio Central
+                  Identidad y Logística de Operación
                 </h3>
               </div>
               <p style={{ fontSize: '0.85rem', color: '#78716c', margin: '0.25rem 0 0 0' }}>
-                Esta dirección se muestra a los clientes que eligen la opción "Recoger en Taller" y en el pie de página.
+                Configuración general de la marca, logística de recepción/envíos y horarios de atención al cliente.
               </p>
             </div>
 
@@ -245,87 +243,13 @@ export const AdminBusinessSettings: React.FC = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  RFC / Identificador Fiscal
+                  Eslogan / Descripción Breve
                 </label>
                 <input
                   type="text"
-                  value={settings.rfcTaxId}
-                  onChange={e => handleChange('rfcTaxId', e.target.value)}
-                  placeholder="ej. DGM-210408-9A1"
-                  className="input-field"
-                  style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
-              <div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  <MapPin size={14} className="text-accent" /> Calle, Número Exterior e Interior
-                </label>
-                <input
-                  type="text"
-                  value={settings.tallerAddress}
-                  onChange={e => handleChange('tallerAddress', e.target.value)}
-                  placeholder="Recepción vía Uber Flash (CDMX) y Paquetería"
-                  className="input-field"
-                  style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  Colonia y Alcaldía / Municipio
-                </label>
-                <input
-                  type="text"
-                  value={settings.tallerNeighborhood}
-                  onChange={e => handleChange('tallerNeighborhood', e.target.value)}
-                  placeholder="Laboratorio Privado"
-                  className="input-field"
-                  style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  Ciudad y Estado
-                </label>
-                <input
-                  type="text"
-                  value={settings.tallerCityState}
-                  onChange={e => handleChange('tallerCityState', e.target.value)}
-                  placeholder="Ciudad de México, CDMX"
-                  className="input-field"
-                  style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  Código Postal (C.P.)
-                </label>
-                <input
-                  type="text"
-                  value={settings.tallerPostalCode}
-                  onChange={e => handleChange('tallerPostalCode', e.target.value)}
-                  placeholder="06760"
-                  className="input-field"
-                  style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  <Globe size={14} className="text-accent" /> Enlace de Google Maps
-                </label>
-                <input
-                  type="url"
-                  value={settings.googleMapsUrl}
-                  onChange={e => handleChange('googleMapsUrl', e.target.value)}
-                  placeholder="https://maps.google.com/..."
+                  value={settings.brandTagline}
+                  onChange={e => handleChange('brandTagline', e.target.value)}
+                  placeholder="Laboratorio Especializado en Preservación y Digitalización..."
                   className="input-field"
                   style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
                 />
@@ -333,14 +257,28 @@ export const AdminBusinessSettings: React.FC = () => {
             </div>
 
             <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                <Truck size={14} className="text-accent" /> Modalidad de Recepción de Material
+              </label>
+              <input
+                type="text"
+                value={settings.tallerAddress}
+                onChange={e => handleChange('tallerAddress', e.target.value)}
+                placeholder="Recepción por Uber Flash (CDMX) y Paquetería Nacional (DHL / FedEx / Estafeta)"
+                className="input-field"
+                style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
+              />
+            </div>
+
+            <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                Referencias para el Cliente
+                Instrucciones / Logística para el Cliente
               </label>
               <input
                 type="text"
                 value={settings.tallerReferences}
                 onChange={e => handleChange('tallerReferences', e.target.value)}
-                placeholder="Frente a estación Metrobús Chilpancingo, edificio de cristal..."
+                placeholder="Dirección exacta coordinada por WhatsApp para el chofer de Uber Flash o guía de paquetería"
                 className="input-field"
                 style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
               />
@@ -350,7 +288,7 @@ export const AdminBusinessSettings: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', paddingTop: '0.5rem', borderTop: '1px solid #f0ede6' }}>
               <div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  <Clock size={14} className="text-accent" /> Horario Entre Semana
+                  <Clock size={14} className="text-accent" /> Horario de Atención (Lunes a Viernes)
                 </label>
                 <input
                   type="text"
@@ -364,7 +302,7 @@ export const AdminBusinessSettings: React.FC = () => {
 
               <div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  <Clock size={14} className="text-accent" /> Horario Fin de Semana
+                  <Clock size={14} className="text-accent" /> Horario de Atención (Fines de Semana)
                 </label>
                 <input
                   type="text"

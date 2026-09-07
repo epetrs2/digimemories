@@ -100,9 +100,10 @@ export const generateQuotePDF = (data: QuotePDFData): jsPDF => {
   doc.text(data.clientPhone || 'No especificado', 128, 55);
 
   doc.setFont('helvetica', 'bold');
-  doc.text('Método:', 110, 61);
+  doc.text('Entrega:', 110, 61);
   doc.setFont('helvetica', 'normal');
-  doc.text('Entrega física en USB / Taller', 128, 61);
+  const deliveryLabel = data.deliveryMethod === 'uber_flash' ? 'Uber Flash (CDMX)' : 'Paquetería Nacional';
+  doc.text(deliveryLabel, 128, 61);
 
   // 4. Items Table
   const tableRows: (string | number)[][] = [];

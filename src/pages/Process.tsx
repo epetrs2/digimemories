@@ -57,7 +57,7 @@ const Process = () => {
             Nuestro <span className="text-gradient">Proceso de Preservación</span>
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.15rem', lineHeight: '1.7' }}>
-            Cuidamos tus recuerdos como si fueran los nuestros. Cada cinta sigue un protocolo de manipulación seguro y trazable desde que entra a nuestro taller hasta que vuelve a tus manos.
+            Cuidamos tus recuerdos como si fueran los nuestros. Cada cinta sigue un protocolo de manipulación seguro y trazable desde que entra a nuestro laboratorio hasta que vuelve a tus manos.
           </p>
         </div>
 

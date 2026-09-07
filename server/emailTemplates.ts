@@ -14,6 +14,9 @@ export interface QuoteTemplateData {
   }[];
   enhanceAudioVideo?: boolean;
   notes?: string;
+  deliveryMethod?: 'uber_flash' | 'national_shipping';
+  preferredPaymentMethod?: 'mercadopago' | 'spei';
+  qualifiesForFreeReturn?: boolean;
   tallerAddress?: string;
   tallerPhone?: string;
   trackUrl?: string;
@@ -28,6 +31,8 @@ export interface DepositConfirmedTemplateData {
   depositAmount: number;
   remainingAmount: number;
   itemsCount: number;
+  deliveryType?: 'home_delivery' | 'national_shipping' | 'taller_pickup';
+  qualifiesForFreeReturn?: boolean;
   trackUrl?: string;
   tallerAddress?: string;
   tallerPhone?: string;
@@ -38,7 +43,7 @@ export interface OrderUpdateTemplateData {
   trackingId: string;
   statusTitle: string;
   statusDescription: string;
-  stepNumber: number;
+  stepNumber: number; // 1 to 4
   pin?: string;
   trackUrl: string;
 }
@@ -75,6 +80,9 @@ const LUXURY_EMAIL_STYLES = `
   .footer { background-color: #f6f3ee; padding: 24px 28px; text-align: center; font-size: 12px; color: #78716c; border-top: 1px solid #e7e2d9; }
 `;
 
+/**
+ * 1. TEMPLATE: CONFIRMACIÓN DE ANTICIPO & ACTIVACIÓN DE PIN (Diseño Premium Elegante)
+ */
 export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateData): string {
   const trackUrl = data.trackUrl || 'https://digimemories.vercel.app/track';
 
@@ -92,11 +100,14 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
     <tr>
       <td align="center">
         <div class="wrapper">
+          
+          <!-- Header -->
           <div class="header">
             <h1 class="brand-title">DIGIMEMORIES</h1>
             <div class="brand-sub">Preservación Digital & Rescate Analógico</div>
           </div>
 
+          <!-- Content -->
           <div class="content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
               <span class="badge">ORDEN #${data.trackingId}</span>
@@ -110,6 +121,7 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
               Hemos validado tu anticipo correspondiente a tu lote de <strong>${data.itemsCount} artículo(s)</strong>. Tu material ya ha ingresado a nuestra fila de digitalización profesional 1:1.
             </p>
 
+            <!-- PIN LUXURY CARD -->
             <div style="background: #1c1917; color: #ffffff; border-radius: 14px; padding: 24px 20px; text-align: center; margin: 24px 0; border: 2px solid #ea580c; box-shadow: 0 8px 20px rgba(0,0,0,0.12);">
               <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #fed7aa; margin-bottom: 8px; font-weight: 700;">
                 🔑 TU PIN DE RASTREO EN VIVO
@@ -122,6 +134,35 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
               </div>
             </div>
 
+            <!-- Next Step Instructions: Send tapes via WhatsApp -->
+            <div style="background: #fff7ed; border: 1.5px solid #fdba74; border-radius: 14px; padding: 20px; margin: 24px 0; text-align: left;">
+              <div style="font-weight: 800; font-size: 15px; color: #9a3412; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                🚚 Siguiente Paso: Haznos llegar tus recuerdos
+              </div>
+              <p style="font-size: 14px; line-height: 1.6; color: #431407; margin: 0 0 14px 0;">
+                Tu turno en el laboratorio está asegurado. Para enviarnos tus cintas de forma rápida y segura, por favor escríbenos por WhatsApp para proporcionarte la dirección de recepción y coordinar el arribo de tu paquete:
+              </p>
+              
+              <div style="background: #ffffff; border-radius: 10px; padding: 14px; border: 1px solid #fed7aa; margin-bottom: 16px; font-size: 13px; color: #7c2d12; line-height: 1.5;">
+                ${data.deliveryType === 'national_shipping' ? `
+                  <strong>📦 Envío por Paquetería Nacional (DHL / FedEx / Estafeta):</strong><br>
+                  Escríbenos a WhatsApp para darte los datos completos del destinatario en CDMX para documentar tu paquete en la sucursal de tu colonia.
+                ` : `
+                  <strong>🛵 Envío local vía Uber Flash / Didi (CDMX):</strong><br>
+                  Escríbenos a WhatsApp para darte la dirección de recepción y el nombre de quien recibe para que pidas el chofer desde tu app de Uber/Didi en la ventana de horario acordada.
+                `}
+              </div>
+
+              <div style="text-align: center;">
+                <a href="https://wa.me/525548889876?text=${encodeURIComponent(`¡Hola扩大DigiMemories! Soy ${data.clientName}. Ya confirmé mi anticipo de la orden #${data.trackingId}. ¿Me pueden compartir la dirección exacta para coordinar el envío de mis cintas?`)}" 
+                   target="_blank" 
+                   style="display: inline-block; background: #25d366; color: #ffffff; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 10px; text-decoration: none; box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);">
+                  💬 Solicitar Dirección por WhatsApp →
+                </a>
+              </div>
+            </div>
+
+            <!-- Financial Summary Box -->
             <div class="card">
               <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #78716c; margin: 0 0 12px 0;">
                 Resumen Financiero del Servicio
@@ -132,28 +173,32 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; color: #15803d; font-weight: 700;">
                 <span>Anticipo Abonado (50%):</span>
-                <span>-$${data.depositAmount.toLocaleString('es-MX')} MXN (Pagado)</span>
+                <span>-$${data.depositAmount.toLocaleString('es-MX')} MXN (Confirmado)</span>
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; color: #ea580c; border-top: 1px dashed #d6ccc2; padding-top: 10px; margin-top: 6px;">
-                <span>Saldo al Recoger:</span>
+                <span>Saldo al Finalizar:</span>
                 <span>$${data.remainingAmount.toLocaleString('es-MX')} MXN</span>
               </div>
             </div>
 
+            <!-- Action Button -->
             <div style="text-align: center; margin: 30px 0 10px 0;">
               <a href="${trackUrl}" target="_blank" class="btn-primary">
                 🔍 Consultar Portal de Rastreo →
               </a>
             </div>
+
           </div>
 
+          <!-- Footer -->
           <div class="footer">
             <div style="font-weight: 700; color: #44403c; margin-bottom: 4px;">
               DigiMemories — Preservación de Memorias Familiares
             </div>
-            <div>${data.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}</div>
-            <div style="margin-top: 4px;">WhatsApp Taller: ${data.tallerPhone || '+52 55 4888 9876'}</div>
+            <div>Recepción y Despacho Seguro por Uber Flash (CDMX) y Paquetería Nacional</div>
+            <div style="margin-top: 4px;">WhatsApp Oficial: ${data.tallerPhone || '+52 55 4888 9876'}</div>
           </div>
+
         </div>
       </td>
     </tr>
@@ -163,6 +208,9 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
   `;
 }
 
+/**
+ * 2. TEMPLATE: COTIZACIÓN OFICIAL (Diseño Premium con Desglose y PDF Adjunto)
+ */
 export function getQuoteEmailHtml(data: QuoteTemplateData): string {
   const trackUrl = data.trackUrl || 'https://digimemories.vercel.app/track';
 
@@ -189,11 +237,14 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
     <tr>
       <td align="center">
         <div class="wrapper">
+          
+          <!-- Header -->
           <div class="header">
             <h1 class="brand-title">DIGIMEMORIES</h1>
             <div class="brand-sub">Preservación Digital & Rescate Analógico</div>
           </div>
 
+          <!-- Content -->
           <div class="content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
               <span class="badge">FOLIO #${data.trackingId}</span>
@@ -207,6 +258,7 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
               Gracias por cotizar la digitalización de tus memorias familiares con nosotros. Hemos generado tu presupuesto oficial con entrega en memoria USB en formato MP4 de alta calidad.
             </p>
 
+            <!-- PDF Attachment Callout -->
             <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
               <div style="font-size: 24px;">📄</div>
               <div>
@@ -215,6 +267,7 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
               </div>
             </div>
 
+            <!-- Items Table -->
             <table style="margin-bottom: 20px;">
               <thead>
                 <tr style="border-bottom: 2px solid #e7e2d9; font-size: 12px; text-transform: uppercase; color: #78716c;">
@@ -229,6 +282,7 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
               </tbody>
             </table>
 
+            <!-- Financial Card -->
             <div class="card">
               <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #57534e;">
                 <span>Total Estimado del Servicio:</span>
@@ -238,26 +292,75 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
                 <span>Anticipo para Iniciar (50%):</span>
                 <span>$${data.depositAmount.toLocaleString('es-MX')} MXN</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 14px; color: #15803d; border-top: 1px dashed #d6ccc2; padding-top: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 14px; color: #15803d; border-top: 1px dashed #d6ccc2; padding-top: 8px; margin-bottom: 14px;">
                 <span>Saldo Restante contra-entrega:</span>
                 <span>$${data.remainingAmount.toLocaleString('es-MX')} MXN</span>
               </div>
+
+              <!-- Logistics & Shipping Selection -->
+              <div style="background: #ffffff; border: 1px solid #e7e2d9; border-radius: 10px; padding: 12px; margin-bottom: 12px; font-size: 13px;">
+                <div style="font-weight: 700; color: #292524; margin-bottom: 4px;">
+                  🚚 Modalidad de Envío Seleccionada:
+                </div>
+                <div style="color: #44403c;">
+                  ${data.deliveryMethod === 'uber_flash' 
+                    ? '🛵 <strong>Uber Flash / Didi (CDMX):</strong> Solicita tu chofer a nuestra dirección coordinada por WhatsApp.' 
+                    : '📦 <strong>Paquetería Nacional:</strong> Despacha por DHL, FedEx o Estafeta desde tu sucursal más cercana.'}
+                </div>
+                <div style="font-size: 12px; margin-top: 6px; color: ${data.qualifiesForFreeReturn ? '#15803d' : '#78716c'}; font-weight: ${data.qualifiesForFreeReturn ? '700' : 'normal'};">
+                  ${data.qualifiesForFreeReturn 
+                    ? '🎉 ¡Tu pedido califica para Retorno GRATIS a tu domicilio!' 
+                    : `💡 Retorno gratis aplica en pedidos mayores a $${data.deliveryMethod === 'uber_flash' ? '1,500' : '2,000'} MXN.`}
+                </div>
+              </div>
+
+              <!-- Payment Method Selection -->
+              <div style="background: #ffffff; border: 1px solid #e7e2d9; border-radius: 10px; padding: 12px; font-size: 13px;">
+                <div style="font-weight: 700; color: #292524; margin-bottom: 4px;">
+                  💳 Método de Pago del Anticipo (50%):
+                </div>
+                ${data.preferredPaymentMethod === 'mercadopago' ? `
+                  <div style="color: #0369a1; font-weight: 600; margin-bottom: 4px;">
+                    💙 Mercado Pago (En Línea con Tarjeta de Débito/Crédito o en OXXO)
+                  </div>
+                  <div style="font-size: 12px; color: #57534e; margin-bottom: 8px;">
+                    Puedes abonar tu anticipo de $${data.depositAmount.toLocaleString('es-MX')} MXN de forma 100% segura con el enlace:
+                  </div>
+                  <a href="https://link.mercadopago.com.mx/digimemories?amount=${data.depositAmount}&description=Anticipo+Orden+${data.trackingId}" target="_blank" style="display: inline-block; background: #009ee3; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 12px; text-decoration: none;">
+                    Pagar $${data.depositAmount.toLocaleString('es-MX')} con Mercado Pago →
+                  </a>
+                ` : `
+                  <div style="color: #1e293b; font-weight: 600; margin-bottom: 4px;">
+                    🏦 Transferencia Bancaria Directa (SPEI)
+                  </div>
+                  <div style="font-size: 12px; color: #475569; line-height: 1.5; background: #f8fafc; padding: 8px 10px; border-radius: 6px;">
+                    <strong>Banco:</strong> BBVA México<br>
+                    <strong>CLABE:</strong> 012180015492837190<br>
+                    <strong>Beneficiario:</strong> DigiMemories México<br>
+                    <strong>Concepto:</strong> #${data.trackingId}
+                  </div>
+                `}
+              </div>
             </div>
 
+            <!-- Action Button -->
             <div style="text-align: center; margin: 30px 0 10px 0;">
               <a href="${trackUrl}" target="_blank" class="btn-primary">
                 Ver Detalles en Portal de Rastreo →
               </a>
             </div>
+
           </div>
 
+          <!-- Footer -->
           <div class="footer">
             <div style="font-weight: 700; color: #44403c; margin-bottom: 4px;">
               DigiMemories — Preservación de Memorias Familiares
             </div>
-            <div>${data.tallerAddress || 'Av. Insurgentes Sur #450, Col. Roma Sur, CDMX'}</div>
-            <div style="margin-top: 4px;">WhatsApp Taller: ${data.tallerPhone || '+52 55 4888 9876'}</div>
+            <div>Recepción y Despacho Seguro por Uber Flash (CDMX) y Paquetería Nacional</div>
+            <div style="margin-top: 4px;">WhatsApp Oficial: ${data.tallerPhone || '+52 55 4888 9876'}</div>
           </div>
+
         </div>
       </td>
     </tr>
@@ -267,12 +370,16 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
   `;
 }
 
+/**
+ * 3. TEMPLATE: ACTUALIZACIÓN DE ESTADO DE ORDEN
+ */
 export function getOrderStatusEmailHtml(data: OrderUpdateTemplateData): string {
   return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Actualización de Orden #${data.trackingId}</title>
   <style>${LUXURY_EMAIL_STYLES}</style>
 </head>
@@ -326,6 +433,9 @@ export function getOrderStatusEmailHtml(data: OrderUpdateTemplateData): string {
   `;
 }
 
+/**
+ * 4. TEMPLATE: MENSAJE PERSONALIZADO DEL TALLER
+ */
 export function getCustomMessageHtml(data: CustomMessageTemplateData): string {
   return `
 <!DOCTYPE html>
@@ -373,6 +483,9 @@ export function getCustomMessageHtml(data: CustomMessageTemplateData): string {
   `;
 }
 
+/**
+ * 5. TEMPLATE: TEST DIAGNÓSTICO SMTP
+ */
 export function getTestEmailHtml(data: TestEmailTemplateData): string {
   return `
 <!DOCTYPE html>

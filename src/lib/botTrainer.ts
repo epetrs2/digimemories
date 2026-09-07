@@ -82,7 +82,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       quickReplies: [
         { label: '💰 Calcular mi Presupuesto', action: 'NAVIGATE_CALCULATOR' },
         { label: '⏱️ ¿Cuánto tiempo tarda?', action: 'TURNAROUND_TIME' },
-        { label: '📍 Ver Ubicación del Taller', action: 'LOCATION_INFO' }
+        { label: '🚚 Opciones de Envío y Recepción', action: 'LOCATION_INFO' }
       ]
     })
   },
@@ -110,7 +110,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       text: `Entregamos tus videos en **archivos digitales MP4 (H.264 / AAC)** listos para conectar y reproducir en:\n\n📺 **Smart TVs** (Samsung, LG, Sony, Roku, etc.)\n💻 **Computadoras** (Mac, Windows, Linux)\n📱 **Celulares y Tablets** (iPhone, Android, iPad)\n\nTe entregamos todo en una **Memoria USB física** y además te regresamos tus cintas originales intactas. ¡También ofrecemos enlace de respaldo privado en la nube si lo requieres!`,
       quickReplies: [
         { label: '🚚 Recolección a Domicilio', action: 'HOME_PICKUP_INFO' },
-        { label: '📍 Entrega en Taller CDMX', action: 'LOCATION_INFO' }
+        { label: '📦 Opciones de Envío', action: 'LOCATION_INFO' }
       ]
     })
   },
@@ -123,7 +123,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
     response: () => ({
       text: `Entendemos el valor invaluable de tus recuerdos familiares:\n\n1. **Inspección Física Gratuita:** Revisamos cada cinta antes de reproducirla.\n2. **Si tiene moho leve:** Se realiza una limpieza mecánica suave sin costo para permitir la lectura.\n3. **Cinta dañada o no legible:** Si una cinta está completamente desmagnetizada o rota y no se puede rescatar, **no se te cobra esa cinta**.\n4. **100% Devolución:** Todas tus cintas físicas originales se te regresan intactas.`,
       quickReplies: [
-        { label: '📍 ¿Dónde están ubicados?', action: 'LOCATION_INFO' },
+        { label: '🚚 ¿Cómo enviar mis cintas?', action: 'LOCATION_INFO' },
         { label: '👤 Quiero que un Asesor me llame', action: 'REQUEST_HUMAN' }
       ]
     })
@@ -208,7 +208,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       text: `¡Hola! 👋 Qué gusto saludarte. Soy **Guillermo**, tu asesor virtual de **DigiMemories**.\n\nEstamos listos para rescatar y digitalizar tus cintas VHS, Betamax, Hi8, MiniDV y fotografías familiares en alta definición.\n\n¿En qué te puedo ayudar hoy?`,
       quickReplies: [
         { label: '💰 Cotizar mis Cintas', action: 'NAVIGATE_CALCULATOR' },
-        { label: '📍 Ubicación y Horarios', action: 'LOCATION_INFO' },
+        { label: '🚚 Envíos y Horarios', action: 'LOCATION_INFO' },
         { label: '⏱️ Tiempos de Entrega', action: 'TURNAROUND_TIME' },
         { label: '👤 Hablar con un Asesor Humano', action: 'REQUEST_HUMAN' }
       ]
@@ -244,7 +244,7 @@ export function getBotResponse(userMessage: string): BotReplyResult {
     text: `Entiendo tu consulta sobre **"${userMessage}"**. Para darte una respuesta 100% precisa, he transferido esta conversación a nuestro **Administrador en Vivo**.\n\nTambién puedes seleccionar una de estas opciones rápidas:`,
     quickReplies: [
       { label: '💰 Cotizar Cintas de Video', action: 'NAVIGATE_CALCULATOR' },
-      { label: '📍 Dirección del Taller CDMX', action: 'LOCATION_INFO' },
+      { label: '🚚 Opciones de Envío y Recepción', action: 'LOCATION_INFO' },
       { label: '🚚 Recolección a Domicilio', action: 'HOME_PICKUP_INFO' },
       { label: '🔍 Rastrear mi Orden', action: 'NAVIGATE_TRACK' }
     ],

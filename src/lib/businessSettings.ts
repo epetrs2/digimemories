@@ -55,7 +55,7 @@ export interface BusinessSettings {
 export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   businessName: 'DigiMemories México',
   brandTagline: 'Laboratorio Especializado en Preservación y Digitalización de Recuerdos en Alta Definición',
-  rfcTaxId: 'DGM-210408-9A1',
+  rfcTaxId: '',
 
   tallerAddress: 'Recepción por Uber Flash (CDMX) y Paquetería Nacional (DHL / FedEx / Estafeta)',
   tallerNeighborhood: 'Laboratorio Privado Sin Atención Presencial',
@@ -73,7 +73,7 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   facebookUrl: 'https://facebook.com/digimemories.mx',
 
   bankName: 'BBVA México',
-  bankAccountHolder: 'DigiMemories Laboratorio Digital S.A. de C.V.',
+  bankAccountHolder: 'DigiMemories México',
   bankClabe: '012180015492837190',
   bankAccountNumber: '1549283719',
   bankPaymentInstructions: 'Favor de ingresar tu Número de Orden o PIN en el concepto de la transferencia y enviar comprobante a contactodigimemories@gmail.com o por WhatsApp.',
