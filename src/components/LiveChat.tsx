@@ -121,6 +121,65 @@ export const LiveChat: React.FC = () => {
     }, 600);
   };
 
+  const renderFormattedMessage = (text: string, isMe: boolean) => {
+    const lines = text.split('\n');
+    return lines.map((line, idx) => {
+      // Format bold, italic, code, and markdown links
+      const parts = line.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`|\[.*?\]\(.*?\))/g);
+      const formatted = parts.map((part, pIdx) => {
+        if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+          return <strong key={pIdx} style={{ fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**') && part.length >= 2) {
+          return <em key={pIdx}>{part.slice(1, -1)}</em>;
+        }
+        if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
+          return (
+            <code 
+              key={pIdx} 
+              style={{ 
+                background: isMe ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)', 
+                padding: '0.1rem 0.35rem', 
+                borderRadius: '4px', 
+                fontFamily: 'monospace',
+                fontSize: '0.85em'
+              }}
+            >
+              {part.slice(1, -1)}
+            </code>
+          );
+        }
+        if (part.startsWith('[') && part.includes('](') && part.endsWith(')')) {
+          const linkText = part.slice(1, part.indexOf(']('));
+          const linkUrl = part.slice(part.indexOf('](') + 2, -1);
+          return (
+            <a 
+              key={pIdx} 
+              href={linkUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ 
+                color: isMe ? '#ffffff' : '#ea580c', 
+                fontWeight: 700, 
+                textDecoration: 'underline' 
+              }}
+            >
+              {linkText}
+            </a>
+          );
+        }
+        return part;
+      });
+
+      return (
+        <React.Fragment key={idx}>
+          {formatted}
+          {idx < lines.length - 1 && <br />}
+        </React.Fragment>
+      );
+    });
+  };
+
   const handleQuickAction = (action: string, label: string) => {
     if (action === 'NAVIGATE_CALCULATOR') {
       navigate('/#calculator');
@@ -130,8 +189,24 @@ export const LiveChat: React.FC = () => {
       navigate('/track');
     } else if (action === 'NAVIGATE_CONTACT') {
       navigate('/contact');
+    } else if (action === 'WHATSAPP_CONTACT') {
+      window.open('https://wa.me/525548889876?text=Hola%2C%20quisiera%20informaci%C3%B3n%20sobre%20la%20digitalizaci%C3%B3n%20de%20mis%20recuerdos', '_blank');
     } else if (action === 'REQUEST_HUMAN') {
       if (thread) triggerHumanEscalation(thread.id, 'Petición de asesor humano');
+    } else if (action === 'LOCATION_INFO') {
+      handleSendMessage('¿Dónde están ubicados y cómo entrego mis cintas?');
+    } else if (action === 'SAFE_MEETING_POINTS') {
+      handleSendMessage('¿Cómo funcionan los Puntos de Encuentro Seguros en CDMX?');
+    } else if (action === 'UBER_FLASH_INFO' || action === 'HOME_PICKUP_INFO') {
+      handleSendMessage('¿Cómo funciona el envío por Uber Flash a domicilio?');
+    } else if (action === 'NATIONAL_SHIPPING') {
+      handleSendMessage('¿Cómo son los envíos a provincia por paquetería?');
+    } else if (action === 'FORMATS_INFO') {
+      handleSendMessage('¿Qué formatos de video y fotos aceptan?');
+    } else if (action === 'MOLD_SAFETY') {
+      handleSendMessage('¿Qué pasa si mis cintas tienen moho o daño?');
+    } else if (action === 'TURNAROUND_TIME') {
+      handleSendMessage('¿Cuánto tiempo tarda la digitalización?');
     } else {
       handleSendMessage(label);
     }
@@ -448,7 +523,7 @@ export const LiveChat: React.FC = () => {
                     wordBreak: 'break-word',
                     whiteSpace: 'pre-line'
                   }}>
-                    {msg.text}
+                    {renderFormattedMessage(msg.text, isMe)}
                   </div>
                 </div>
               );
