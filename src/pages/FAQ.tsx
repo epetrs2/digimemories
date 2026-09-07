@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     question: "¿Cómo hago llegar mis casetes y recuerdos a DigiMemories?",
-    answer: "Manejamos 3 modalidades muy cómodas: 1) Punto de Encuentro Seguro (CDMX): Agendamos una cita vía WhatsApp en una plaza o punto céntrico con vigilancia (Parque Delta, Reforma 222, WTC, etc.) para entrega y recepción personal sin costo de envío. 2) Uber Flash / Didi (CDMX): Envías tus casetes el mismo día solicitando un chofer desde tu app de Uber o Didi a la dirección coordinada por WhatsApp (el viaje lo pagas tú directamente en tu app). 3) Paquetería Nacional (DHL, FedEx, Estafeta): Si estás en CDMX o en cualquier estado de la República, empacas tu material y lo despachas desde tu sucursal más cercana pagando tu guía en ventanilla."
+    answer: "Manejamos 2 modalidades muy cómodas 100% sin contacto: 1) Uber Flash / Didi (CDMX y Área Metropolitana): Envías tus casetes el mismo día solicitando un chofer desde tu app de Uber o Didi a la dirección privada coordinada por WhatsApp. En pedidos a partir de $1,500 MXN el viaje de retorno va por nuestra cuenta. 2) Paquetería Nacional (DHL, FedEx, Estafeta): Si estás en CDMX o en cualquier estado de la República, empacas tu material y lo despachas desde tu sucursal más cercana. En pedidos a partir de $2,000 MXN el retorno con guía asegurada es 100% gratis."
   },
   {
     question: "¿Qué sucede si mi cinta dura más de 2 horas?",

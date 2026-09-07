@@ -195,8 +195,6 @@ export const LiveChat: React.FC = () => {
       if (thread) triggerHumanEscalation(thread.id, 'Petición de asesor humano');
     } else if (action === 'LOCATION_INFO') {
       handleSendMessage('¿Dónde están ubicados y cómo entrego mis cintas?');
-    } else if (action === 'SAFE_MEETING_POINTS') {
-      handleSendMessage('¿Cómo funcionan los Puntos de Encuentro Seguros en CDMX?');
     } else if (action === 'UBER_FLASH_INFO' || action === 'HOME_PICKUP_INFO') {
       handleSendMessage('¿Cómo funciona el envío por Uber Flash a domicilio?');
     } else if (action === 'NATIONAL_SHIPPING') {

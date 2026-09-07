@@ -456,32 +456,33 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'donde los llevo', 'donde puedo llevar', 'local', 'donde se encuentran'
     ],
     response: () => ({
-      text: `🚚 **Logística de Entrega y Recepción DigiMemories:**\n\nPor seguridad, cuidado del material y conveniencia de todos nuestros clientes, operamos como laboratorio privado especializado con **3 modalidades de recepción 100% seguras y cómodas:**\n\n1. 📍 **Puntos de Encuentro Seguros (CDMX):** Agendamos una cita vía WhatsApp en una plaza comercial céntrica y con vigilancia (Parque Delta, Reforma 222, WTC, etc.) para entrega y recepción personal **sin costo de envío**.\n2. 🛵 **Uber Flash / Didi (CDMX):** Envías tus recuerdos el mismo día solicitando un chofer desde tu app hacia la dirección compartida por WhatsApp.\n3. 📦 **Paquetería Nacional (DHL / FedEx / Estafeta):** Para toda la República Mexicana y CDMX, despachas tu caja desde tu sucursal más cercana.\n\n📱 **WhatsApp de Coordinación:** +52 55 4888 9876`,
+      text: `🚚 **Logística de Entrega y Recepción DigiMemories:**\n\nPor seguridad, cuidado del material y conveniencia de todos nuestros clientes, operamos como laboratorio privado especializado con **dos modalidades de recepción 100% sin contacto:**\n\n1. 🛵 **Uber Flash / Didi (CDMX y Área Metropolitana):** Envías tus recuerdos el mismo día solicitando un chofer desde tu app hacia la dirección privada coordinada por WhatsApp. *(En pedidos a partir de $1,500 MXN el viaje de retorno va por nuestra cuenta)*.\n2. 📦 **Paquetería Nacional (DHL / FedEx / Estafeta):** Para toda la República Mexicana y CDMX, despachas tu caja desde tu sucursal más cercana. *(En pedidos a partir de $2,000 MXN el retorno asegurado es 100% GRATIS)*.\n\n📱 **WhatsApp de Coordinación:** +52 55 4888 9876`,
       quickReplies: [
-        { label: '📍 Ver Puntos de Encuentro', action: 'SAFE_MEETING_POINTS' },
         { label: '🛵 Enviar por Uber Flash', action: 'UBER_FLASH_INFO' },
         { label: '📦 Envíos por Paquetería', action: 'NATIONAL_SHIPPING' },
-        { label: '💬 Coordinar por WhatsApp', action: 'WHATSAPP_CONTACT' }
+        { label: '💬 Coordinar por WhatsApp', action: 'WHATSAPP_CONTACT' },
+        { label: '💰 Cotizar mis Cintas', action: 'NAVIGATE_CALCULATOR' }
       ]
     })
   },
 
-  // 11. Puntos de Encuentro Seguros (CDMX)
+  // 11. Aclaración sobre Entregas Personales / Puntos de Encuentro
   {
     id: 'safe_meeting_points',
     category: 'safe_meeting_points',
-    priority: 88,
+    priority: 90,
     keywords: [
       'punto de encuentro', 'puntos de encuentro', 'plaza', 'plazas', 'parque delta', 
       'reforma 222', 'wtc', 'oasis coyoacan', 'plaza universidad', 'galerias insurgentes',
-      'cita personal', 'entrega personal', 'entregas personales'
+      'cita personal', 'entrega personal', 'entregas personales', 'ir al taller', 'ir en persona'
     ],
     response: () => ({
-      text: `📍 **Puntos de Encuentro Seguros en CDMX:**\n\nPara tu total tranquilidad y seguridad, podemos acordar una entrega y recepción personal en plazas comerciales concurridas con seguridad privada y cámaras:\n\n• **Plazas habituales:** Parque Delta, Reforma 222, World Trade Center (WTC), Oasis Coyoacán, Plaza Universidad o Galerías Insurgentes.\n• **Sin costo adicional:** No pagas gastos de envío.\n• **Coordinación previa:** Agendamos día y hora exacta vía WhatsApp.\n\n¿Te gustaría coordinar una cita en un punto de encuentro?`,
+      text: `ℹ️ **Información sobre Recepción y Entrega:**\n\nPara garantizar la máxima seguridad y cuidado del material de todos nuestros clientes, operamos como **laboratorio privado especializado sin atención presencial ni puntos de encuentro**.\n\n📦 **Manejamos 2 modalidades seguras 100% sin contacto:**\n1. 🛵 **Uber Flash / Didi (CDMX y Área Metropolitana):** Pides un chofer desde tu app hacia la dirección coordinada por WhatsApp.\n2. 📦 **Paquetería Nacional (DHL / FedEx / Estafeta):** Despachas desde tu sucursal más cercana en cualquier estado del país o CDMX.\n\n📱 **WhatsApp de Coordinación:** +52 55 4888 9876`,
       quickReplies: [
-        { label: '💬 Agendar por WhatsApp', action: 'WHATSAPP_CONTACT' },
-        { label: '💰 Cotizar mis Cintas', action: 'NAVIGATE_CALCULATOR' },
-        { label: '👤 Hablar con un Asesor', action: 'REQUEST_HUMAN' }
+        { label: '🛵 Enviar por Uber Flash', action: 'UBER_FLASH_INFO' },
+        { label: '📦 Enviar por Paquetería', action: 'NATIONAL_SHIPPING' },
+        { label: '💬 Escribir por WhatsApp', action: 'WHATSAPP_CONTACT' },
+        { label: '💰 Cotizar mis Cintas', action: 'NAVIGATE_CALCULATOR' }
       ]
     })
   },
@@ -616,7 +617,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'mercado pago', 'efectivo', 'cuenta bancaria'
     ],
     response: () => ({
-      text: `💳 **Esquema de Pago y Métodos Aceptados:**\n\nPara tu total seguridad, nuestro esquema es:\n1. **50% de Anticipo:** Al ingresar tu material a nuestro laboratorio (se te asigna tu PIN de rastreo en vivo).\n2. **50% Restante:** Al recibir tus archivos en tu Memoria USB y tus cintas originales devueltas.\n\n🏦 **Métodos de Pago:**\n• 📲 **Transferencia Bancaria (SPEI):**\n  - Banco: **BBVA México**\n  - CLABE: **012180015492837190**\n  - Titular: **DigiMemories México**\n• 💳 **Mercado Pago:** Tarjetas de Crédito, Débito y pagos en efectivo en tiendas **OXXO / 7-Eleven**.\n• 💵 **Efectivo:** En entregas en Puntos de Encuentro Seguros.`,
+      text: `💳 **Esquema de Pago y Métodos Aceptados:**\n\nPara tu total seguridad, nuestro esquema es:\n1. **50% de Anticipo:** Al ingresar tu material a nuestro laboratorio (se te asigna tu PIN de rastreo en vivo).\n2. **50% Restante:** Al recibir tus archivos en tu Memoria USB y tus cintas originales devueltas.\n\n🏦 **Métodos de Pago:**\n• 📲 **Transferencia Bancaria (SPEI):**\n  - Banco: **BBVA México**\n  - CLABE: **012180015492837190**\n  - Titular: **DigiMemories México**\n• 💳 **Mercado Pago:** Tarjetas de Crédito, Débito y pagos en efectivo en tiendas **OXXO / 7-Eleven**.`,
       quickReplies: [
         { label: '📄 Generar Presupuesto Oficial', action: 'NAVIGATE_CONTACT' },
         { label: '🔍 Rastrear con mi PIN', action: 'NAVIGATE_TRACK' },
@@ -730,7 +731,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'cual es el procedimiento', 'como inicio', 'proceso paso a paso'
     ],
     response: () => ({
-      text: `📋 **¿Cómo es el proceso paso a paso?**\n\n1. **Cotización:** Calculas tu presupuesto en línea o por chat y generas tu Folio.\n2. **Recepción:** Envías tus cintas por Uber Flash, Paquetería Nacional o las entregas en un Punto de Encuentro Seguro.\n3. **Inspección y PIN:** Revisamos el estado físico de cada cinta y te asignamos tu PIN de rastreo con anticipo del 50%.\n4. **Digitalización 1:1:** Procesamos tus videos a velocidad real en equipos de estudio con corrección de señal.\n5. **Entrega Física:** Te entregamos tu Memoria USB con tus archivos MP4 y te devolvemos tus cintas originales intactas.`,
+      text: `📋 **¿Cómo es el proceso paso a paso?**\n\n1. **Cotización:** Calculas tu presupuesto en línea o por chat y generas tu Folio.\n2. **Recepción:** Envías tus cintas por Uber Flash (CDMX) o Paquetería Nacional (DHL / FedEx).\n3. **Inspección y PIN:** Revisamos el estado físico de cada cinta y te asignamos tu PIN de rastreo con anticipo del 50%.\n4. **Digitalización 1:1:** Procesamos tus videos a velocidad real en equipos de estudio con corrección de señal.\n5. **Entrega Física:** Te entregamos tu Memoria USB con tus archivos MP4 y te devolvemos tus cintas originales intactas.`,
       quickReplies: [
         { label: '💰 Iniciar Cotización', action: 'NAVIGATE_CALCULATOR' },
         { label: '📍 Ver Opciones de Envío', action: 'LOCATION_INFO' },

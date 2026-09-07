@@ -63,13 +63,13 @@ const EXPANDED_TEST_CASES = [
   { query: "se puede ver en mi celular iphone y en smart tv?", expectContains: "Smart TVs" },
   { query: "dan link de descarga en la nube?", expectContains: "nube" },
 
-  // 6. Logística, Ubicación y Envíos (Sin direcciones físicas)
-  { query: "¿Dónde están ubicados para llevar mis cintas?", expectContains: "Puntos de Encuentro Seguros" },
-  { query: "¿Cómo funcionan los Puntos de Encuentro en Parque Delta o WTC?", expectContains: "seguridad privada" },
+  // 6. Logística, Ubicación y Envíos (2 Modalidades 100% Sin Contacto)
+  { query: "¿Dónde están ubicados para llevar mis cintas?", expectContains: "dos modalidades de recepción 100% sin contacto" },
+  { query: "¿Cómo funcionan los Puntos de Encuentro en Parque Delta o WTC?", expectContains: "sin atención presencial ni puntos de encuentro" },
   { query: "¿Puedo mandar un chofer por Uber Flash o Didi?", expectContains: "Uber Flash" },
   { query: "Soy de Guadalajara, ¿hacen envíos por DHL o FedEx?", expectContains: "Paquetería Nacional" },
   { query: "¿Hacen envíos a Monterrey?", expectContains: "Paquetería Nacional" },
-  { query: "hacen entregas personales en plaza universidad?", expectContains: "Puntos de Encuentro Seguros" },
+  { query: "hacen entregas personales en plaza universidad?", expectContains: "sin atención presencial ni puntos de encuentro" },
   { query: "como le hago para enviar por paqueteria desde puebla", expectContains: "Paquetería Nacional" },
 
   // 7. Cuidado, Moho y Seguridad
