@@ -33,7 +33,9 @@ export async function createMercadoPagoPreference(params: CheckoutPreferencePara
   // 1. Si hay Access Token configurado, intentar crear preferencia dinámica vía API Checkout Pro
   if (settings.mercadopagoAccessToken && settings.mercadopagoAccessToken.trim() !== '') {
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://digimemories.mx';
+      const origin = (typeof window !== 'undefined' && window.location.protocol === 'https:') 
+        ? window.location.origin 
+        : 'https://digimemories.mx';
       
       // Intento 1: A través del endpoint backend del servidor
       try {

@@ -105,7 +105,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         return sendJson(res, 400, { success: false, error: 'El monto de pago debe ser mayor a 0' }, req);
       }
 
-      const baseUrl = backUrlOrigin || 'https://digimemories.mx';
+      const isHttps = backUrlOrigin && typeof backUrlOrigin === 'string' && backUrlOrigin.startsWith('https://');
+      const baseUrl = isHttps ? backUrlOrigin : 'https://digimemories.mx';
 
       const preferencePayload = {
         items: [

@@ -236,7 +236,8 @@ export function viteEmailPlugin(): Plugin {
                 return sendJson(res, 400, { success: false, error: 'Monto debe ser mayor a 0' });
               }
 
-              const baseUrl = backUrlOrigin || 'http://localhost:5173';
+              const isHttps = backUrlOrigin && typeof backUrlOrigin === 'string' && backUrlOrigin.startsWith('https://');
+              const baseUrl = isHttps ? backUrlOrigin : 'https://digimemories.mx';
               const preferencePayload = {
                 items: [
                   {
