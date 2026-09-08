@@ -463,13 +463,13 @@ const Contact = () => {
                         clientName: formData.name
                       });
                       if (pref.success && pref.initPoint) {
-                        window.open(pref.initPoint, '_blank', 'noopener,noreferrer');
+                        window.location.href = pref.initPoint;
                       } else {
                         alert(pref.error || 'No se pudo generar la orden de pago. Intenta de nuevo.');
+                        setIsPayingWithMp(false);
                       }
                     } catch (e: any) {
                       alert(`Error al conectar con Mercado Pago: ${e?.message || e}`);
-                    } finally {
                       setIsPayingWithMp(false);
                     }
                   }}
