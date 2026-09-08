@@ -26,7 +26,7 @@ export const AdminBusinessSettings: React.FC = () => {
   const [settings, setSettings] = useState<BusinessSettings>(() => getBusinessSettings());
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [activeSection, setActiveSection] = useState<'location' | 'bank' | 'mercadopago' | 'pricing' | 'contact' | 'banner'>('location');
+  const [activeSection, setActiveSection] = useState<'location' | 'bank' | 'pricing' | 'contact' | 'banner'>('location');
   const [mpTestStatus, setMpTestStatus] = useState<{ loading: boolean; message?: string; success?: boolean } | null>(null);
 
   useEffect(() => {
@@ -150,27 +150,7 @@ export const AdminBusinessSettings: React.FC = () => {
             gap: '0.4rem'
           }}
         >
-          <CreditCard size={16} /> Cuentas Bancarias & Anticipos
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveSection('mercadopago')}
-          style={{
-            padding: '0.6rem 1.1rem',
-            fontSize: '0.85rem',
-            fontWeight: 800,
-            borderRadius: '12px',
-            border: 'none',
-            background: activeSection === 'mercadopago' ? '#0284c7' : '#f5f5f4',
-            color: activeSection === 'mercadopago' ? '#ffffff' : '#78716c',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem'
-          }}
-        >
-          <Zap size={16} /> Mercado Pago
+          <CreditCard size={16} /> Métodos de Pago & Facturación
         </button>
 
         <button
@@ -342,9 +322,10 @@ export const AdminBusinessSettings: React.FC = () => {
           </div>
         )}
 
-        {/* SECTION 2: DATOS BANCARIOS */}
+        {/* SECTION 2: DATOS BANCARIOS & PASARELA */}
         {activeSection === 'bank' && (
-          <div className="glass animate-on-load" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <>
+            <div className="glass animate-on-load" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <CreditCard size={20} className="text-accent" />
@@ -432,11 +413,9 @@ export const AdminBusinessSettings: React.FC = () => {
               />
             </div>
           </div>
-        )}
 
-        {/* SECTION: MERCADO PAGO */}
-        {activeSection === 'mercadopago' && (
-          <div className="glass animate-on-load" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* TARJETA 2 DENTRO DEL MISMO TAB: MERCADO PAGO MÉXICO */}
+          <div className="glass animate-on-load" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1.25rem', border: '1px solid #e0f2fe' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -601,9 +580,10 @@ export const AdminBusinessSettings: React.FC = () => {
               </div>
             )}
           </div>
-        )}
+        </>
+      )}
 
-        {/* SECTION 3: TARIFAS Y PRECIOS BASE */}
+      {/* SECTION 3: TARIFAS Y PRECIOS BASE */}
         {activeSection === 'pricing' && (
           <div className="glass animate-on-load" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div>
