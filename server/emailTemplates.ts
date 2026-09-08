@@ -20,6 +20,7 @@ export interface QuoteTemplateData {
   tallerAddress?: string;
   tallerPhone?: string;
   trackUrl?: string;
+  quoteUrl?: string;
 }
 
 export interface DepositConfirmedTemplateData {
@@ -213,6 +214,8 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
  */
 export function getQuoteEmailHtml(data: QuoteTemplateData): string {
   const trackUrl = data.trackUrl || 'https://digimemories.vercel.app/track';
+  const baseUrl = data.trackUrl ? data.trackUrl.replace(/\/track.*$/, '') : 'https://digimemories.vercel.app';
+  const quoteUrl = data.quoteUrl || `${baseUrl}/quote/${data.trackingId}`;
 
   const itemsRows = data.items.map(item => `
     <tr style="border-bottom: 1px solid #f0ede6;">
@@ -254,17 +257,40 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
             <h2 style="font-size: 22px; font-weight: 800; color: #1c1917; margin: 0 0 12px 0;">
               ¡Hola, ${data.clientName}!
             </h2>
-            <p style="font-size: 15px; line-height: 1.6; color: #44403c; margin: 0 0 20px 0;">
-              Gracias por cotizar la digitalización de tus memorias familiares con nosotros. Hemos generado tu presupuesto oficial con entrega en memoria USB en formato MP4 de alta calidad.
+            <p style="font-size: 15px; line-height: 1.6; color: #44403c; margin: 0 0 18px 0;">
+              Gracias por cotizar la digitalización de tus memorias familiares con nosotros. Hemos generado tu presupuesto oficial en formato digital MP4 de alta fidelidad, listo para disfrutarse en Smart TVs, computadoras y celulares.
             </p>
 
-            <!-- PDF Attachment Callout -->
-            <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
-              <div style="font-size: 24px;">📄</div>
-              <div>
-                <strong style="color: #c2410c; font-size: 14px; display: block;">Presupuesto PDF Adjunto</strong>
-                <span style="color: #7c2d12; font-size: 12px;">Hemos adjuntado el documento formal en PDF a este correo para tu respaldo.</span>
-              </div>
+            <!-- PDF Attachment Callout / Interactive Button -->
+            <a href="${quoteUrl}" target="_blank" style="display: block; text-decoration: none; background: #fff7ed; border: 2px solid #ea580c; border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; transition: all 0.2s ease;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="36" valign="middle" style="font-size: 26px; padding-right: 12px;">
+                    📄
+                  </td>
+                  <td valign="middle">
+                    <strong style="color: #c2410c; font-size: 15px; display: block; margin-bottom: 3px;">
+                      Presupuesto PDF Adjunto — Clic para Ver o Descargar ↗
+                    </strong>
+                    <span style="color: #7c2d12; font-size: 12.5px; line-height: 1.4; display: block;">
+                      Hemos adjuntado el documento formal en PDF. Haz clic en este botón para ver tu cotización en línea o descargarla en cualquier momento.
+                    </span>
+                  </td>
+                  <td width="85" align="right" valign="middle" style="padding-left: 10px;">
+                    <span style="display: inline-block; background: #ea580c; color: #ffffff; padding: 8px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; text-align: center; text-decoration: none; white-space: nowrap;">
+                      Ver PDF ↗
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </a>
+
+            <!-- Dispositivo de Almacenamiento Info Card (USB / Disco Duro) -->
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 13px 16px; margin-bottom: 20px; font-size: 13px; line-height: 1.5; color: #166534;">
+              <strong style="display: block; font-size: 13.5px; margin-bottom: 4px; color: #15803d;">
+                💾 Dispositivo de Almacenamiento (Memoria USB / Disco Duro):
+              </strong>
+              Para recibir tus archivos MP4, <strong>el cliente proporciona su propia memoria USB o disco duro externo</strong> (mínimo 50GB recomendados) al entregar el material. Si no cuentas con una, <strong>puedes adquirir una USB 3.0 de 64GB con nosotros a precio de costo ($180 MXN)</strong>. DigiMemories <em>no regala ni incluye de forma gratuita</em> el dispositivo físico; la carga, organización y transferencia de los videos en MP4 no tiene ningún costo adicional.
             </div>
 
             <!-- Items Table -->
@@ -293,8 +319,19 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
                 <span>$${data.depositAmount.toLocaleString('es-MX')} MXN</span>
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 14px; color: #15803d; border-top: 1px dashed #d6ccc2; padding-top: 8px; margin-bottom: 14px;">
-                <span>Saldo Restante contra-entrega:</span>
+                <span>Saldo Restante Estimado contra-entrega*:</span>
                 <span>$${data.remainingAmount.toLocaleString('es-MX')} MXN</span>
+              </div>
+
+              <!-- Balance Adjustment Notice -->
+              <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 12px; line-height: 1.5; color: #92400e;">
+                <strong>⚠️ *Importante sobre el Saldo Restante y Duración:</strong><br>
+                El total cotizado y el saldo restante son <strong>estimaciones iniciales</strong> que se ajustan con total honestidad tras la digitalización en laboratorio:
+                <ul style="margin: 6px 0 4px 16px; padding: 0;">
+                  <li><strong>Cintas vacías o ilegibles:</strong> Si alguna cinta no contiene metraje o presenta daño físico irreparable que impida su lectura, <strong>NO se cobra y se descuenta íntegramente de tu saldo</strong>.</li>
+                  <li><strong>Horas adicionales (&gt;2h):</strong> La tarifa base incluye hasta 2 horas por cinta. Si alguna cinta supera las 2 horas de duración real, el tiempo extra se factura a <strong>$50 MXN por hora adicional</strong>.</li>
+                </ul>
+                Podrás consultar el avance cinta por cinta y tu saldo final exacto en nuestro portal de rastreo.
               </div>
 
               <!-- Logistics & Shipping Selection -->
@@ -344,10 +381,15 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
             </div>
 
             <!-- Action Button -->
-            <div style="text-align: center; margin: 30px 0 10px 0;">
-              <a href="${trackUrl}" target="_blank" class="btn-primary">
-                Ver Detalles en Portal de Rastreo →
+            <div style="text-align: center; margin: 26px 0 10px 0;">
+              <a href="${quoteUrl}" target="_blank" class="btn-primary" style="margin-bottom: 8px;">
+                📄 Ver y Descargar Presupuesto en Línea →
               </a>
+              <div style="margin-top: 10px;">
+                <a href="${trackUrl}" target="_blank" style="color: #ea580c; font-size: 13px; font-weight: 600; text-decoration: underline;">
+                  Consultar Estado en Portal de Rastreo →
+                </a>
+              </div>
             </div>
 
           </div>

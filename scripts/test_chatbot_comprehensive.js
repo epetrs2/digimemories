@@ -116,7 +116,15 @@ const EXPANDED_TEST_CASES = [
   { query: "Muchas gracias por la información, excelente servicio", expectContains: "placer ayudarte" },
   { query: "Hasta luego, que tengas buen día", expectContains: "Hasta pronto" },
   { query: "Me parece perfecto, sí me interesa", expectContains: "Excelente" },
-  { query: "mil gracias por todo", expectContains: "placer ayudarte" }
+  { query: "mil gracias por todo", expectContains: "placer ayudarte" },
+
+  // 15. Clarificación sobre Memoria USB y Dispositivos Físicos
+  { query: "ustedes regalan la memoria usb o yo tengo que llevar usb?", expectContains: "no regala ni proporciona gratis el dispositivo físico" },
+  { query: "¿ustedes ponen la memoria usb gratis?", expectContains: "no regala ni proporciona gratis el dispositivo físico" },
+
+  // 16. Clarificación sobre Ajuste del Saldo Restante (Cintas vacías y Horas extras)
+  { query: "¿el total restante puede cambiar si un casette no se digitalizo o esta vacio?", expectContains: "NO se te cobra y se descuenta" },
+  { query: "¿cambia el saldo si una cinta tiene mas de 2 horas?", expectContains: "$50 MXN por hora adicional" }
 ];
 
 console.log("=======================================================");

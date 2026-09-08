@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Film, Menu, X, ArrowRight, ShieldCheck } from 'lucide-react';
+import { destroyAdminSession } from '../lib/security';
 
 const Navbar = () => {
   const location = useLocation();
@@ -18,13 +19,20 @@ const Navbar = () => {
     return location.pathname === path;
   };
 
+  const handleNavClick = () => {
+    setMobileMenuOpen(false);
+    if (location.pathname.startsWith('/admin')) {
+      destroyAdminSession();
+    }
+  };
+
   return (
     <nav className="glass-nav" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
       <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '76px' }}>
         {/* Logo */}
         <Link 
           to="/" 
-          onClick={() => setMobileMenuOpen(false)}
+          onClick={handleNavClick}
           style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', textDecoration: 'none', color: 'var(--text-primary)' }}
         >
           <div style={{
@@ -57,6 +65,7 @@ const Navbar = () => {
               <Link
                 key={link.path}
                 to={link.path}
+                onClick={handleNavClick}
                 style={{
                   textDecoration: 'none',
                   fontWeight: active ? 600 : 500,
@@ -84,7 +93,7 @@ const Navbar = () => {
               </Link>
             );
           })}
-          <Link to="/contact" className="btn btn-primary" style={{ padding: '0.65rem 1.35rem', fontSize: '0.95rem' }}>
+          <Link to="/contact" onClick={handleNavClick} className="btn btn-primary" style={{ padding: '0.65rem 1.35rem', fontSize: '0.95rem' }}>
             Cotizar Cintas <ArrowRight size={16} />
           </Link>
           <Link 
@@ -134,7 +143,7 @@ const Navbar = () => {
             <Link
               key={link.path}
               to={link.path}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={handleNavClick}
               style={{
                 textDecoration: 'none',
                 fontWeight: isActive(link.path) ? 700 : 500,
@@ -149,7 +158,7 @@ const Navbar = () => {
           ))}
           <Link
             to="/contact"
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={handleNavClick}
             className="btn btn-primary"
             style={{ width: '100%', marginTop: '0.5rem' }}
           >

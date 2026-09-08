@@ -195,7 +195,7 @@ export const generateQuotePDF = (data: QuotePDFData): jsPDF => {
   doc.setFontSize(7.5);
   doc.setTextColor(...darkStone);
   doc.text(`• Anticipo de inicio (50%): $${depositAmount.toLocaleString('es-MX')} MXN`, 18, finalTableY + 21);
-  doc.text(`• Saldo contra-entrega (50%): $${remainingAmount.toLocaleString('es-MX')} MXN`, 18, finalTableY + 27);
+  doc.text(`• Saldo contra-entrega: $${remainingAmount.toLocaleString('es-MX')} MXN (estimado)`, 18, finalTableY + 27);
   doc.text(`• Método elegido: ${data.preferredPaymentMethod === 'mercadopago' ? 'Mercado Pago (Tarjeta/OXXO)' : 'Transferencia SPEI (BBVA)'}`, 18, finalTableY + 33);
   doc.text(`• BBVA CLABE: 012180015492837190 | Ref: #${data.trackingId}`, 18, finalTableY + 39);
   doc.text('• Beneficiario: DigiMemories México', 18, finalTableY + 45);
@@ -222,22 +222,41 @@ export const generateQuotePDF = (data: QuotePDFData): jsPDF => {
   } else {
     doc.text(`• Retorno gratis en pedidos de $${data.deliveryMethod === 'uber_flash' ? '1,500' : '2,000'}+ MXN`, 112, finalTableY + 27);
   }
-  doc.text('• Entrega en Memoria USB y devolución de cintas', 112, finalTableY + 33);
+  doc.text('• Almacenamiento: USB provista por cliente (o adquisición $180)', 112, finalTableY + 33);
   doc.text('• Rastrear orden con PIN en: digimemories.mx/track', 112, finalTableY + 39);
   doc.text('• Despacho seguro coordinado vía WhatsApp', 112, finalTableY + 45);
 
-  // 6. Legal Terms & Guarantees
+  // 6. Legal Terms, Storage Policy & Balance Adjustment Guarantees
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(...mutedGray);
-  doc.text('TÉRMINOS Y GARANTÍA DE PRESERVACIÓN:', 14, finalTableY + 56);
+  doc.setTextColor(...primaryColor);
+  doc.text('TÉRMINOS, CONDICIONES Y POLÍTICAS DE SERVICIO:', 14, finalTableY + 56);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.text('1. Cotización válida por 15 días a partir de la fecha de emisión.', 14, finalTableY + 61);
-  doc.text('2. El costo final se ajusta de acuerdo a la duración real comprobada de cada cinta durante la digitalización.', 14, finalTableY + 66);
-  doc.text('3. Si una cinta no puede reproducirse por daño físico extremo o moho severo, se te notificará y NO se cobrará esa unidad.', 14, finalTableY + 71);
-  doc.text('4. Estricta confidencialidad: tus videos se procesan de forma local y se eliminan temporalmente tras tu confirmación de entrega.', 14, finalTableY + 76);
+  doc.setFontSize(7);
+  doc.setTextColor(...darkStone);
+  doc.text('1. COTIZACIÓN VÁLIDA: Por 15 días naturales a partir de la fecha de emisión.', 14, finalTableY + 61);
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('2. DISPOSITIVO DE ALMACENAMIENTO (USB / DISCO DURO):', 14, finalTableY + 66);
+  doc.setFont('helvetica', 'normal');
+  doc.text('El cliente proporciona su memoria USB o disco duro externo (min. 50GB recomendados) al enviar sus cintas, o bien puede', 14, finalTableY + 70);
+  doc.text('adquirir una USB 3.0 de 64GB con nosotros a precio de costo ($180 MXN). DigiMemories NO regala ni incluye de forma gratuita', 14, finalTableY + 74);
+  doc.text('el medio físico; la carga, conversión y organización de los videos en MP4 no tiene ningún costo adicional.', 14, finalTableY + 78);
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('3. AJUSTE TRANSPARENTE DE SALDO RESTANTE Y DURACIÓN REAL:', 14, finalTableY + 83);
+  doc.setFont('helvetica', 'normal');
+  doc.text('El total cotizado y saldo restante son estimaciones iniciales que se ajustan con honestidad tras la captura en laboratorio:', 14, finalTableY + 87);
+  doc.text('• Cintas vacías o ilegibles: Si una cinta viene en blanco o con daño severo irreparable, NO se cobra y se descuenta del saldo.', 14, finalTableY + 91);
+  doc.text('• Duración mayor a 2h: La tarifa base incluye hasta 2 horas por cinta; cada hora adicional se factura a $50 MXN.', 14, finalTableY + 95);
+  doc.text('El saldo definitivo a liquidar antes del retorno se reflejará en el portal de rastreo en línea (digimemories.mx/track).', 14, finalTableY + 99);
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('4. CONFIDENCIALIDAD Y RETORNO:', 14, finalTableY + 104);
+  doc.setFont('helvetica', 'normal');
+  doc.text('El 100% de tus cintas originales se devuelven intactas. Tus archivos se procesan en terminales aisladas y se borran', 14, finalTableY + 108);
+  doc.text('de nuestros discos de trabajo una vez que confirmas la recepción satisfactoria de tu paquete.', 14, finalTableY + 112);
 
   // 7. Footer Stamp / Verification
   doc.setFillColor(...primaryColor);

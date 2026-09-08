@@ -98,6 +98,42 @@ export async function saveOrderToCloud(order: Order): Promise<boolean> {
   }
 }
 
+export async function fetchOrderByIdFromCloud(id: string): Promise<Order | null> {
+  if (!isSupabaseConfigured || !id) return null;
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id.trim())
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      clientName: data.client_name,
+      clientEmail: data.client_email,
+      clientPhone: data.client_phone,
+      createdAt: data.created_at,
+      estimatedTotal: Number(data.estimated_total) || 0,
+      depositPaid: Boolean(data.deposit_paid),
+      pin: data.pin,
+      status: data.status || 'pendiente',
+      completedAt: data.completed_at,
+      completionEmailSent: Boolean(data.completion_email_sent),
+      items: data.items || [],
+      addAudioVideoEnhancement: Boolean(data.add_audio_video_enhancement),
+      generalNotes: data.general_notes || '',
+      deliveryType: data.delivery_type,
+      preferredPaymentMethod: data.preferred_payment_method,
+      qualifiesForFreeReturn: Boolean(data.qualifies_for_free_return)
+    };
+  } catch (e) {
+    console.warn('[Supabase] Exception fetching order by ID:', e);
+    return null;
+  }
+}
+
 /**
  * -------------------------------------------------------------
  * 2. CHAT THREADS REPOSITORY (Realtime Multi-Device Messaging)

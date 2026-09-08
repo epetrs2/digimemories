@@ -84,6 +84,13 @@ const Admin: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Auto-logout for security when leaving the Admin section
+  useEffect(() => {
+    return () => {
+      destroyAdminSession();
+    };
+  }, []);
+
   const handleTabChange = (tab: 'chat' | 'orders' | 'business' | 'traffic' | 'emails' | 'metrics' | 'security') => {
     setActiveTab(tab);
     setSearchParams({ tab });

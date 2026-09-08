@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   ArrowRight, 
   CheckCircle2, 
@@ -10,7 +11,10 @@ import {
   Download,
   Truck,
   Car,
-  CreditCard
+  CreditCard,
+  FileText,
+  HardDrive,
+  AlertTriangle
 } from 'lucide-react';
 import { generateQuotePDF } from '../lib/pdfGenerator';
 import { saveOrder } from '../lib/store';
@@ -241,7 +245,9 @@ const Contact = () => {
       generalNotes: formData.details,
       deliveryType: (deliveryMethod === 'uber_flash' ? 'home_delivery' : 'national_shipping') as 'home_delivery' | 'national_shipping',
       preferredPaymentMethod,
-      qualifiesForFreeReturn
+      qualifiesForFreeReturn,
+      quoteItems: itemsForPdf,
+      extraHours
     };
     saveOrder(newOrder);
 
@@ -265,7 +271,8 @@ const Contact = () => {
         qualifiesForFreeReturn,
         tallerAddress: 'Recepción por Uber Flash (CDMX) y Paquetería Nacional (DHL / FedEx / Estafeta)',
         tallerPhone: '55 4888 9876',
-        trackUrl: `${window.location.origin}/track`
+        trackUrl: `${window.location.origin}/track`,
+        quoteUrl: `${window.location.origin}/quote/${newTrackingId}`
       },
       pdfDoc
     });
@@ -362,6 +369,60 @@ const Contact = () => {
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.5rem', margin: 0 }}>
               Podrás consultar el estado de cada cinta en tiempo real desde la pestaña <strong>Rastrear</strong>.
             </p>
+          </div>
+
+          {/* Action to view / download quote online */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
+            <Link 
+              to={`/quote/${trackingId}`}
+              className="btn btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.35rem', fontSize: '0.95rem', borderRadius: '12px' }}
+            >
+              <FileText size={18} /> Ver y Descargar Presupuesto en Línea ↗
+            </Link>
+            <button 
+              onClick={handleDownloadPDF}
+              className="btn btn-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', fontSize: '0.95rem', borderRadius: '12px' }}
+            >
+              <Download size={18} /> Descargar PDF Nuevamente
+            </button>
+          </div>
+
+          {/* Transparent Storage Policy Notice */}
+          <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '14px', padding: '1rem 1.25rem', marginBottom: '1.25rem', textAlign: 'left', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <div style={{ background: '#dcfce7', color: '#15803d', padding: '0.4rem', borderRadius: '8px' }}>
+              <HardDrive size={20} />
+            </div>
+            <div>
+              <strong style={{ display: 'block', fontSize: '0.95rem', color: '#14532d', marginBottom: '0.2rem' }}>
+                Aviso Importante: Dispositivo de Almacenamiento (USB / Disco Duro)
+              </strong>
+              <span style={{ fontSize: '0.85rem', color: '#166534', lineHeight: 1.5, display: 'block' }}>
+                Para recibir tus archivos digitales MP4, <strong>el cliente proporciona su propia memoria USB o disco duro externo</strong> (mín. 50GB recomendados) al hacernos llegar su material, o bien <strong>puede adquirir una USB 3.0 de 64GB con nosotros a precio de costo ($180 MXN)</strong>. DigiMemories <em>no regala</em> el dispositivo físico; la carga, conversión y organización de tus videos está 100% incluida.
+              </span>
+            </div>
+          </div>
+
+          {/* Transparent Balance Adjustment Notice */}
+          <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: '14px', padding: '1rem 1.25rem', marginBottom: '1.75rem', textAlign: 'left', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <div style={{ background: '#fef3c7', color: '#b45309', padding: '0.4rem', borderRadius: '8px' }}>
+              <AlertTriangle size={20} />
+            </div>
+            <div>
+              <strong style={{ display: 'block', fontSize: '0.95rem', color: '#78350f', marginBottom: '0.2rem' }}>
+                Aviso de Ajuste Transparente del Saldo Restante
+              </strong>
+              <span style={{ fontSize: '0.85rem', color: '#92400e', lineHeight: 1.5, display: 'block' }}>
+                El total cotizado y el saldo restante son <strong>estimaciones iniciales</strong>. Tras la captura técnica en laboratorio:
+                <br />
+                • <strong>Cintas vacías o con daño físico irreparable:</strong> NO se cobran y se descuentan de tu saldo final.
+                <br />
+                • <strong>Horas adicionales (&gt;2h):</strong> Cada cinta incluye hasta 2 horas; cada hora extra se factura a $50 MXN.
+                <br />
+                Podrás revisar el detalle cinta por cinta y tu saldo exacto en el portal de rastreo.
+              </span>
+            </div>
           </div>
 
           {/* Anticipo del 50% y Métodos de Pago */}
@@ -853,13 +914,32 @@ const Contact = () => {
               </div>
             </div>
 
+          {/* Policy Reminders (USB & Balance adjustment) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginTop: '2rem', marginBottom: '2rem' }}>
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '1rem 1.15rem', display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+              <HardDrive size={20} style={{ color: '#16a34a', flexShrink: 0, marginTop: '2px' }} />
+              <div style={{ fontSize: '0.82rem', color: '#166534', lineHeight: 1.5 }}>
+                <strong style={{ color: '#14532d', display: 'block', marginBottom: '2px' }}>Dispositivo USB / Disco Duro:</strong>
+                Tú proporcionas tu propia memoria USB o disco duro (min. 50GB), o puedes adquirir una USB de 64GB a costo ($180 MXN). DigiMemories no regala el medio físico.
+              </div>
+            </div>
+
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '1rem 1.15rem', display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+              <AlertTriangle size={20} style={{ color: '#d97706', flexShrink: 0, marginTop: '2px' }} />
+              <div style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>
+                <strong style={{ color: '#78350f', display: 'block', marginBottom: '2px' }}>Ajuste Transparente de Saldo:</strong>
+                El saldo final se ajusta en laboratorio: Cintas vacías o ilegibles NO se cobran y se descuentan; horas mayores a 2h se facturan a $50 MXN/hora.
+              </div>
+            </div>
+          </div>
+
           {/* Contact Details Form */}
-          <div id="contact-form" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '2.5rem' }}>
+          <div id="contact-form" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '2rem' }}>
             <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
               ¿A dónde enviamos tu presupuesto por correo?
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem' }}>
-              Te enviaremos el documento en PDF con validez de 15 días y tu folio de seguimiento.
+              Te enviaremos el documento formal en PDF con validez de 15 días y tu folio oficial.
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
