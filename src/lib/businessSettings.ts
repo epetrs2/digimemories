@@ -86,8 +86,8 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   bankPaymentInstructions: 'Favor de ingresar tu Número de Orden o PIN en el concepto de la transferencia y enviar comprobante a contactodigimemories@gmail.com o por WhatsApp.',
 
   mercadopagoEnabled: true,
-  mercadopagoAccessToken: '',
-  mercadopagoPublicKey: '',
+  mercadopagoAccessToken: 'APP_USR-1691694472433668-090816-2dba2cc0bf20589ac9b9d0d2846665f1-256102028',
+  mercadopagoPublicKey: 'APP_USR-42dc43f2-be28-4b70-ad33-a77ee464a7bd',
   mercadopagoPaymentLink: 'https://link.mercadopago.com.mx/digimemories',
   mercadopagoSandbox: false,
 
