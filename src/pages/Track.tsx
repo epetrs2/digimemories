@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getOrders, calculateFinalTotal } from '../lib/store';
 import type { Order } from '../lib/store';
 import { 
@@ -9,16 +9,37 @@ import {
   Clock, 
   Sparkles, 
   Download, 
-  Truck
+  Truck,
+  RefreshCw
 } from 'lucide-react';
 import { generateQuotePDF } from '../lib/pdfGenerator';
 import { checkLockoutStatus, recordFailedLoginAttempt, resetFailedAttempts } from '../lib/security';
+import { createMercadoPagoPreference, handleMercadoPagoCallback } from '../lib/mercadoPagoService';
 
 const Track: React.FC = () => {
   const [trackingId, setTrackingId] = useState('');
   const [pin, setPin] = useState('');
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState('');
+  const [isPayingWithMp, setIsPayingWithMp] = useState(false);
+  const [mpSuccessMessage, setMpSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      handleMercadoPagoCallback(searchParams).then(res => {
+        if (res.detected && res.approved && res.orderId) {
+          setMpSuccessMessage(`🎉 ¡Pago registrado con éxito en Mercado Pago para la orden #${res.orderId}!`);
+          const orders = getOrders();
+          const found = orders.find(o => o.id === res.orderId);
+          if (found) {
+            setOrder(found);
+            setTrackingId(found.id);
+          }
+        }
+      });
+    }
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,6 +225,14 @@ const Track: React.FC = () => {
         </div>
       </div>
 
+      {/* Mercado Pago Payment Success Banner */}
+      {mpSuccessMessage && (
+        <div className="glass" style={{ padding: '1.25rem 1.75rem', background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '16px', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#15803d', fontWeight: 700 }}>
+          <CheckCircle size={22} color="#16a34a" />
+          <span>{mpSuccessMessage}</span>
+        </div>
+      )}
+
       {/* Completion Celebration Banner */}
       {isCompleted && (
         <div className="glass" style={{ padding: '1.75rem 2rem', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '20px', marginBottom: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
@@ -251,7 +280,7 @@ const Track: React.FC = () => {
         {/* Financial Breakdown Card */}
         <div className="glass" style={{ padding: '2.25rem', borderRadius: '20px', background: '#ffffff' }}>
           <h3 style={{ marginBottom: '1.25rem', fontSize: '1.15rem', fontWeight: 700 }}>
-            Resumen Financiero Transparente
+            Resumen Financiero Detallado
           </h3>
           
           <div style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(214, 204, 194, 0.6)' }}>
@@ -276,16 +305,38 @@ const Track: React.FC = () => {
                   💳 Opciones para Liquidar Saldo (${remainingBalance} MXN):
                 </div>
                 <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
-                  <a
-                    href={`https://link.mercadopago.com.mx/digimemories?amount=${remainingBalance}&description=Liquidacion+Orden+${order.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    disabled={isPayingWithMp}
+                    onClick={async () => {
+                      if (!order) return;
+                      setIsPayingWithMp(true);
+                      try {
+                        const pref = await createMercadoPagoPreference({
+                          orderId: order.id,
+                          title: `Liquidación Saldo - Orden #${order.id}`,
+                          amount: remainingBalance,
+                          clientEmail: order.clientEmail,
+                          clientName: order.clientName
+                        });
+                        if (pref.success && pref.initPoint) {
+                          window.location.href = pref.initPoint;
+                        } else {
+                          alert(pref.error || 'No se pudo generar la orden de pago. Intenta nuevamente.');
+                        }
+                      } catch (e: any) {
+                        alert(`Error al conectar con Mercado Pago: ${e?.message || e}`);
+                      } finally {
+                        setIsPayingWithMp(false);
+                      }
+                    }}
                     style={{
                       padding: '0.55rem 0.95rem',
                       background: '#009ee3',
                       color: '#ffffff',
                       borderRadius: '10px',
-                      textDecoration: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
                       fontSize: '0.82rem',
                       fontWeight: 700,
                       display: 'inline-flex',
@@ -293,8 +344,9 @@ const Track: React.FC = () => {
                       gap: '5px'
                     }}
                   >
-                    Pagar con Mercado Pago →
-                  </a>
+                    {isPayingWithMp ? <RefreshCw size={14} className="animate-spin" /> : null}
+                    {isPayingWithMp ? 'Generando...' : 'Pagar con Mercado Pago →'}
+                  </button>
                   <button
                     type="button"
                     onClick={() => {

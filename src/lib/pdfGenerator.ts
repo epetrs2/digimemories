@@ -222,7 +222,7 @@ export const generateQuotePDF = (data: QuotePDFData): jsPDF => {
   } else {
     doc.text(`• Retorno gratis en pedidos de $${data.deliveryMethod === 'uber_flash' ? '1,500' : '2,000'}+ MXN`, 112, finalTableY + 27);
   }
-  doc.text('• Almacenamiento: USB provista por cliente (o adquisición $180)', 112, finalTableY + 33);
+  doc.text('• Almacenamiento: Memoria USB / Disco provisto por cliente', 112, finalTableY + 33);
   doc.text('• Rastrear orden con PIN en: digimemories.mx/track', 112, finalTableY + 39);
   doc.text('• Despacho seguro coordinado vía WhatsApp', 112, finalTableY + 45);
 
@@ -240,12 +240,12 @@ export const generateQuotePDF = (data: QuotePDFData): jsPDF => {
   doc.setFont('helvetica', 'bold');
   doc.text('2. DISPOSITIVO DE ALMACENAMIENTO (USB / DISCO DURO):', 14, finalTableY + 66);
   doc.setFont('helvetica', 'normal');
-  doc.text('El cliente proporciona su memoria USB o disco duro externo (min. 50GB recomendados) al enviar sus cintas, o bien puede', 14, finalTableY + 70);
-  doc.text('adquirir una USB 3.0 de 64GB con nosotros a precio de costo ($180 MXN). DigiMemories NO regala ni incluye de forma gratuita', 14, finalTableY + 74);
-  doc.text('el medio físico; la carga, conversión y organización de los videos en MP4 no tiene ningún costo adicional.', 14, finalTableY + 78);
+  doc.text('El cliente proporciona su memoria USB o disco duro externo (mínimo 50GB recomendados) al enviar sus cintas.', 14, finalTableY + 70);
+  doc.text('DigiMemories no regala ni proporciona el medio físico; la carga, conversión y organización de los videos en MP4', 14, finalTableY + 74);
+  doc.text('de alta definición está 100% incluida sin costo adicional.', 14, finalTableY + 78);
 
   doc.setFont('helvetica', 'bold');
-  doc.text('3. AJUSTE TRANSPARENTE DE SALDO RESTANTE Y DURACIÓN REAL:', 14, finalTableY + 83);
+  doc.text('3. AJUSTE DE SALDO RESTANTE Y DURACIÓN REAL:', 14, finalTableY + 83);
   doc.setFont('helvetica', 'normal');
   doc.text('El total cotizado y saldo restante son estimaciones iniciales que se ajustan con honestidad tras la captura en laboratorio:', 14, finalTableY + 87);
   doc.text('• Cintas vacías o ilegibles: Si una cinta viene en blanco o con daño severo irreparable, NO se cobra y se descuenta del saldo.', 14, finalTableY + 91);

@@ -55,7 +55,7 @@ const EXPANDED_TEST_CASES = [
   { query: "¿Pasan cassettes de audio de música o voz?", expectContains: "$100 MXN" },
   { query: "¿Pueden escanear fotos familiares viejas y álbumes?", expectContains: "600 DPI" },
   { query: "tienen adaptadores para rollos de 16mm?", expectContains: "NO procesamos" },
-  { query: "digitalizan minidv y video8?", expectContains: "Digitalizamos los siguientes formatos oficiales" },
+  { query: "digitalizan minidv y video8?", expectContains: "Digitalizamos los siguientes formatos compatibles" },
 
   // 5. Medios de Entrega y Compatibilidad
   { query: "¿Cómo entregan los archivos y se puede ver en Smart TV?", expectContains: "MP4 universal" },

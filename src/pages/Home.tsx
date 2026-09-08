@@ -117,7 +117,7 @@ const Home = () => {
               }}>
                 <div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-                    Tarifa Transparente
+                    Tarifas Claras
                   </div>
                   <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                     Desde $200 MXN <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ cinta</span>
@@ -295,7 +295,7 @@ const Home = () => {
                 date: "Hace 2 semanas" 
               },
               { 
-                text: "El cotizador en línea es súper transparente. Sabía exactamente cuánto iba a pagar antes de mandar el material. Y la entrega en USB quedó impecable.", 
+                text: "El cotizador en línea es súper claro y exacto. Sabía exactamente cuánto iba a pagar antes de mandar el material. Y la entrega en USB quedó impecable.", 
                 author: "Alejandro Ruiz", 
                 city: "Guadalajara",
                 date: "Hace 1 mes" 
@@ -358,7 +358,7 @@ const Home = () => {
                 ¿Cómo recibo mis videos digitalizados?
               </h4>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', margin: 0 }}>
-                La entrega se realiza en formato digital MP4 en una memoria USB o Disco Duro que tú nos proporciones (o puedes adquirir una con nosotros). Además, te devolvemos intactas todas tus cintas originales.
+                La entrega se realiza en formato digital MP4 en una memoria USB o Disco Duro que tú nos proporciones al enviar tus cintas. Además, te devolvemos intactas todas tus cintas originales.
               </p>
             </div>
 
@@ -367,7 +367,7 @@ const Home = () => {
                 ¿Qué pasa si una cinta dura más de 2 horas?
               </h4>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', margin: 0 }}>
-                El costo base de $200 MXN cubre las primeras 2 horas completas de digitalización. Si la cinta dura más tiempo, cada hora adicional tiene un costo de solo $50 MXN, el cual se reporta transparentemente en tu portal de rastreo.
+                El costo base de $200 MXN cubre las primeras 2 horas completas de digitalización. Si la cinta dura más tiempo, cada hora adicional tiene un costo de solo $50 MXN, el cual se detalla de inmediato en tu portal de rastreo.
               </p>
             </div>
 
@@ -403,7 +403,7 @@ const Home = () => {
               No dejes que tus recuerdos se apaguen.
             </h2>
             <p style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', marginBottom: '2.5rem', maxWidth: '600px', margin: '0 auto 2.5rem auto', lineHeight: '1.7' }}>
-              Cotiza en menos de 1 minuto con nuestra calculadora instantánea y obtén tu presupuesto oficial en PDF.
+              Cotiza en menos de 1 minuto con nuestra calculadora instantánea y obtén tu presupuesto en PDF.
             </p>
             <Link to="/contact" className="btn btn-primary animate-pulse-glow" style={{ padding: '1.15rem 3rem', fontSize: '1.15rem' }}>
               Iniciar Cotización Sin Compromiso <ArrowRight size={20} />

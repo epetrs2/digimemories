@@ -19,6 +19,7 @@ import {
 import { generateQuotePDF } from '../lib/pdfGenerator';
 import { saveOrder } from '../lib/store';
 import { sendQuoteEmailWithPdf } from '../lib/emailService';
+import { createMercadoPagoPreference } from '../lib/mercadoPagoService';
 
 const FORMATS = [
   { 
@@ -94,6 +95,7 @@ const Contact = () => {
   const [emailStatusText, setEmailStatusText] = useState('');
   const [trackingId, setTrackingId] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isPayingWithMp, setIsPayingWithMp] = useState(false);
 
   const updateQuantity = (id: string, amount: number) => {
     const newQty = Math.max(0, amount);
@@ -211,7 +213,7 @@ const Contact = () => {
 
     const qualifiesForFreeReturn = deliveryMethod === 'uber_flash' ? total >= 1500 : total >= 2000;
 
-    // 2. Generate and Download Redesigned Luxury PDF
+    // 2. Generate Redesigned Luxury PDF (no se fuerza descarga automática para respetar la experiencia de usuario)
     const pdfDoc = generateQuotePDF({
       trackingId: newTrackingId,
       clientName: formData.name,
@@ -226,8 +228,6 @@ const Contact = () => {
       enhanceAudioVideo,
       total
     });
-
-    pdfDoc.save(`Cotizacion_DigiMemories_#${newTrackingId}.pdf`);
 
     // 3. Save Order to mock database
     const newOrder = {
@@ -389,7 +389,7 @@ const Contact = () => {
             </button>
           </div>
 
-          {/* Transparent Storage Policy Notice */}
+          {/* Storage Policy Notice */}
           <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '14px', padding: '1rem 1.25rem', marginBottom: '1.25rem', textAlign: 'left', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
             <div style={{ background: '#dcfce7', color: '#15803d', padding: '0.4rem', borderRadius: '8px' }}>
               <HardDrive size={20} />
@@ -399,19 +399,19 @@ const Contact = () => {
                 Aviso Importante: Dispositivo de Almacenamiento (USB / Disco Duro)
               </strong>
               <span style={{ fontSize: '0.85rem', color: '#166534', lineHeight: 1.5, display: 'block' }}>
-                Para recibir tus archivos digitales MP4, <strong>el cliente proporciona su propia memoria USB o disco duro externo</strong> (mín. 50GB recomendados) al hacernos llegar su material, o bien <strong>puede adquirir una USB 3.0 de 64GB con nosotros a precio de costo ($180 MXN)</strong>. DigiMemories <em>no regala</em> el dispositivo físico; la carga, conversión y organización de tus videos está 100% incluida.
+                Para recibir tus archivos digitales MP4, <strong>el cliente proporciona su propia memoria USB o disco duro externo</strong> (mín. 50GB recomendados) al hacernos llegar su material. DigiMemories <em>no regala ni proporciona</em> el dispositivo físico; la carga, conversión y organización de tus videos está 100% incluida.
               </span>
             </div>
           </div>
 
-          {/* Transparent Balance Adjustment Notice */}
+          {/* Balance Adjustment Notice */}
           <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: '14px', padding: '1rem 1.25rem', marginBottom: '1.75rem', textAlign: 'left', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
             <div style={{ background: '#fef3c7', color: '#b45309', padding: '0.4rem', borderRadius: '8px' }}>
               <AlertTriangle size={20} />
             </div>
             <div>
               <strong style={{ display: 'block', fontSize: '0.95rem', color: '#78350f', marginBottom: '0.2rem' }}>
-                Aviso de Ajuste Transparente del Saldo Restante
+                Aviso de Ajuste del Saldo Restante
               </strong>
               <span style={{ fontSize: '0.85rem', color: '#92400e', lineHeight: 1.5, display: 'block' }}>
                 El total cotizado y el saldo restante son <strong>estimaciones iniciales</strong>. Tras la captura técnica en laboratorio:
@@ -451,10 +451,29 @@ const Contact = () => {
                   </div>
                 </div>
 
-                <a 
-                  href={`https://link.mercadopago.com.mx/digimemories?amount=${Math.round(total * 0.5)}&description=Anticipo+Orden+${trackingId}`}
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                <button 
+                  onClick={async () => {
+                    setIsPayingWithMp(true);
+                    try {
+                      const pref = await createMercadoPagoPreference({
+                        orderId: trackingId,
+                        title: `Anticipo 50% - Orden #${trackingId}`,
+                        amount: Math.round(total * 0.5),
+                        clientEmail: formData.email,
+                        clientName: formData.name
+                      });
+                      if (pref.success && pref.initPoint) {
+                        window.open(pref.initPoint, '_blank', 'noopener,noreferrer');
+                      } else {
+                        alert(pref.error || 'No se pudo generar la orden de pago. Intenta de nuevo.');
+                      }
+                    } catch (e: any) {
+                      alert(`Error al conectar con Mercado Pago: ${e?.message || e}`);
+                    } finally {
+                      setIsPayingWithMp(false);
+                    }
+                  }}
+                  disabled={isPayingWithMp}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -466,14 +485,16 @@ const Contact = () => {
                     fontSize: '0.85rem',
                     padding: '0.65rem 1rem',
                     borderRadius: '10px',
-                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    border: 'none',
                     marginTop: '1rem',
                     transition: 'all 0.2s ease',
                     boxShadow: '0 2px 6px rgba(0, 158, 227, 0.25)'
                   }}
                 >
-                  Pagar ${Math.round(total * 0.5)} con Mercado Pago →
-                </a>
+                  {isPayingWithMp ? <RefreshCw size={14} className="animate-spin" /> : null}
+                  {isPayingWithMp ? 'Generando orden...' : `Pagar $${Math.round(total * 0.5)} con Mercado Pago →`}
+                </button>
               </div>
 
               {/* Método 2: Transferencia SPEI */}
@@ -559,8 +580,8 @@ const Contact = () => {
           <h1 style={{ fontSize: 'clamp(2.3rem, 5vw, 3.5rem)', marginBottom: '1rem', letterSpacing: '-0.02em' }}>
             Calcula el costo de tus <span className="text-gradient">recuerdos</span>
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.15rem', lineHeight: '1.7' }}>
-            Selecciona la cantidad de formatos que tienes en casa. El presupuesto se calcula al instante de forma 100% transparente y se enviará a tu correo en PDF.
+          <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto', fontSize: '1.05rem', lineHeight: '1.6' }}>
+            Selecciona la cantidad de formatos que tienes en casa. El presupuesto se calcula al instante y se enviará a tu correo en PDF.
           </p>
 
           {/* Quick Presets */}
@@ -920,14 +941,14 @@ const Contact = () => {
               <HardDrive size={20} style={{ color: '#16a34a', flexShrink: 0, marginTop: '2px' }} />
               <div style={{ fontSize: '0.82rem', color: '#166534', lineHeight: 1.5 }}>
                 <strong style={{ color: '#14532d', display: 'block', marginBottom: '2px' }}>Dispositivo USB / Disco Duro:</strong>
-                Tú proporcionas tu propia memoria USB o disco duro (min. 50GB), o puedes adquirir una USB de 64GB a costo ($180 MXN). DigiMemories no regala el medio físico.
+                Tú proporcionas tu propia memoria USB o disco duro (min. 50GB) al entregarnos tu material. DigiMemories no regala ni proporciona el medio físico.
               </div>
             </div>
 
             <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '1rem 1.15rem', display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
               <AlertTriangle size={20} style={{ color: '#d97706', flexShrink: 0, marginTop: '2px' }} />
               <div style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>
-                <strong style={{ color: '#78350f', display: 'block', marginBottom: '2px' }}>Ajuste Transparente de Saldo:</strong>
+                <strong style={{ color: '#78350f', display: 'block', marginBottom: '2px' }}>Ajuste de Saldo:</strong>
                 El saldo final se ajusta en laboratorio: Cintas vacías o ilegibles NO se cobran y se descuentan; horas mayores a 2h se facturan a $50 MXN/hora.
               </div>
             </div>
@@ -939,7 +960,7 @@ const Contact = () => {
               ¿A dónde enviamos tu presupuesto por correo?
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem' }}>
-              Te enviaremos el documento formal en PDF con validez de 15 días y tu folio oficial.
+              Te enviaremos el documento formal en PDF con validez de 15 días y tu folio de seguimiento.
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>

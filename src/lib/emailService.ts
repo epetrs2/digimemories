@@ -203,7 +203,7 @@ export async function sendQuoteEmailWithPdf(params: {
   return sendEmailViaInternalServer({
     toEmail: params.quoteData.clientEmail,
     toName: params.quoteData.clientName,
-    subject: `📄 Cotización Oficial #${params.quoteData.trackingId} - DigiMemories Preservación`,
+    subject: `📄 Cotización #${params.quoteData.trackingId} - DigiMemories Preservación`,
     html,
     pdfDoc: params.pdfDoc,
     pdfFilename: `Cotizacion_DigiMemories_${params.quoteData.trackingId}.pdf`,

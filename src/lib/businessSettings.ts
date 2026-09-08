@@ -20,7 +20,7 @@ export interface BusinessSettings {
   businessHoursWeekdays: string;
   businessHoursWeekend: string;
 
-  // 3. Contacto Oficial
+  // 3. Canales de Contacto
   contactEmail: string;
   contactPhone: string;
   contactWhatsApp: string;
@@ -34,14 +34,21 @@ export interface BusinessSettings {
   bankAccountNumber: string;
   bankPaymentInstructions: string;
 
-  // 5. Precios y Tarifas Oficiales ($ MXN)
+  // 4b. Configuración de Mercado Pago
+  mercadopagoEnabled: boolean;
+  mercadopagoAccessToken: string;
+  mercadopagoPublicKey: string;
+  mercadopagoPaymentLink: string;
+  mercadopagoSandbox: boolean;
+
+  // 5. Precios y Tarifas Base ($ MXN)
   priceTape: number;
   priceDvd: number;
   priceReel: number;
   priceAudioCassette: number;
   pricePhotoScan: number;
   priceExtraHour: number;
-  priceUsb64gb: number;
+  priceUsb64gb?: number;
   priceLocalDeliveryCdmx: number;
   priceNationalShippingDhl: number;
 
@@ -78,13 +85,19 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   bankAccountNumber: '1549283719',
   bankPaymentInstructions: 'Favor de ingresar tu Número de Orden o PIN en el concepto de la transferencia y enviar comprobante a contactodigimemories@gmail.com o por WhatsApp.',
 
+  mercadopagoEnabled: true,
+  mercadopagoAccessToken: '',
+  mercadopagoPublicKey: '',
+  mercadopagoPaymentLink: 'https://link.mercadopago.com.mx/digimemories',
+  mercadopagoSandbox: false,
+
   priceTape: 150,
   priceDvd: 120,
   priceReel: 250,
   priceAudioCassette: 100,
   pricePhotoScan: 10,
   priceExtraHour: 50,
-  priceUsb64gb: 180,
+  priceUsb64gb: 0,
   priceLocalDeliveryCdmx: 120,
   priceNationalShippingDhl: 220,
 

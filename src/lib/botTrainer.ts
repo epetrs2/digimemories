@@ -264,7 +264,7 @@ export function tryParseQuoteInquiry(rawInput: string): BotReplyResult | null {
       }
 
       return {
-        text: `¡Excelente! Con base en tu material, aquí tienes tu **cálculo estimado al instante**:\n\n${details.join('\n')}\n\n💰 **Total Estimado:** **$${subtotal.toLocaleString('es-MX')} MXN**\n💳 **Anticipo para Iniciar (50%):** **$${deposit.toLocaleString('es-MX')} MXN**\n⚖️ **Saldo Restante Estimado (50%):** **$${(subtotal - deposit).toLocaleString('es-MX')} MXN** *(se ajusta según duración real: cintas vacías o ilegibles NO se cobran y se descuentan; horas >2h a $50 MXN/h)*.\n💾 **Almacenamiento:** El cliente proporciona su memoria USB o disco duro (mín. 50GB), o adquiere una USB 3.0 de 64GB a costo ($180 MXN). DigiMemories no regala el medio físico; la carga en MP4 universal está 100% incluida.\n📼 **Devolución:** El 100% de tus cintas originales se te devuelven intactas.${freeShippingPromo}\n\n¿Deseas generar tu cotización formal en PDF con folio de rastreo o agendar tu entrega?`,
+        text: `¡Excelente! Con base en tu material, aquí tienes tu **cálculo estimado al instante**:\n\n${details.join('\n')}\n\n💰 **Total Estimado:** **$${subtotal.toLocaleString('es-MX')} MXN**\n💳 **Anticipo para Iniciar (50%):** **$${deposit.toLocaleString('es-MX')} MXN**\n⚖️ **Saldo Restante Estimado (50%):** **$${(subtotal - deposit).toLocaleString('es-MX')} MXN** *(se ajusta según duración real: cintas vacías o ilegibles NO se cobran y se descuentan; horas >2h a $50 MXN/h)*.\n💾 **Almacenamiento:** El cliente proporciona su memoria USB o disco duro (mín. 50GB). DigiMemories no regala ni proporciona el medio físico; la carga en MP4 universal está 100% incluida.\n📼 **Devolución:** El 100% de tus cintas originales se te devuelven intactas.${freeShippingPromo}\n\n¿Deseas generar tu cotización formal en PDF con folio de rastreo o agendar tu entrega?`,
         quickReplies: [
           { label: '📄 Generar Presupuesto en PDF', action: 'NAVIGATE_CONTACT' },
           { label: '🧮 Abrir Calculadora Completa', action: 'NAVIGATE_CALCULATOR' },
@@ -298,9 +298,9 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       if (parsed) return parsed;
 
       return {
-        text: `¡Con mucho gusto te ayudamos a cotizar! Nuestras tarifas oficiales son:\n\n📹 **Cintas de Video (VHS, Betamax, Hi8, Video8, Digital8, MiniDV):** $200 MXN / cinta (hasta 2 horas completas en MP4).\n💿 **Discos DVD y Mini DVD:** $150 MXN / disco.\n📻 **Cassettes de Audio:** $100 MXN / cassette.\n📸 **Fotografías Sueltas (600 DPI):** $7 MXN / foto.\n📚 **Álbum Familiar Completo:** $1,200 MXN.\n✨ **Mejora Premium de Audio/Video (Opcional):** $150 MXN / cinta.\n\n💾 **Almacenamiento:** Nos proporcionas tu memoria USB o disco duro externo (mín. 50GB recomendados), o bien puedes adquirir una USB 3.0 de 64GB con nosotros a precio de costo ($180 MXN). DigiMemories no regala el dispositivo físico, pero la carga y organización en MP4 no tiene costo adicional.\n⚖️ **Ajuste de Saldo:** El presupuesto es estimado; cintas vacías o ilegibles NO se cobran y se descuentan; horas mayores a 2h se facturan a $50 MXN/hora.\n\n¿Cuántas cintas, discos o fotos tienes aproximadamente? *(Ejemplo: "Tengo 4 cintas VHS y 2 DVDs")*.`,
+        text: `¡Con mucho gusto te ayudamos a cotizar! Nuestras tarifas son:\n\n📹 **Cintas de Video (VHS, Betamax, Hi8, Video8, Digital8, MiniDV):** $200 MXN / cinta (hasta 2 horas completas en MP4).\n💿 **Discos DVD y Mini DVD:** $150 MXN / disco.\n📻 **Cassettes de Audio:** $100 MXN / cassette.\n📸 **Fotografías Sueltas (600 DPI):** $7 MXN / foto.\n📚 **Álbum Familiar Completo:** $1,200 MXN.\n✨ **Mejora Premium de Audio/Video (Opcional):** $150 MXN / cinta.\n\n💾 **Almacenamiento:** Nos proporcionas tu memoria USB o disco duro externo (mín. 50GB recomendados). DigiMemories no regala ni proporciona el dispositivo físico, pero la carga y organización en MP4 no tiene costo adicional.\n⚖️ **Ajuste de Saldo:** El presupuesto es estimado; cintas vacías o ilegibles NO se cobran y se descuentan; horas mayores a 2h se facturan a $50 MXN/hora.\n\n¿Cuántas cintas, discos o fotos tienes aproximadamente? *(Ejemplo: "Tengo 4 cintas VHS y 2 DVDs")*.`,
         quickReplies: [
-          { label: '🧮 Abrir Calculadora Oficial', action: 'NAVIGATE_CALCULATOR' },
+          { label: '🧮 Abrir Calculadora', action: 'NAVIGATE_CALCULATOR' },
           { label: '📄 Generar Presupuesto PDF', action: 'NAVIGATE_CONTACT' },
           { label: '📦 ¿Qué formatos aceptan?', action: 'FORMATS_INFO' },
           { label: '👤 Hablar con un Asesor', action: 'REQUEST_HUMAN' }
@@ -319,7 +319,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'cuanto cobran', 'cuanto vale', 'lista de precios', 'tabla de precios', 'hora extra'
     ],
     response: () => ({
-      text: `Nuestras tarifas transparentes de digitalización son:\n\n📼 **Cintas de Video (VHS normal, Beta, Hi8, MiniDV, Video8):** **$200 MXN** / cinta (cubre hasta 2h completas de grabación).\n💿 **Discos Ópticos (DVD, Mini DVD, CD):** **$150 MXN** / disco.\n📻 **Cassettes de Audio (Música / Voz):** **$100 MXN** / cassette.\n📸 **Fotografías Sueltas (600 DPI):** **$7 MXN** / foto escaneada en alta resolución.\n📚 **Álbum Familiar Completo:** **$1,200 MXN** (hasta 200 fotos).\n⏳ **Hora adicional de cinta (>2h):** **$50 MXN**.\n✨ **Remasterización y Mejora de Color/Audio:** **$150 MXN** / cinta.\n\n💾 **Dispositivo de Almacenamiento:** El cliente proporciona su propia memoria USB o disco duro (mín. 50GB), o puede adquirir una USB 3.0 de 64GB con nosotros a costo ($180 MXN). DigiMemories no regala el dispositivo físico.\n⚖️ **Ajuste de Saldo:** Cintas vacías o ilegibles NO se cobran y se descuentan de tu saldo final.\n📼 **Devolución:** El 100% de tus recuerdos originales se te devuelven intactos.`,
+      text: `Nuestras tarifas de digitalización son:\n\n📼 **Cintas de Video (VHS normal, Beta, Hi8, MiniDV, Video8):** **$200 MXN** / cinta (cubre hasta 2h completas de grabación).\n💿 **Discos Ópticos (DVD, Mini DVD, CD):** **$150 MXN** / disco.\n📻 **Cassettes de Audio (Música / Voz):** **$100 MXN** / cassette.\n📸 **Fotografías Sueltas (600 DPI):** **$7 MXN** / foto escaneada en alta resolución.\n📚 **Álbum Familiar Completo:** **$1,200 MXN** (hasta 200 fotos).\n⏳ **Hora adicional de cinta (>2h):** **$50 MXN**.\n✨ **Remasterización y Mejora de Color/Audio:** **$150 MXN** / cinta.\n\n💾 **Dispositivo de Almacenamiento:** El cliente proporciona su propia memoria USB o disco duro (mín. 50GB). DigiMemories no regala ni proporciona el dispositivo físico.\n⚖️ **Ajuste de Saldo:** Cintas vacías o ilegibles NO se cobran y se descuentan de tu saldo final.\n📼 **Devolución:** El 100% de tus recuerdos originales se te devuelven intactas.`,
       quickReplies: [
         { label: '🧮 Calcular mi Presupuesto', action: 'NAVIGATE_CALCULATOR' },
         { label: '⏱️ Tiempos de Entrega', action: 'TURNAROUND_TIME' },
@@ -379,7 +379,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'digitalizan minidv', 'digitalizan betamax', 'digitalizan video8', 'digitalizan hi8'
     ],
     response: () => ({
-      text: `Digitalizamos los siguientes formatos oficiales:\n\n📼 **Cintas de Video:**\n• VHS Estándar Normal\n• Betamax (Beta I, II, III)\n• Video8, Hi8 y Digital8 (8mm videocámaras)\n• MiniDV\n\n💿 **Discos Ópticos:**\n• DVD, DVD-R, DVD+R y Mini DVD (Handycam)\n\n📻 **Audio:**\n• Cassettes de audio convencionales (música y grabaciones de voz a $100 MXN)\n\n📸 **Fotografías:**\n• Fotos impresas en papel (escaneo plano a 600 DPI a $7 MXN)\n• Álbumes fotográficos completos encuadernados ($1,200 MXN)\n\n⚠️ *Aclaración:* Únicamente procesamos **VHS estándar normal** (no VHS-C ni S-VHS). No procesamos película de carrete de celuloide (8mm cine / Super 8).`,
+      text: `Digitalizamos los siguientes formatos compatibles:\n\n📼 **Cintas de Video:**\n• VHS Estándar Normal\n• Betamax (Beta I, II, III)\n• Video8, Hi8 y Digital8 (8mm videocámaras)\n• MiniDV\n\n💿 **Discos Ópticos:**\n• DVD, DVD-R, DVD+R y Mini DVD (Handycam)\n\n📻 **Audio:**\n• Cassettes de audio convencionales (música y grabaciones de voz a $100 MXN)\n\n📸 **Fotografías:**\n• Fotos impresas en papel (escaneo plano a 600 DPI a $7 MXN)\n• Álbumes fotográficos completos encuadernados ($1,200 MXN)\n\n⚠️ *Aclaración:* Únicamente procesamos **VHS estándar normal** (no VHS-C ni S-VHS). No procesamos película de carrete de celuloide (8mm cine / Super 8).`,
       quickReplies: [
         { label: '💰 Cotizar mis Formatos', action: 'NAVIGATE_CALCULATOR' },
         { label: '🛡️ ¿Qué pasa si tienen moho?', action: 'MOLD_SAFETY' },
@@ -455,7 +455,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'me regresan', 'mis cintas originales', 'material original', 'iphone', 'smart tv'
     ],
     response: () => ({
-      text: `💻 **Dispositivo de Almacenamiento, Entrega Digital y Devolución:**\n\n1. 📼 **Devolución de tus Cintas:** El **100% de tus cintas y recuerdos originales se te regresan intactas** para que las conserves como reliquia familiar.\n2. 💾 **Memoria USB o Disco Duro:** **El cliente proporciona su propio dispositivo físico** (mínimo 50GB recomendados) al enviar sus cintas, o bien **puede adquirir una USB 3.0 de 64GB con nosotros a precio de costo ($180 MXN)**. DigiMemories *no regala ni incluye gratis* el dispositivo físico, pero la entrega de todos tus archivos en formato **MP4 universal (H.264 / AAC)** de alta definición y su organización por carpetas está 100% incluida sin costo adicional.\n3. 📺 **Compatibilidad Total:**\n   • **Smart TVs:** Samsung, LG, Sony, Roku, Hisense, etc.\n   • **Computadoras:** Mac, Windows y Linux.\n   • **Celulares y Tablets:** iPhone, Android y iPad.\n\nSi lo requieres, también podemos proporcionarte un enlace de respaldo privado en la nube.`,
+      text: `💻 **Dispositivo de Almacenamiento, Entrega Digital y Devolución:**\n\n1. 📼 **Devolución de tus Cintas:** El **100% de tus cintas y recuerdos originales se te regresan intactas** para que las conserves como reliquia familiar.\n2. 💾 **Memoria USB o Disco Duro:** **El cliente proporciona su propio dispositivo físico** (mínimo 50GB recomendados) al enviar sus cintas. DigiMemories no regala ni proporciona el dispositivo físico, pero la entrega de todos tus archivos en formato **MP4 universal (H.264 / AAC)** de alta definición y su organización por carpetas está 100% incluida sin costo adicional.\n3. 📺 **Compatibilidad Total:**\n   • **Smart TVs:** Samsung, LG, Sony, Roku, Hisense, etc.\n   • **Computadoras:** Mac, Windows y Linux.\n   • **Celulares y Tablets:** iPhone, Android y iPad.\n\nSi lo requieres, también podemos proporcionarte un enlace de respaldo privado en la nube.`,
       quickReplies: [
         { label: '💰 Cotizar mis Cintas', action: 'NAVIGATE_CALCULATOR' },
         { label: '🚚 ¿Cómo entrego mis cintas?', action: 'LOCATION_INFO' },
@@ -477,7 +477,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'memoria gratis', 'ustedes ponen la memoria usb gratis', 'ustedes ponen la memoria', 'dan usb gratis'
     ],
     response: () => ({
-      text: `💾 **Política Transparente sobre Memoria USB y Disco Duro:**\n\n• **¿DigiMemories regala o incluye gratis la memoria USB?**\n  **No**, DigiMemories **no regala ni proporciona gratis el dispositivo físico** de almacenamiento.\n\n• **¿Cómo recibes tus recuerdos digitalizados?**\n  1. **Tú nos proporcionas tu propia memoria USB o disco duro externo** (mínimo 50GB recomendados) al entregar tus cintas.\n  2. O si lo prefieres, **puedes adquirir una memoria USB 3.0 de 64GB con nosotros a precio de costo ($180 MXN)**.\n\n• **¿Cobran por pasar los archivos?**\n  ¡No! La transferencia, conversión a MP4 universal de alta calidad y organización ordenada por carpetas está **100% incluida sin costo adicional**.\n\n¿Deseas cotizar tu material o agregar una USB a tu cotización?`,
+      text: `💾 **Política sobre Memoria USB y Disco Duro:**\n\n• **¿DigiMemories regala o incluye gratis la memoria USB?**\n  **No**, DigiMemories **no regala ni proporciona gratis el dispositivo físico** de almacenamiento.\n\n• **¿Cómo recibes tus recuerdos digitalizados?**\n  Tú nos proporcionas tu propia memoria USB o disco duro externo (mínimo 50GB recomendados) al entregarnos tus cintas. (DigiMemories no vende ni regala medios físicos).\n\n• **¿Cobran por pasar los archivos?**\n  ¡No! La transferencia, conversión a MP4 universal de alta calidad y organización ordenada por carpetas está **100% incluida sin costo adicional**.\n\n¿Deseas cotizar tu material y agendar tu entrega?`,
       quickReplies: [
         { label: '💰 Cotizar mis Cintas', action: 'NAVIGATE_CALCULATOR' },
         { label: '📄 Generar Presupuesto PDF', action: 'NAVIGATE_CONTACT' },
@@ -499,7 +499,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'que pasa si dura mas', 'cinta no se digitalizo', 'mas horas'
     ],
     response: () => ({
-      text: `⚖️ **Ajuste Transparente del Total y Saldo Restante:**\n\nEl presupuesto inicial y el anticipo del 50% son **estimaciones iniciales**, y tu saldo final a liquidar **se ajusta con total honestidad tras la captura en laboratorio**:\n\n1. 🚫 **Cintas Vacías o Ilegibles:** Si una cinta resulta estar vacía, desmagnetizada o con daño irreparable que impida su lectura, **NO se te cobra y se descuenta íntegramente de tu saldo restante**.\n2. ⏳ **Cintas con Más de 2 Horas:** La tarifa base incluye hasta 2 horas completas por cinta. Si alguna cinta contiene más de 2 horas reales de video, el tiempo extra se factura a **$50 MXN por hora adicional**.\n\n📱 **Auditoría en Vivo:** Podrás ver el estado individual de cada cinta y tu **saldo final exacto en el Portal de Rastreo** con tu PIN asignado antes de liquidar contra-entrega.`,
+      text: `⚖️ **Ajuste del Total y Saldo Restante:**\n\nEl presupuesto inicial y el anticipo del 50% son **estimaciones iniciales**, y tu saldo final a liquidar **se ajusta con honestidad tras la captura en laboratorio**:\n\n1. 🚫 **Cintas Vacías o Ilegibles:** Si una cinta resulta estar vacía, desmagnetizada o con daño irreparable que impida su lectura, **NO se te cobra y se descuenta íntegramente de tu saldo restante**.\n2. ⏳ **Cintas con Más de 2 Horas:** La tarifa base incluye hasta 2 horas completas por cinta. Si alguna cinta contiene más de 2 horas reales de video, el tiempo extra se factura a **$50 MXN por hora adicional**.\n\n📱 **Auditoría en Vivo:** Podrás ver el estado individual de cada cinta y tu **saldo final exacto en el Portal de Rastreo** con tu PIN asignado antes de liquidar contra-entrega.`,
       quickReplies: [
         { label: '🔍 Rastrear con mi PIN', action: 'NAVIGATE_TRACK' },
         { label: '💰 Calcular Cotización', action: 'NAVIGATE_CALCULATOR' },
@@ -679,9 +679,9 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'mercado pago', 'efectivo', 'cuenta bancaria'
     ],
     response: () => ({
-      text: `💳 **Esquema de Pago y Métodos Aceptados:**\n\nPara tu total seguridad, nuestro esquema es:\n1. **50% de Anticipo:** Al ingresar tu material a nuestro laboratorio (se te asigna tu PIN de rastreo en vivo).\n2. **50% Restante (Estimado):** Al concluir la digitalización. *Aviso: Tu saldo final se ajusta si una cinta viene vacía/dañada (se descuenta) o si excede las 2 horas ($50 MXN/h extra)*.\n\n💾 **Almacenamiento:** El cliente proporciona su propia memoria USB o disco duro externo, o adquiere una USB de 64GB con nosotros a costo ($180 MXN).\n\n🏦 **Métodos de Pago:**\n• 📲 **Transferencia Bancaria (SPEI):**\n  - Banco: **BBVA México**\n  - CLABE: **012180015492837190**\n  - Titular: **DigiMemories México**\n• 💳 **Mercado Pago:** Tarjetas de Crédito, Débito y pagos en efectivo en tiendas **OXXO / 7-Eleven**.`,
+      text: `💳 **Esquema de Pago y Métodos Aceptados:**\n\nPara tu total seguridad, nuestro esquema es:\n1. **50% de Anticipo:** Al ingresar tu material a nuestro laboratorio (se te asigna tu PIN de rastreo en vivo).\n2. **50% Restante (Estimado):** Al concluir la digitalización. *Aviso: Tu saldo final se ajusta si una cinta viene vacía/dañada (se descuenta) o si excede las 2 horas ($50 MXN/h extra)*.\n\n💾 **Almacenamiento:** El cliente proporciona su propia memoria USB o disco duro externo (DigiMemories no proporciona el medio físico).\n\n🏦 **Métodos de Pago:**\n• 📲 **Transferencia Bancaria (SPEI):**\n  - Banco: **BBVA México**\n  - CLABE: **012180015492837190**\n  - Titular: **DigiMemories México**\n• 💳 **Mercado Pago:** Tarjetas de Crédito, Débito y pagos en efectivo en tiendas **OXXO / 7-Eleven**.`,
       quickReplies: [
-        { label: '📄 Generar Presupuesto Oficial', action: 'NAVIGATE_CONTACT' },
+        { label: '📄 Generar Presupuesto', action: 'NAVIGATE_CONTACT' },
         { label: '🔍 Rastrear con mi PIN', action: 'NAVIGATE_TRACK' },
         { label: '👤 Hablar con un Asesor', action: 'REQUEST_HUMAN' }
       ]
@@ -755,7 +755,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'sabado', 'domingo', 'dias habiles', 'abierto', 'abren los sabados'
     ],
     response: () => ({
-      text: `🕒 **Horarios de Atención DigiMemories:**\n\n• 🗓️ **Lunes a Viernes:** 9:00 AM – 7:00 PM\n• 🗓️ **Sábados:** 10:00 AM – 3:00 PM\n• 🗓️ **Domingos:** Cerrado (Atención de cotizaciones en línea 24/7 vía asistente virtual).\n\n📱 **WhatsApp Oficial:** +52 55 4888 9876\n\n¿En qué podemos apoyarte hoy?`,
+      text: `🕒 **Horarios de Atención DigiMemories:**\n\n• 🗓️ **Lunes a Viernes:** 9:00 AM – 7:00 PM\n• 🗓️ **Sábados:** 10:00 AM – 3:00 PM\n• 🗓️ **Domingos:** Cerrado (Atención de cotizaciones en línea 24/7 vía asistente virtual).\n\n📱 **WhatsApp:** +52 55 4888 9876\n\n¿En qué podemos apoyarte hoy?`,
       quickReplies: [
         { label: '💰 Cotizar mis Cintas', action: 'NAVIGATE_CALCULATOR' },
         { label: '💬 Escribir por WhatsApp', action: 'WHATSAPP_CONTACT' },
@@ -774,7 +774,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'instagram', 'facebook', 'como me comunico', 'llamar'
     ],
     response: () => ({
-      text: `📞 **Canales Oficiales de Contacto DigiMemories:**\n\n• 💬 **WhatsApp Oficial:** [+52 55 4888 9876](https://wa.me/525548889876)\n• ✉️ **Correo Electrónico:** contactodigimemories@gmail.com\n• 📸 **Instagram:** @digimemories_mx\n• 🌐 **Sitio Web:** www.digimemories.com.mx\n\n¡Estamos a tus órdenes para resolver cualquier duda!`,
+      text: `📞 **Canales de Contacto Directo DigiMemories:**\n\n• 💬 **WhatsApp:** [+52 55 4888 9876](https://wa.me/525548889876)\n• ✉️ **Correo Electrónico:** contactodigimemories@gmail.com\n• 📸 **Instagram:** @digimemories_mx\n• 🌐 **Sitio Web:** www.digimemories.com.mx\n\n¡Estamos a tus órdenes para resolver cualquier duda!`,
       quickReplies: [
         { label: '💬 Abrir WhatsApp', action: 'WHATSAPP_CONTACT' },
         { label: '📄 Ir a Formulario de Contacto', action: 'NAVIGATE_CONTACT' },
@@ -889,7 +889,7 @@ export const BOT_KNOWLEDGE_BASE: BotIntent[] = [
       'dale', 'perfecto', 'me parece bien', 'quiero hacerlo'
     ],
     response: () => ({
-      text: `¡Excelente! Para dar el siguiente paso y reservar la digitalización de tu material:\n\n1. Puedes ingresar a la **Calculadora y Formulario Oficial** para generar tu presupuesto en PDF con Folio de rastreo.\n2. O si lo prefieres, escribirnos directamente por WhatsApp para coordinar la recepción de tus cintas hoy mismo.`,
+      text: `¡Excelente! Para dar el siguiente paso y reservar la digitalización de tu material:\n\n1. Puedes ingresar a la **Calculadora y Formulario** para generar tu presupuesto en PDF con Folio de rastreo.\n2. O si lo prefieres, escribirnos directamente por WhatsApp para coordinar la recepción de tus cintas hoy mismo.`,
       quickReplies: [
         { label: '📄 Generar Presupuesto PDF', action: 'NAVIGATE_CONTACT' },
         { label: '💬 Escribir por WhatsApp', action: 'WHATSAPP_CONTACT' },

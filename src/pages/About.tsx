@@ -53,7 +53,7 @@ const About = () => {
 
           <div>
             <h3 style={{ fontSize: '1.4rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-              Trato artesanal y transparente
+              Trato artesanal, cercano y confiable
             </h3>
             <p>
               No somos un servicio masivo automatizado sin rostro. Cada orden es monitoreada por técnicos dedicados que revisan el material segundo a segundo. Si alguna cinta no puede leerse, te lo informamos con total honestidad y no se cobra esa unidad.

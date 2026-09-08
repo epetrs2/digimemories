@@ -9,7 +9,7 @@ const FAQS = [
   },
   {
     question: "¿Cómo es el método de entrega de mis archivos?",
-    answer: "Por políticas estrictas de privacidad y debido al alto peso de los videos sin comprimir, la entrega se realiza de forma física. Puedes entregarnos una memoria USB (mínimo 50GB recomendados) o un Disco Duro externo al traer tus cintas, o bien adquirir uno directamente con nosotros a precio de costo."
+    answer: "Por políticas estrictas de privacidad y debido a la alta fidelidad de los videos sin comprimir, la entrega se realiza de forma física en formato digital MP4. El cliente nos proporciona su propia memoria USB (mínimo 50GB recomendados) o un Disco Duro externo al hacernos llegar sus cintas. DigiMemories no regala ni proporciona el medio físico; la carga y organización está 100% incluida."
   },
   {
     question: "¿Cómo hago llegar mis casetes y recuerdos a DigiMemories?",

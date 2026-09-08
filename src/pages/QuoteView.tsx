@@ -11,12 +11,14 @@ import {
   Truck, 
   CreditCard, 
   ArrowLeft, 
-  Search
+  Search,
+  RefreshCw
 } from 'lucide-react';
 import { getOrders } from '../lib/store';
 import type { Order } from '../lib/store';
 import { fetchOrderByIdFromCloud } from '../lib/supabase';
 import { generateQuotePDF } from '../lib/pdfGenerator';
+import { createMercadoPagoPreference, handleMercadoPagoCallback } from '../lib/mercadoPagoService';
 
 export const QuoteView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,10 +27,23 @@ export const QuoteView: React.FC = () => {
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [manualId, setManualId] = useState<string>('');
   const [notFound, setNotFound] = useState<boolean>(false);
+  const [isPayingWithMp, setIsPayingWithMp] = useState<boolean>(false);
+  const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     const targetId = (id || '').replace('#', '').trim();
+
+    // Revisa si regresó de un cobro exitoso en Mercado Pago
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      handleMercadoPagoCallback(searchParams).then(res => {
+        if (res.detected && res.approved) {
+          setPaymentSuccessMsg('🎉 ¡Pago de anticipo aprobado con éxito en Mercado Pago! Tu orden está confirmada.');
+          setOrder(prev => prev ? { ...prev, depositPaid: true } : prev);
+        }
+      });
+    }
 
     async function loadQuote() {
       if (!targetId) {
@@ -143,8 +158,31 @@ export const QuoteView: React.FC = () => {
   const depositAmount = order ? Math.round(order.estimatedTotal * 0.5) : 0;
   const remainingAmount = order ? order.estimatedTotal - depositAmount : 0;
 
+  const handlePayWithMercadoPago = async () => {
+    if (!order) return;
+    setIsPayingWithMp(true);
+    try {
+      const pref = await createMercadoPagoPreference({
+        orderId: order.id,
+        title: `Anticipo 50% - Orden #${order.id}`,
+        amount: depositAmount,
+        clientEmail: order.clientEmail,
+        clientName: order.clientName
+      });
+      if (pref.success && pref.initPoint) {
+        window.location.href = pref.initPoint;
+      } else {
+        alert(pref.error || 'No se pudo generar la orden de pago. Intenta nuevamente.');
+      }
+    } catch (err: any) {
+      alert(`Error al conectar con Mercado Pago: ${err?.message || err}`);
+    } finally {
+      setIsPayingWithMp(false);
+    }
+  };
+
   const waMessage = order 
-    ? encodeURIComponent(`¡Hola DigiMemories! Estoy consultando mi presupuesto oficial con Folio #${order.id} por un total de $${order.estimatedTotal.toLocaleString('es-MX')} MXN. Quisiera coordinar el envío de mis cintas y resolver unas dudas.`)
+    ? encodeURIComponent(`¡Hola DigiMemories! Estoy consultando mi presupuesto con Folio #${order.id} por un total de $${order.estimatedTotal.toLocaleString('es-MX')} MXN. Quisiera coordinar el envío de mis cintas y resolver unas dudas.`)
     : '';
 
   return (
@@ -190,7 +228,7 @@ export const QuoteView: React.FC = () => {
           <div className="card text-center" style={{ padding: '4rem 2rem', background: '#ffffff', borderRadius: '16px' }}>
             <div className="spinner" style={{ margin: '0 auto 1.25rem auto' }} />
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1c1917', marginBottom: '0.5rem' }}>
-              Cargando Presupuesto Oficial...
+              Cargando Presupuesto...
             </h3>
             <p style={{ color: '#78716c', fontSize: '0.95rem' }}>
               Estamos recuperando los detalles de tu cotización en alta fidelidad.
@@ -262,7 +300,7 @@ export const QuoteView: React.FC = () => {
                       FOLIO #{order.id}
                     </span>
                     <span style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', padding: '0.3rem 0.65rem', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <CheckCircle2 size={14} /> Presupuesto Oficial
+                      <CheckCircle2 size={14} /> Presupuesto Formal
                     </span>
                   </div>
                   <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#1c1917', margin: '0 0 0.35rem 0' }}>
@@ -280,7 +318,7 @@ export const QuoteView: React.FC = () => {
                     className="btn btn-primary"
                     style={{ padding: '0.65rem 1.25rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '10px' }}
                   >
-                    <Download size={18} /> Descargar PDF Oficial
+                    <Download size={18} /> Descargar PDF
                   </button>
                   {pdfBlobUrl && (
                     <a 
@@ -336,6 +374,14 @@ export const QuoteView: React.FC = () => {
               </div>
             </div>
 
+            {/* Payment success alert if redirected from MP */}
+            {paymentSuccessMsg && (
+              <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '14px', padding: '1rem 1.25rem', marginBottom: '1.25rem', color: '#15803d', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CheckCircle2 size={20} />
+                <span>{paymentSuccessMsg}</span>
+              </div>
+            )}
+
             {/* MANDATORY POLICY CLARIFICATION 1: USB / STORAGE DRIVE */}
             <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '14px', padding: '1.25rem 1.5rem', marginBottom: '1.25rem', boxShadow: '0 2px 10px rgba(22, 101, 52, 0.04)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
@@ -347,9 +393,9 @@ export const QuoteView: React.FC = () => {
                     Aviso Importante sobre la Memoria USB / Disco Duro
                   </h3>
                   <p style={{ fontSize: '0.9rem', color: '#166534', margin: 0, lineHeight: 1.6 }}>
-                    <strong>El cliente proporciona su propia memoria USB o disco duro externo</strong> (mínimo 50GB recomendados) al hacernos llegar su material, o si lo prefiere, <strong>puede adquirir una USB 3.0 de 64GB directamente con nosotros a precio de costo ($180 MXN)</strong>. 
+                    <strong>El cliente proporciona su propia memoria USB o disco duro externo</strong> (mínimo 50GB recomendados) al hacernos llegar su material. 
                     <br />
-                    <em>DigiMemories NO regala ni incluye de forma gratuita el dispositivo físico de almacenamiento; la carga, conversión y organización de tus archivos digitales en formato MP4 está 100% incluida sin costo adicional.</em>
+                    <em>DigiMemories no regala ni proporciona el dispositivo físico de almacenamiento; la carga, conversión y organización de tus archivos digitales en formato MP4 de alta fidelidad está 100% incluida sin costo adicional.</em>
                   </p>
                 </div>
               </div>
@@ -363,10 +409,10 @@ export const QuoteView: React.FC = () => {
                 </div>
                 <div>
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#78350f', margin: '0 0 0.35rem 0' }}>
-                    *Aviso de Ajuste Transparente del Saldo Restante
+                    Aviso de Ajuste del Saldo Restante
                   </h3>
                   <p style={{ fontSize: '0.9rem', color: '#92400e', margin: '0 0 0.5rem 0', lineHeight: 1.6 }}>
-                    El total y el saldo restante son <strong>estimaciones iniciales</strong> calculadas con base en el conteo aproximado. El saldo final a liquidar se ajustará de forma 100% transparente tras la captura técnica en laboratorio:
+                    El total y el saldo restante son <strong>estimaciones iniciales</strong> calculadas con base en el conteo aproximado. El saldo final a liquidar se ajustará tras la captura técnica en laboratorio:
                   </p>
                   <ul style={{ fontSize: '0.85rem', color: '#78350f', margin: 0, paddingLeft: '1.25rem', lineHeight: 1.6 }}>
                     <li>
@@ -389,7 +435,7 @@ export const QuoteView: React.FC = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <FileText size={20} style={{ color: '#ea580c' }} />
                   <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#1c1917', margin: 0 }}>
-                    Vista Previa del Documento PDF Oficial
+                    Vista Previa del Documento PDF
                   </h2>
                 </div>
                 <button 
@@ -441,19 +487,23 @@ export const QuoteView: React.FC = () => {
                   <CreditCard size={18} /> Pago de Anticipo (50%)
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#44403c', lineHeight: 1.5, marginBottom: '0.75rem' }}>
-                  {order.preferredPaymentMethod === 'mercadopago' ? (
+                  {order.depositPaid ? (
+                    <div style={{ background: '#f0fdf4', color: '#15803d', padding: '0.6rem 0.8rem', borderRadius: '8px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <CheckCircle2 size={18} /> Anticipo del 50% Cubierto
+                    </div>
+                  ) : order.preferredPaymentMethod === 'mercadopago' ? (
                     <div>
-                      Abona $<strong>{depositAmount.toLocaleString('es-MX')} MXN</strong> con Tarjeta de Débito/Crédito o en OXXO mediante Mercado Pago.
-                      <div style={{ marginTop: '0.5rem' }}>
-                        <a 
-                          href={`https://link.mercadopago.com.mx/digimemories?amount=${depositAmount}&description=Anticipo+Orden+${order.id}`}
-                          target="_blank"
-                          rel="noreferrer"
+                      Abona $<strong>{depositAmount.toLocaleString('es-MX')} MXN</strong> con Tarjeta de Débito/Crédito, SPEI o en OXXO mediante Mercado Pago.
+                      <div style={{ marginTop: '0.65rem' }}>
+                        <button 
+                          onClick={handlePayWithMercadoPago}
+                          disabled={isPayingWithMp}
                           className="btn"
-                          style={{ background: '#009ee3', color: '#ffffff', padding: '0.45rem 0.9rem', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-block' }}
+                          style={{ background: '#009ee3', color: '#ffffff', padding: '0.55rem 1.1rem', fontSize: '0.875rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.45rem', borderRadius: '8px', cursor: 'pointer', border: 'none' }}
                         >
-                          Pagar con Mercado Pago →
-                        </a>
+                          {isPayingWithMp ? <RefreshCw size={16} className="animate-spin" /> : <CreditCard size={16} />}
+                          {isPayingWithMp ? 'Generando pago seguro...' : 'Pagar con Mercado Pago →'}
+                        </button>
                       </div>
                     </div>
                   ) : (

@@ -36,6 +36,10 @@
       "destination": "/api/email"
     },
     {
+      "source": "/api/mercadopago/:match*",
+      "destination": "/api/mercadopago"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

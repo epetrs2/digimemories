@@ -398,7 +398,7 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
                   rows={2}
                   value={formData.tallerAddress}
                   onChange={e => setFormData(prev => ({ ...prev, tallerAddress: e.target.value }))}
-                  placeholder="Dirección del taller oficial donde se trabaja el material..."
+                  placeholder="Dirección del laboratorio donde se trabaja el material..."
                   className="input-field"
                   style={{ width: '100%', padding: '0.65rem 0.9rem', fontSize: '0.85rem', borderRadius: '10px', background: '#ffffff', resize: 'none' }}
                 />

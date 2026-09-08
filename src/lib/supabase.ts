@@ -98,6 +98,19 @@ export async function saveOrderToCloud(order: Order): Promise<boolean> {
   }
 }
 
+export async function updateOrderInCloud(id: string, updates: Partial<Order>): Promise<boolean> {
+  if (!isSupabaseConfigured || !id) return false;
+  try {
+    const existing = await fetchOrderByIdFromCloud(id);
+    if (!existing) return false;
+    const merged: Order = { ...existing, ...updates };
+    return await saveOrderToCloud(merged);
+  } catch (e) {
+    console.warn('[Supabase] Exception updating order in cloud:', e);
+    return false;
+  }
+}
+
 export async function fetchOrderByIdFromCloud(id: string): Promise<Order | null> {
   if (!isSupabaseConfigured || !id) return null;
   try {

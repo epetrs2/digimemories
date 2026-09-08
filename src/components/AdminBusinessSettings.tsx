@@ -5,6 +5,7 @@ import {
   fetchCloudBusinessSettings,
   type BusinessSettings 
 } from '../lib/businessSettings';
+import { testMercadoPagoConnection } from '../lib/mercadoPagoService';
 import { 
   Truck,
   CreditCard, 
@@ -15,14 +16,18 @@ import {
   Save, 
   CheckCircle2, 
   Megaphone, 
-  RefreshCw 
+  RefreshCw,
+  ShieldCheck,
+  AlertCircle,
+  Zap
 } from 'lucide-react';
 
 export const AdminBusinessSettings: React.FC = () => {
   const [settings, setSettings] = useState<BusinessSettings>(() => getBusinessSettings());
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [activeSection, setActiveSection] = useState<'location' | 'bank' | 'pricing' | 'contact' | 'banner'>('location');
+  const [activeSection, setActiveSection] = useState<'location' | 'bank' | 'mercadopago' | 'pricing' | 'contact' | 'banner'>('location');
+  const [mpTestStatus, setMpTestStatus] = useState<{ loading: boolean; message?: string; success?: boolean } | null>(null);
 
   useEffect(() => {
     fetchCloudBusinessSettings().then(cloud => {
@@ -150,6 +155,26 @@ export const AdminBusinessSettings: React.FC = () => {
 
         <button
           type="button"
+          onClick={() => setActiveSection('mercadopago')}
+          style={{
+            padding: '0.6rem 1.1rem',
+            fontSize: '0.85rem',
+            fontWeight: 800,
+            borderRadius: '12px',
+            border: 'none',
+            background: activeSection === 'mercadopago' ? '#0284c7' : '#f5f5f4',
+            color: activeSection === 'mercadopago' ? '#ffffff' : '#78716c',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
+          }}
+        >
+          <Zap size={16} /> Mercado Pago
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveSection('pricing')}
           style={{
             padding: '0.6rem 1.1rem',
@@ -165,7 +190,7 @@ export const AdminBusinessSettings: React.FC = () => {
             gap: '0.4rem'
           }}
         >
-          <DollarSign size={16} /> Tarifas & Precios Oficiales
+          <DollarSign size={16} /> Tarifas & Precios Base
         </button>
 
         <button
@@ -324,7 +349,7 @@ export const AdminBusinessSettings: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <CreditCard size={20} className="text-accent" />
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
-                  Cuentas Bancarias Oficiales para Anticipos (50%) & Transferencias
+                  Cuentas Bancarias para Anticipos (50%) & Transferencias
                 </h3>
               </div>
               <p style={{ fontSize: '0.85rem', color: '#78716c', margin: '0.25rem 0 0 0' }}>
@@ -406,6 +431,175 @@ export const AdminBusinessSettings: React.FC = () => {
                 style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.85rem', borderRadius: '10px', resize: 'none' }}
               />
             </div>
+          </div>
+        )}
+
+        {/* SECTION: MERCADO PAGO */}
+        {activeSection === 'mercadopago' && (
+          <div className="glass animate-on-load" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ background: '#e0f2fe', color: '#0284c7', padding: '0.5rem', borderRadius: '10px' }}>
+                    <Zap size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#0c4a6e' }}>
+                      Conexión y Cobros con Mercado Pago México
+                    </h3>
+                    <p style={{ fontSize: '0.85rem', color: '#78716c', margin: '0.2rem 0 0 0' }}>
+                      Permite a tus clientes pagar el anticipo del 50% con Tarjeta de Crédito, Débito, SPEI y en OXXO.
+                    </p>
+                  </div>
+                </div>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: settings.mercadopagoEnabled ? '#f0fdf4' : '#f5f5f4', padding: '0.4rem 0.8rem', borderRadius: '10px', border: settings.mercadopagoEnabled ? '1px solid #bbf7d0' : '1px solid #e7e5e4' }}>
+                  <input
+                    type="checkbox"
+                    checked={settings.mercadopagoEnabled}
+                    onChange={e => handleChange('mercadopagoEnabled', e.target.checked)}
+                    style={{ accentColor: '#16a34a', width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: settings.mercadopagoEnabled ? '#15803d' : '#78716c' }}>
+                    {settings.mercadopagoEnabled ? 'Activo en el sitio' : 'Desactivado'}
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Step-by-step setup guide */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <ShieldCheck size={18} color="#0284c7" />
+                Guía Paso a Paso para Conectar tu Cuenta de Mercado Pago
+              </h4>
+              <ol style={{ fontSize: '0.85rem', color: '#475569', margin: 0, paddingLeft: '1.25rem', lineHeight: 1.7 }}>
+                <li>
+                  Inicia sesión en tu cuenta de <a href="https://www.mercadopago.com.mx/developers/panel/app" target="_blank" rel="noreferrer" style={{ color: '#0284c7', fontWeight: 700 }}>Mercado Pago Developers México ↗</a>.
+                </li>
+                <li>
+                  Ve a <strong>Tus integraciones</strong> y abre tu aplicación (o crea una seleccionando "Pagos en línea / Checkout Pro").
+                </li>
+                <li>
+                  En el menú izquierdo, haz clic en <strong>Credenciales de producción</strong> (o <em>Credenciales de prueba</em> si pruebas en Sandbox).
+                </li>
+                <li>
+                  Copia tu <strong>Access Token</strong> (comienza con <code>APP_USR-</code> o <code>TEST-</code>) y pégalo en el campo de abajo.
+                </li>
+                <li>
+                  Haz clic en el botón <strong>"Probar Conexión con Mercado Pago"</strong> para verificar en tiempo real que tus credenciales funcionen.
+                </li>
+              </ol>
+            </div>
+
+            {/* Credential Inputs */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  Mercado Pago Access Token (Requerido para Checkout Pro)
+                </label>
+                <input
+                  type="password"
+                  value={settings.mercadopagoAccessToken}
+                  onChange={e => handleChange('mercadopagoAccessToken', e.target.value)}
+                  placeholder="APP_USR-1234567890-..."
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', fontFamily: 'monospace', borderRadius: '10px' }}
+                />
+                <span style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '0.25rem', display: 'block' }}>
+                  Tu clave privada se utiliza exclusivamente del lado del servidor para generar órdenes con monto exacto.
+                </span>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                  Mercado Pago Public Key (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={settings.mercadopagoPublicKey}
+                  onChange={e => handleChange('mercadopagoPublicKey', e.target.value)}
+                  placeholder="APP_USR-..."
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', fontFamily: 'monospace', borderRadius: '10px' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
+                Link de Pago Personalizado / Fallback de Mercado Pago
+              </label>
+              <input
+                type="text"
+                value={settings.mercadopagoPaymentLink}
+                onChange={e => handleChange('mercadopagoPaymentLink', e.target.value)}
+                placeholder="https://link.mercadopago.com.mx/digimemories"
+                className="input-field"
+                style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
+              />
+              <span style={{ fontSize: '0.75rem', color: '#78716c', marginTop: '0.25rem', display: 'block' }}>
+                Enlace directo utilizado en caso de que no configures Access Token de API.
+              </span>
+            </div>
+
+            {/* Sandbox switch & Test button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderTop: '1px solid #f5f5f4', paddingTop: '1.25rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={settings.mercadopagoSandbox}
+                  onChange={e => handleChange('mercadopagoSandbox', e.target.checked)}
+                  style={{ accentColor: '#eab308', width: '16px', height: '16px' }}
+                />
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#44403c' }}>
+                  Modo Sandbox (Pruebas con credenciales TEST-)
+                </span>
+              </label>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  setMpTestStatus({ loading: true });
+                  const res = await testMercadoPagoConnection(settings.mercadopagoAccessToken);
+                  setMpTestStatus({ loading: false, message: res.message, success: res.success });
+                }}
+                disabled={mpTestStatus?.loading}
+                className="btn"
+                style={{
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  padding: '0.6rem 1.25rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  borderRadius: '10px'
+                }}
+              >
+                {mpTestStatus?.loading ? <RefreshCw size={15} className="animate-spin" /> : <Zap size={15} />}
+                Probar Conexión con Mercado Pago
+              </button>
+            </div>
+
+            {/* Connection Test Result */}
+            {mpTestStatus && (
+              <div style={{
+                background: mpTestStatus.success ? '#f0fdf4' : '#fef2f2',
+                border: mpTestStatus.success ? '1px solid #86efac' : '1px solid #fca5a5',
+                color: mpTestStatus.success ? '#15803d' : '#b91c1c',
+                padding: '0.85rem 1.15rem',
+                borderRadius: '10px',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                {mpTestStatus.success ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                <span>{mpTestStatus.message}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -512,23 +706,6 @@ export const AdminBusinessSettings: React.FC = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  💾 Memoria USB 3.0 64GB
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 800, color: '#ea580c' }}>$</span>
-                  <input
-                    type="number"
-                    value={settings.priceUsb64gb}
-                    onChange={e => handleChange('priceUsb64gb', Number(e.target.value))}
-                    className="input-field"
-                    style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', fontWeight: 800, borderRadius: '10px' }}
-                  />
-                  <span style={{ fontSize: '0.8rem', color: '#78716c' }}>MXN</span>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
                   🛵 Entrega Local CDMX
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -571,7 +748,7 @@ export const AdminBusinessSettings: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Phone size={20} className="text-accent" />
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
-                  Canales Oficiales de Contacto & Redes Sociales
+                  Canales de Contacto Directo & Redes Sociales
                 </h3>
               </div>
               <p style={{ fontSize: '0.85rem', color: '#78716c', margin: '0.25rem 0 0 0' }}>
@@ -582,7 +759,7 @@ export const AdminBusinessSettings: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
               <div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 700, color: '#44403c', marginBottom: '0.35rem' }}>
-                  <Phone size={14} className="text-accent" /> WhatsApp Oficial de Atención
+                  <Phone size={14} className="text-accent" /> WhatsApp de Atención
                 </label>
                 <input
                   type="text"

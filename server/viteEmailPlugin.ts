@@ -188,6 +188,113 @@ export function viteEmailPlugin(): Plugin {
           }
         }
 
+        // 7. POST /api/mercadopago (Checkout Pro & Conexión)
+        if (req.method === 'POST' && url.startsWith('/api/mercadopago')) {
+          try {
+            const body = await readJsonBody(req);
+            const { action } = body;
+
+            if (action === 'test-connection') {
+              const accessToken = body.accessToken || process.env.MERCADOPAGO_ACCESS_TOKEN;
+              if (!accessToken || accessToken.trim().length < 10) {
+                return sendJson(res, 400, { success: false, error: 'Access Token no proporcionado' });
+              }
+
+              const mpResponse = await fetch('https://api.mercadopago.com/users/me', {
+                headers: { 'Authorization': `Bearer ${accessToken.trim()}` }
+              });
+
+              if (!mpResponse.ok) {
+                const errorDetail = (await mpResponse.json().catch(() => ({}))) as any;
+                return sendJson(res, 400, {
+                  success: false,
+                  error: errorDetail.message || `Error de autorización en Mercado Pago (HTTP ${mpResponse.status})`
+                });
+              }
+
+              const userData = (await mpResponse.json()) as any;
+              return sendJson(res, 200, {
+                success: true,
+                user: {
+                  id: userData.id,
+                  nickname: userData.nickname,
+                  email: userData.email,
+                  country_id: userData.country_id
+                }
+              });
+            }
+
+            if (action === 'create-preference') {
+              const accessToken = body.accessToken || process.env.MERCADOPAGO_ACCESS_TOKEN;
+              if (!accessToken || accessToken.trim().length < 10) {
+                return sendJson(res, 400, { success: false, error: 'Access Token de Mercado Pago no configurado' });
+              }
+
+              const { orderId, title, amount, clientEmail, clientName, backUrlOrigin } = body;
+              const numAmount = Number(amount);
+              if (!numAmount || numAmount <= 0) {
+                return sendJson(res, 400, { success: false, error: 'Monto debe ser mayor a 0' });
+              }
+
+              const baseUrl = backUrlOrigin || 'http://localhost:5173';
+              const preferencePayload = {
+                items: [
+                  {
+                    id: String(orderId || 'orden'),
+                    title: title || `Anticipo DigiMemories - #${orderId}`,
+                    description: `Digitalización de memorias analógicas - Orden #${orderId}`,
+                    quantity: 1,
+                    currency_id: 'MXN',
+                    unit_price: Math.round(numAmount * 100) / 100
+                  }
+                ],
+                payer: {
+                  name: clientName || 'Cliente DigiMemories',
+                  email: clientEmail || 'contacto@digimemories.mx'
+                },
+                back_urls: {
+                  success: `${baseUrl}/track?id=${orderId}&collection_status=approved`,
+                  failure: `${baseUrl}/track?id=${orderId}&collection_status=failure`,
+                  pending: `${baseUrl}/track?id=${orderId}&collection_status=pending`
+                },
+                auto_return: 'approved',
+                external_reference: String(orderId),
+                statement_descriptor: 'DIGIMEMORIES'
+              };
+
+              const prefResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken.trim()}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(preferencePayload)
+              });
+
+              if (!prefResponse.ok) {
+                const errorDetail = (await prefResponse.json().catch(() => ({}))) as any;
+                return sendJson(res, 400, {
+                  success: false,
+                  error: errorDetail.message || `Error al crear preferencia en Mercado Pago (HTTP ${prefResponse.status})`
+                });
+              }
+
+              const prefData = (await prefResponse.json()) as any;
+              return sendJson(res, 200, {
+                success: true,
+                preferenceId: prefData.id,
+                initPoint: prefData.init_point,
+                sandboxInitPoint: prefData.sandbox_init_point
+              });
+            }
+
+            return sendJson(res, 400, { success: false, error: `Acción desconocida: ${action}` });
+          } catch (err: any) {
+            console.error('[API /api/mercadopago] Error:', err);
+            return sendJson(res, 500, { success: false, error: err.message || 'Error interno del servidor' });
+          }
+        }
+
         next();
       });
     }

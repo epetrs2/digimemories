@@ -197,7 +197,7 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
               DigiMemories — Preservación de Memorias Familiares
             </div>
             <div>Recepción y Despacho Seguro por Uber Flash (CDMX) y Paquetería Nacional</div>
-            <div style="margin-top: 4px;">WhatsApp Oficial: ${data.tallerPhone || '+52 55 4888 9876'}</div>
+            <div style="margin-top: 4px;">WhatsApp: ${data.tallerPhone || '+52 55 4888 9876'}</div>
           </div>
 
         </div>
@@ -210,7 +210,7 @@ export function getDepositConfirmedPinEmailHtml(data: DepositConfirmedTemplateDa
 }
 
 /**
- * 2. TEMPLATE: COTIZACIÓN OFICIAL (Diseño Premium con Desglose y PDF Adjunto)
+ * 2. TEMPLATE: COTIZACIÓN FORMAL (Diseño Premium con Desglose y PDF Adjunto)
  */
 export function getQuoteEmailHtml(data: QuoteTemplateData): string {
   const trackUrl = data.trackUrl || 'https://digimemories.vercel.app/track';
@@ -251,14 +251,14 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
           <div class="content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
               <span class="badge">FOLIO #${data.trackingId}</span>
-              <span style="font-size: 13px; color: #78716c;">Cotización Oficial</span>
+              <span style="font-size: 13px; color: #78716c;">Cotización Formal</span>
             </div>
 
             <h2 style="font-size: 22px; font-weight: 800; color: #1c1917; margin: 0 0 12px 0;">
               ¡Hola, ${data.clientName}!
             </h2>
             <p style="font-size: 15px; line-height: 1.6; color: #44403c; margin: 0 0 18px 0;">
-              Gracias por cotizar la digitalización de tus memorias familiares con nosotros. Hemos generado tu presupuesto oficial en formato digital MP4 de alta fidelidad, listo para disfrutarse en Smart TVs, computadoras y celulares.
+              Gracias por cotizar la digitalización de tus memorias familiares con nosotros. Hemos generado tu presupuesto en formato digital MP4 de alta fidelidad, listo para disfrutarse en Smart TVs, computadoras y celulares.
             </p>
 
             <!-- PDF Attachment Callout / Interactive Button -->
@@ -290,7 +290,7 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
               <strong style="display: block; font-size: 13.5px; margin-bottom: 4px; color: #15803d;">
                 💾 Dispositivo de Almacenamiento (Memoria USB / Disco Duro):
               </strong>
-              Para recibir tus archivos MP4, <strong>el cliente proporciona su propia memoria USB o disco duro externo</strong> (mínimo 50GB recomendados) al entregar el material. Si no cuentas con una, <strong>puedes adquirir una USB 3.0 de 64GB con nosotros a precio de costo ($180 MXN)</strong>. DigiMemories <em>no regala ni incluye de forma gratuita</em> el dispositivo físico; la carga, organización y transferencia de los videos en MP4 no tiene ningún costo adicional.
+              Para recibir tus archivos MP4, <strong>el cliente proporciona su propia memoria USB o disco duro externo</strong> (mínimo 50GB recomendados) al entregar el material. DigiMemories <em>no regala ni proporciona</em> el dispositivo físico; la carga, organización y transferencia de los videos en MP4 de alta fidelidad está 100% incluida sin costo adicional.
             </div>
 
             <!-- Items Table -->
@@ -400,7 +400,7 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
               DigiMemories — Preservación de Memorias Familiares
             </div>
             <div>Recepción y Despacho Seguro por Uber Flash (CDMX) y Paquetería Nacional</div>
-            <div style="margin-top: 4px;">WhatsApp Oficial: ${data.tallerPhone || '+52 55 4888 9876'}</div>
+            <div style="margin-top: 4px;">WhatsApp: ${data.tallerPhone || '+52 55 4888 9876'}</div>
           </div>
 
         </div>
@@ -494,7 +494,7 @@ export function getCustomMessageHtml(data: CustomMessageTemplateData): string {
         <div class="wrapper">
           <div class="header">
             <h1 class="brand-title">DIGIMEMORIES</h1>
-            <div class="brand-sub">Comunicado Oficial del Laboratorio</div>
+            <div class="brand-sub">Comunicado del Laboratorio</div>
           </div>
 
           <div class="content">
@@ -555,7 +555,7 @@ export function getTestEmailHtml(data: TestEmailTemplateData): string {
               <div><strong>Fecha y Hora:</strong> ${data.timestamp}</div>
             </div>
             <p style="font-size: 15px; color: #374151; line-height: 1.6; margin: 0;">
-              Tu servidor de correo está funcionando a la perfección. Todos los avisos de anticipo, PINs de rastreo y presupuestos oficiales en PDF se despacharán de forma inmediata y profesional.
+              Tu servidor de correo está funcionando a la perfección. Todos los avisos de anticipo, PINs de rastreo y presupuestos en PDF se despacharán de forma inmediata y profesional.
             </p>
           </div>
 
