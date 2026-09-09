@@ -1,9 +1,84 @@
 const { app, BrowserWindow, ipcMain, Notification, systemPreferences, Menu } = require('electron');
 const path = require('path');
+const http = require('http');
+const fs = require('fs');
 
 let mainWindow = null;
+let localServer = null;
+let localServerPort = null;
 
-function createMainWindow() {
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.wav': 'audio/wav',
+  '.mp3': 'audio/mpeg'
+};
+
+function startLocalServer() {
+  if (localServerPort) return Promise.resolve(localServerPort);
+
+  return new Promise((resolve, reject) => {
+    const distDir = path.resolve(__dirname, '../dist');
+
+    localServer = http.createServer((req, res) => {
+      try {
+        const parsedUrl = new URL(req.url, 'http://127.0.0.1');
+        let pathname = decodeURIComponent(parsedUrl.pathname);
+        let rel = pathname.replace(/^\/+/, '');
+        if (!rel) rel = 'index.html';
+
+        let filePath = path.join(distDir, rel);
+
+        // Fallback for SPA routing if file does not exist
+        if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+          filePath = path.join(distDir, 'index.html');
+        }
+
+        const ext = path.extname(filePath).toLowerCase();
+        const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+        fs.readFile(filePath, (err, data) => {
+          if (err) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('File Not Found');
+            return;
+          }
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'Cache-Control': 'no-cache',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(data);
+        });
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end(err.message || 'Internal Server Error');
+      }
+    });
+
+    localServer.listen(0, '127.0.0.1', () => {
+      localServerPort = localServer.address().port;
+      resolve(localServerPort);
+    });
+
+    localServer.on('error', reject);
+  });
+}
+
+async function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -23,21 +98,46 @@ function createMainWindow() {
     }
   });
 
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    console.error(`[Electron] Failed to load ${validatedURL}: ${errorCode} (${errorDescription})`);
+  });
+
+  mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+    console.log(`[Renderer Log ${level}] ${message} (${sourceId}:${line})`);
+  });
+
   const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173/?desktop=true';
   const isDev = !app.isPackaged && !process.env.ELECTRON_PROD;
 
   if (isDev) {
-    mainWindow.loadURL(devServerUrl).catch(() => {
-      mainWindow.loadFile(path.join(__dirname, '../dist/index.html'), { query: { desktop: 'true' } });
-    });
+    try {
+      // Check if vite dev server is responding
+      await new Promise((resolve, reject) => {
+        const req = http.get('http://localhost:5173/?desktop=true', (res) => {
+          if (res.statusCode && res.statusCode < 400) resolve(true);
+          else reject(new Error('Dev server returned ' + res.statusCode));
+        });
+        req.on('error', reject);
+        req.setTimeout(800, () => {
+          req.destroy();
+          reject(new Error('Timeout connecting to dev server'));
+        });
+      });
+      await mainWindow.loadURL(devServerUrl);
+    } catch {
+      const port = await startLocalServer();
+      await mainWindow.loadURL(`http://127.0.0.1:${port}/?desktop=true`);
+    }
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'), { query: { desktop: 'true' } });
+    const port = await startLocalServer();
+    await mainWindow.loadURL(`http://127.0.0.1:${port}/?desktop=true`);
   }
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
+
 
 function buildAppMenu() {
   const isMac = process.platform === 'darwin';
@@ -209,4 +309,10 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('before-quit', () => {
+  if (localServer) {
+    try { localServer.close(); } catch {}
+  }
 });
