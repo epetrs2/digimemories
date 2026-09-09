@@ -1,4 +1,4 @@
-import { getBusinessSettings } from './businessSettings';
+import { getBusinessSettings, fetchCloudBusinessSettings } from './businessSettings';
 
 export interface GeminiAnalysisResult {
   text: string;
@@ -64,101 +64,100 @@ export async function askGeminiAssistant(
   imageBase64?: string,
   mimeType: string = 'image/jpeg'
 ): Promise<string | null> {
-  const settings = getBusinessSettings();
+  let settings = getBusinessSettings();
 
   // If Gemini is disabled by settings, skip and let rule bot handle it
   if (settings.geminiEnabled === false) {
     return null;
   }
 
-  // Key priority: Business settings > VITE environment variable
-  const apiKey = (settings.geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY || '').trim();
-  const model = normalizeModel(settings.geminiModel);
-
-  // If no API key configured in browser, attempt call via backend endpoint /api/gemini
+  let apiKey = (settings.geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY || '').trim();
   if (!apiKey) {
     try {
-      const serverRes = await fetch('/api/gemini', {
+      settings = await fetchCloudBusinessSettings();
+      apiKey = (settings.geminiApiKey || '').trim();
+    } catch {}
+  }
+
+  const model = normalizeModel(settings.geminiModel);
+
+  // Strategy 1: Direct Google Generative Language API call if apiKey is present
+  if (apiKey) {
+    try {
+      const parts: any[] = [];
+      if (imageBase64) {
+        const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
+        parts.push({
+          inlineData: {
+            mimeType,
+            data: cleanBase64
+          }
+        });
+      }
+
+      const textPrompt = userText.trim() || (imageBase64 
+        ? 'Hola Guillermo, te adjunto una foto de mis cintas para que por favor me digas qué formato son, su estado y cómo las pueden digitalizar.'
+        : 'Hola, tengo dudas sobre el servicio de digitalización.');
+      
+      parts.push({ text: textPrompt });
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: userText,
-          imageBase64,
-          mimeType,
-          model
+          systemInstruction: {
+            parts: [{ text: GEMINI_SYSTEM_PROMPT }]
+          },
+          contents: [{ role: 'user', parts }],
+          generationConfig: {
+            temperature: 0.35,
+            maxOutputTokens: 900
+          }
         })
       });
-      if (serverRes.ok) {
-        const data = await serverRes.json();
-        if (data.text) return data.text;
+
+      if (response.ok) {
+        const data = await response.json();
+        const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (candidateText && typeof candidateText === 'string') {
+          const b1 = new RegExp('trans' + 'parente', 'gi');
+          const b2 = new RegExp('ofi' + 'cial', 'gi');
+          return candidateText.replace(b1, 'claro').replace(b2, 'autorizado').trim();
+        }
       }
-    } catch {
-      // Backend not available or no key on server
+    } catch (directErr) {
+      console.warn('[Gemini Flash] Direct call notice, falling back to server proxy:', directErr);
     }
-    return null;
   }
 
+  // Strategy 2: Call backend endpoint /api/gemini (which also retrieves cloud key from Supabase)
   try {
-    const parts: any[] = [];
-
-    // If multimodal image provided
-    if (imageBase64) {
-      const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
-      parts.push({
-        inlineData: {
-          mimeType,
-          data: cleanBase64
-        }
-      });
-    }
-
-    // Add user text
-    const textPrompt = userText.trim() || (imageBase64 
-      ? 'Hola Guillermo, te adjunto una foto de mis cintas para que por favor me digas qué formato son, su estado y cómo las pueden digitalizar.'
-      : 'Hola, tengo dudas sobre el servicio de digitalización.');
-    
-    parts.push({ text: textPrompt });
-
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-    const response = await fetch(endpoint, {
+    const serverRes = await fetch('/api/gemini', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: GEMINI_SYSTEM_PROMPT }]
-        },
-        contents: [
-          {
-            role: 'user',
-            parts
-          }
-        ],
-        generationConfig: {
-          temperature: 0.35,
-          maxOutputTokens: 900
-        }
+        prompt: userText,
+        imageBase64,
+        mimeType,
+        model,
+        apiKey: apiKey || undefined
       })
     });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.warn('[Gemini Flash] Error en respuesta de Google AI:', response.status, errText);
-      return null;
+    if (serverRes.ok) {
+      const data = await serverRes.json();
+      if (data.text) {
+        const b1 = new RegExp('trans' + 'parente', 'gi');
+        const b2 = new RegExp('ofi' + 'cial', 'gi');
+        return data.text.replace(b1, 'claro').replace(b2, 'autorizado').trim();
+      }
     }
-
-    const data = await response.json();
-    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (candidateText && typeof candidateText === 'string') {
-      const b1 = new RegExp('trans' + 'parente', 'gi');
-      const b2 = new RegExp('ofi' + 'cial', 'gi');
-      return candidateText.replace(b1, 'claro').replace(b2, 'autorizado').trim();
-    }
-    return null;
-  } catch (error) {
-    console.warn('[Gemini Flash] Excepción al invocar API de Gemini:', error);
-    return null;
+  } catch (serverErr) {
+    console.warn('[Gemini Flash] Server proxy notice:', serverErr);
   }
+
+  return null;
 }
 
 export async function testGeminiConnection(

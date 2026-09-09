@@ -13,7 +13,8 @@ import {
   getOrCreateVisitorThread, 
   addMessageToThread, 
   triggerHumanEscalation,
-  markThreadAsReadByVisitor
+  markThreadAsReadByVisitor,
+  setThreadMode
 } from '../lib/chatStore';
 import type { ChatThread } from '../lib/chatStore';
 import { getBotResponse, type BotReplyResult } from '../lib/botTrainer';
@@ -146,8 +147,14 @@ export const LiveChat: React.FC = () => {
     if (!textToSend) setInputText('');
     syncThread();
 
-    // 2. If in human mode or thread is archived, skip automated bot response
-    if (thread.mode === 'human' || thread.status === 'archived') {
+    // 2. If thread is archived, skip automated bot response
+    if (thread.status === 'archived') {
+      return;
+    }
+
+    // If an admin has actively replied, let them converse; otherwise allow Guillermo (IA) to assist
+    const hasAdminReplied = thread.messages.some(m => m.sender === 'admin');
+    if (thread.mode === 'human' && hasAdminReplied) {
       return;
     }
 
@@ -278,8 +285,17 @@ export const LiveChat: React.FC = () => {
   const handleStartNewChat = () => {
     localStorage.removeItem('digimemories_current_visitor_id');
     const fresh = getOrCreateVisitorThread('Visitante', location.pathname);
+    fresh.mode = 'bot';
+    fresh.needsHumanAttention = false;
     setThread(fresh);
     setActiveQuickReplies([]);
+  };
+
+  const handleSwitchToBot = () => {
+    if (!thread) return;
+    setThreadMode(thread.id, 'bot');
+    addMessageToThread(thread.id, 'system', 'Has vuelto a conectar con Guillermo (Asistente IA).');
+    syncThread();
   };
 
   const isContactPage = location.pathname === '/contact';
@@ -451,7 +467,25 @@ export const LiveChat: React.FC = () => {
                   {isArchived ? (
                     <span style={{ color: 'var(--text-muted)' }}>Conversación Finalizada</span>
                   ) : isHumanMode ? (
-                    <span style={{ color: 'var(--accent-color)', fontWeight: 700 }}>• Atendido por Administrador</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ color: 'var(--accent-color)', fontWeight: 700 }}>• Modo Operador</span>
+                      <button
+                        onClick={handleSwitchToBot}
+                        style={{
+                          background: '#ffedd5',
+                          color: '#c2410c',
+                          border: '1px solid #fed7aa',
+                          borderRadius: '6px',
+                          padding: '0.1rem 0.4rem',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                        title="Conectar con Guillermo IA"
+                      >
+                        Volver a IA
+                      </button>
+                    </div>
                   ) : (
                     <span>Cotizador & Especialista 24/7</span>
                   )}

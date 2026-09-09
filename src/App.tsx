@@ -13,6 +13,7 @@ import Admin from './pages/Admin';
 import QuoteView from './pages/QuoteView';
 import { recordPageView } from './lib/analytics';
 import { destroyAdminSession } from './lib/security';
+import { fetchCloudBusinessSettings } from './lib/businessSettings';
 
 function NavigationSecurityWatcher() {
   const location = useLocation();
@@ -35,6 +36,10 @@ function NavigationSecurityWatcher() {
 }
 
 function App() {
+  useEffect(() => {
+    fetchCloudBusinessSettings().catch(() => {});
+  }, []);
+
   return (
     <Router>
       <NavigationSecurityWatcher />

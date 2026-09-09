@@ -36,24 +36,32 @@ export const DEFAULT_MP_PUBLIC_KEY = 'APP_USR-42dc43f2-be28-4b70-ad33-a77ee464a7
 /**
  * Helper to read JSON request body from IncomingMessage
  */
-function readJsonBody(req: IncomingMessage): Promise<any> {
-  return new Promise((resolve, reject) => {
+function readJsonBody(req: any): Promise<any> {
+  if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
+  if (typeof req.body === 'string') {
+    try { return Promise.resolve(JSON.parse(req.body)); } catch { return Promise.resolve({}); }
+  }
+  return new Promise((resolve) => {
     let body = '';
-    req.on('data', chunk => {
+    const timer = setTimeout(() => {
+      try { resolve(body ? JSON.parse(body) : {}); } catch { resolve({}); }
+    }, 2500);
+
+    req.on('data', (chunk: any) => {
       body += chunk.toString();
     });
     req.on('end', () => {
+      clearTimeout(timer);
       try {
-        if (!body || body.trim() === '') {
-          resolve({});
-        } else {
-          resolve(JSON.parse(body));
-        }
-      } catch (err) {
-        reject(err);
+        resolve(body ? JSON.parse(body) : {});
+      } catch {
+        resolve({});
       }
     });
-    req.on('error', err => reject(err));
+    req.on('error', () => {
+      clearTimeout(timer);
+      resolve({});
+    });
   });
 }
 
@@ -344,8 +352,35 @@ export function viteEmailPlugin(): Plugin {
           try {
             const body = await readJsonBody(req);
             const { prompt, imageBase64, mimeType = 'image/jpeg', model = 'gemini-2.5-flash', apiKey: providedKey } = body;
-            const effectiveModel = (!model || model === 'gemini-1.5-flash' || model === 'gemini-2.0-flash') ? 'gemini-2.5-flash' : model;
-            const apiKey = (providedKey || process.env.GEMINI_API_KEY || '').trim();
+            let apiKey = (providedKey || process.env.GEMINI_API_KEY || '').trim();
+            let effectiveModel = (!model || model === 'gemini-1.5-flash' || model === 'gemini-2.0-flash') ? 'gemini-2.5-flash' : model;
+
+            if (!apiKey) {
+              try {
+                const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://nqlillrugkxxpjobzsja.supabase.co';
+                const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_V_wCDy_Oe1_4ZMahWfNmfg_X1gqNpsN';
+                const sbRes = await fetch(`${supabaseUrl}/rest/v1/email_logs?id=eq.settings_business_profile_v1&select=body_html`, {
+                  headers: {
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`
+                  }
+                });
+                if (sbRes.ok) {
+                  const rows = (await sbRes.json()) as any;
+                  if (rows && rows[0]?.body_html) {
+                    const parsed = JSON.parse(rows[0].body_html);
+                    if (parsed.geminiApiKey) {
+                      apiKey = parsed.geminiApiKey.trim();
+                    }
+                    if (parsed.geminiModel) {
+                      effectiveModel = (!parsed.geminiModel || parsed.geminiModel === 'gemini-1.5-flash') ? 'gemini-2.5-flash' : parsed.geminiModel;
+                    }
+                  }
+                }
+              } catch (sbErr) {
+                console.warn('[Gemini Local Dev Cloud Key Fetch] Notice:', sbErr);
+              }
+            }
 
             if (!apiKey) {
               return sendJson(res, 400, { error: 'No se ha configurado la API Key de Gemini Flash.' });
