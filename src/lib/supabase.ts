@@ -364,7 +364,20 @@ export function initSupabaseRealtimeListeners() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_threads' }, async () => {
         const freshChats = await fetchChatThreadsFromCloud();
         if (freshChats) {
-          localStorage.setItem('digimemories_chat_threads_v3', JSON.stringify(freshChats));
+          try {
+            const rawLocal = localStorage.getItem('digimemories_chat_threads_v3');
+            const localThreads: ChatThread[] = rawLocal ? JSON.parse(rawLocal) : [];
+            const reconciled = freshChats.map(cloudT => {
+              const localT = localThreads.find(l => l.id === cloudT.id);
+              if (localT && localT.unreadByAdmin === 0 && cloudT.unreadByAdmin > 0 && (localT.messages?.length || 0) >= (cloudT.messages?.length || 0)) {
+                cloudT.unreadByAdmin = 0;
+              }
+              return cloudT;
+            });
+            localStorage.setItem('digimemories_chat_threads_v3', JSON.stringify(reconciled));
+          } catch {
+            localStorage.setItem('digimemories_chat_threads_v3', JSON.stringify(freshChats));
+          }
           window.dispatchEvent(new CustomEvent('digimemories_chat_sync'));
         }
       })

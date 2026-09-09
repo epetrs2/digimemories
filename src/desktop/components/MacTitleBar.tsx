@@ -1,18 +1,22 @@
 import React from 'react';
-import { Shield, Lock, Search } from 'lucide-react';
+import { Shield, Lock, Search, Sun, Moon, Laptop } from 'lucide-react';
 
 interface MacTitleBarProps {
   isLocked: boolean;
   onLock: () => void;
   onQuickSearch: () => void;
   isOnline: boolean;
+  themePreference: 'system' | 'dark' | 'light';
+  onThemeChange: (theme: 'system' | 'dark' | 'light') => void;
 }
 
 export const MacTitleBar: React.FC<MacTitleBarProps> = ({
   isLocked,
   onLock,
   onQuickSearch,
-  isOnline
+  isOnline,
+  themePreference,
+  onThemeChange
 }) => {
   const isElectron = typeof window !== 'undefined' && Boolean((window as any).macOSAdminApi?.isElectron);
 
@@ -21,7 +25,7 @@ export const MacTitleBar: React.FC<MacTitleBarProps> = ({
       className="mac-drag-region"
       style={{
         height: '48px',
-        background: 'rgba(12, 10, 9, 0.88)',
+        background: 'var(--mac-bg-surface)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--mac-border)',
@@ -107,6 +111,80 @@ export const MacTitleBar: React.FC<MacTitleBarProps> = ({
             </kbd>
           </button>
         )}
+
+        {/* Theme Selector Widget */}
+        <div style={{
+          display: 'flex',
+          background: 'rgba(255, 255, 255, 0.08)',
+          borderRadius: '8px',
+          padding: '2px',
+          border: '1px solid var(--mac-border)',
+          height: '28px',
+          alignItems: 'center'
+        }}>
+          <button
+            type="button"
+            onClick={() => onThemeChange('system')}
+            style={{
+              background: themePreference === 'system' ? 'var(--mac-accent)' : 'transparent',
+              color: themePreference === 'system' ? '#ffffff' : 'var(--mac-text-muted)',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.2rem 0.45rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontSize: '0.72rem',
+              fontWeight: 700
+            }}
+            title="Tema Automático según el Sistema macOS"
+          >
+            <Laptop size={12} /> Auto
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onThemeChange('dark')}
+            style={{
+              background: themePreference === 'dark' ? 'var(--mac-accent)' : 'transparent',
+              color: themePreference === 'dark' ? '#ffffff' : 'var(--mac-text-muted)',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.2rem 0.45rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontSize: '0.72rem',
+              fontWeight: 700
+            }}
+            title="Modo Oscuro"
+          >
+            <Moon size={12} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onThemeChange('light')}
+            style={{
+              background: themePreference === 'light' ? 'var(--mac-accent)' : 'transparent',
+              color: themePreference === 'light' ? '#ffffff' : 'var(--mac-text-muted)',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.2rem 0.45rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontSize: '0.72rem',
+              fontWeight: 700
+            }}
+            title="Modo Claro"
+          >
+            <Sun size={12} />
+          </button>
+        </div>
 
         <div style={{
           width: '28px',

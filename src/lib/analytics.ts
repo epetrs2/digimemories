@@ -231,12 +231,9 @@ export function getLocalVisits(): TrafficVisit[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const seeds = generateSeedTraffic();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeds));
-      return seeds;
-    }
-    return JSON.parse(raw);
+    if (!raw) return [];
+    const parsed: TrafficVisit[] = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(v => !v.id?.startsWith('vis_seed_')) : [];
   } catch {
     return [];
   }
@@ -289,7 +286,7 @@ export function computeYouTubeMetrics(visits: TrafficVisit[]): YouTubeStyleMetri
       activeSessions.add(v.sessionId);
     }
   });
-  const activeNow = Math.max(1, activeSessions.size);
+  const activeNow = activeSessions.size;
 
   // Views counts
   const viewsLast60Min = visits.filter(v => new Date(v.timestamp).getTime() >= oneHourAgo).length;
@@ -441,57 +438,6 @@ export function computeYouTubeMetrics(visits: TrafficVisit[]): YouTubeStyleMetri
     devices,
     topPages,
     cities,
-    recentVisits: visits.slice(0, 40)
+    recentVisits: visits.slice(0, 50)
   };
-}
-
-function generateSeedTraffic(): TrafficVisit[] {
-  const pages = [
-    { path: '/', title: 'DigiMemories — Inicio' },
-    { path: '/calculator', title: 'Calculadora de Cotizaciones' },
-    { path: '/track', title: 'Portal de Rastreo en Vivo' },
-    { path: '/contact', title: 'Contacto & Ubicación Taller' },
-    { path: '/faq', title: 'Preguntas Frecuentes' },
-    { path: '/process', title: 'Nuestro Proceso de Restauración' }
-  ];
-
-  const categories: ('Google Search' | 'Instagram' | 'Facebook' | 'WhatsApp' | 'Directo / Link')[] = [
-    'Google Search', 'Google Search', 'Instagram', 'Instagram', 'WhatsApp', 'Directo / Link', 'Facebook'
-  ];
-
-  const cities = ['CDMX (Roma/Condesa)', 'CDMX (Coyoacán)', 'CDMX (Polanco)', 'Guadalajara', 'Monterrey', 'Puebla'];
-
-  const now = Date.now();
-  const list: TrafficVisit[] = [];
-
-  // Generate realistic distributed traffic over last 48 hours
-  for (let i = 0; i < 75; i++) {
-    // Clustered heavily in recent minutes/hours for real-time graphs
-    const isRecent = i < 30;
-    const timeAgoMs = isRecent 
-      ? (i * 2 + Math.floor(Math.random() * 3)) * 60 * 1000 // Last 60 min
-      : (i * 35 + Math.floor(Math.random() * 20)) * 60 * 1000; // Last 48 hrs
-
-    const page = pages[Math.floor(Math.random() * pages.length)];
-    const cat = categories[Math.floor(Math.random() * categories.length)];
-    const isMobile = Math.random() > 0.35;
-
-    list.push({
-      id: 'vis_seed_' + i + '_' + Math.random().toString(36).substring(2, 5),
-      timestamp: new Date(now - timeAgoMs).toISOString(),
-      path: page.path,
-      pageTitle: page.title,
-      referrer: cat === 'Google Search' ? 'https://www.google.com/' : (cat === 'Instagram' ? 'https://l.instagram.com/' : ''),
-      referrerCategory: cat,
-      device: isMobile ? 'Móvil' : 'Desktop',
-      os: isMobile ? 'iOS (Apple)' : 'macOS (Apple)',
-      browser: isMobile ? 'Apple Safari' : 'Google Chrome',
-      screenResolution: isMobile ? '390x844' : '1920x1080',
-      city: cities[Math.floor(Math.random() * cities.length)],
-      country: 'México 🇲🇽',
-      sessionId: 'sess_' + (i % 24)
-    });
-  }
-
-  return list;
 }

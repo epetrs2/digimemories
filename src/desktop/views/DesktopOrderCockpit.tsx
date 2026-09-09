@@ -9,7 +9,8 @@ import {
   Film, 
   Truck, 
   RefreshCw, 
-  Check 
+  Check,
+  AlertTriangle
 } from 'lucide-react';
 import { 
   getOrders, 
@@ -96,7 +97,20 @@ export const DesktopOrderCockpit: React.FC = () => {
   };
 
   const handleItemStatusChange = (orderId: string, itemId: string, newStatus: OrderItem['status']) => {
-    updateItem(orderId, itemId, { status: newStatus });
+    const patch: Partial<OrderItem> = { status: newStatus };
+    if (newStatus === 'fallida') {
+      const order = orders.find(o => o.id === orderId);
+      const item = order?.items?.find(i => i.id === itemId);
+      if (!item?.failureReason) {
+        patch.failureReason = 'Cinta en blanco / sin señal grabada';
+      }
+    }
+    updateItem(orderId, itemId, patch);
+    loadOrders();
+  };
+
+  const handleUpdateItemField = (orderId: string, itemId: string, patch: Partial<OrderItem>) => {
+    updateItem(orderId, itemId, patch);
     loadOrders();
   };
 
@@ -139,7 +153,7 @@ export const DesktopOrderCockpit: React.FC = () => {
       <div style={{
         width: '380px',
         borderRight: '1px solid var(--mac-border)',
-        background: 'rgba(20, 17, 15, 0.7)',
+        background: 'var(--mac-bg-sidebar)',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0
@@ -147,7 +161,7 @@ export const DesktopOrderCockpit: React.FC = () => {
         {/* Header & Filters */}
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--mac-border)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f5f5f4' }}>
+            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
               Órdenes de Laboratorio ({orders.length})
             </span>
             <span style={{ fontSize: '0.75rem', color: 'var(--mac-accent)', fontWeight: 700 }}>
@@ -216,7 +230,7 @@ export const DesktopOrderCockpit: React.FC = () => {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f5f5f4' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
                     #{o.id} — {o.clientName}
                   </span>
                   <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#34d399' }}>
@@ -265,14 +279,13 @@ export const DesktopOrderCockpit: React.FC = () => {
 
       {/* 2. RIGHT COLUMN: WORKSTATION COCKPIT INSPECTOR */}
       {selectedOrder ? (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'rgba(12, 10, 9, 0.5)', overflowY: 'auto' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--mac-bg-base)', overflowY: 'auto' }}>
           
-          {/* Cockpit Header */}
+          {/* Cockpit Top Bar */}
           <div style={{
             padding: '1.25rem 2rem',
             borderBottom: '1px solid var(--mac-border)',
-            background: 'rgba(18, 16, 15, 0.7)',
-            backdropFilter: 'blur(16px)',
+            background: 'var(--mac-bg-surface)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -281,7 +294,7 @@ export const DesktopOrderCockpit: React.FC = () => {
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#f5f5f4' }}>
+                <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
                   Orden #{selectedOrder.id}
                 </h2>
                 <span className={selectedOrder.status === 'completada' ? "mac-badge-emerald" : "mac-badge-amber"}>
@@ -365,7 +378,7 @@ export const DesktopOrderCockpit: React.FC = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--mac-accent)', fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem' }}>
                   <Truck size={16} /> Logística y Entrega
                 </div>
-                <div style={{ fontSize: '0.85rem', color: '#f5f5f4', fontWeight: 600 }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--mac-text-primary)', fontWeight: 600 }}>
                   {selectedOrder.deliveryType === 'home_delivery' ? 'Entrega a Domicilio' : selectedOrder.deliveryType === 'national_shipping' ? 'Envío Nacional' : 'Recolección en Taller'}
                 </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--mac-text-muted)', marginTop: '0.25rem' }}>
@@ -406,7 +419,7 @@ export const DesktopOrderCockpit: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Film size={18} style={{ color: 'var(--mac-accent)' }} />
-                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#f5f5f4' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
                     Control de Digitalización por Casete ({selectedOrder.items?.length || 0})
                   </h4>
                 </div>
@@ -422,64 +435,136 @@ export const DesktopOrderCockpit: React.FC = () => {
                     style={{
                       padding: '1rem',
                       borderRadius: '12px',
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      background: 'var(--mac-bg-card)',
+                      border: item.status === 'fallida' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--mac-border)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.85rem'
+                    }}
+                  >
+                    <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       flexWrap: 'wrap',
                       gap: '0.75rem'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--mac-accent)' }}>
-                          #{idx + 1}
-                        </span>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f5f5f4' }}>
-                          Formato: {item.format}
-                        </span>
-                        {item.extraHours > 0 && (
-                          <span style={{ fontSize: '0.7rem', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                            +{item.extraHours}h extras
+                    }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--mac-accent)' }}>
+                            #{idx + 1}
                           </span>
-                        )}
+                          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
+                            Formato: {item.format}
+                          </span>
+                          {item.extraHours > 0 && (
+                            <span style={{ fontSize: '0.7rem', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                              +{item.extraHours}h extras
+                            </span>
+                          )}
+                          {item.status === 'fallida' && (
+                            <span style={{ fontSize: '0.72rem', color: '#f87171', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.1rem 0.45rem', borderRadius: '6px', fontWeight: 700 }}>
+                              Motivo: {item.failureReason || 'Cinta en blanco / sin señal grabada'}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--mac-text-muted)', marginTop: '0.2rem' }}>
+                          {item.notes || 'Sin observaciones de laboratorio'}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--mac-text-muted)', marginTop: '0.2rem' }}>
-                        {item.notes || 'Sin observaciones de laboratorio'}
+
+                      {/* Status Dropdown / Buttons */}
+                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                        {[
+                          { id: 'pendiente', label: 'Pendiente', color: '#9ca3af' },
+                          { id: 'digitalizando', label: 'En Digitalizadora', color: '#fbbf24' },
+                          { id: 'completada', label: 'Digitalizado', color: '#34d399' },
+                          { id: 'fallida', label: 'Cinta Dañada', color: '#f87171' }
+                        ].map(s => {
+                          const isCurrent = item.status === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => handleItemStatusChange(selectedOrder.id, item.id, s.id as any)}
+                              style={{
+                                padding: '0.35rem 0.7rem',
+                                borderRadius: '6px',
+                                border: isCurrent ? `1px solid ${s.color}` : '1px solid var(--mac-border)',
+                                background: isCurrent ? `${s.color}25` : 'transparent',
+                                color: isCurrent ? s.color : 'var(--mac-text-muted)',
+                                fontSize: '0.74rem',
+                                fontWeight: isCurrent ? 800 : 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              {s.label}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    {/* Status Dropdown / Buttons */}
-                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                      {[
-                        { id: 'pendiente', label: 'Pendiente', color: '#9ca3af' },
-                        { id: 'digitalizando', label: 'En Digitalizadora', color: '#fbbf24' },
-                        { id: 'completada', label: 'Digitalizado', color: '#34d399' },
-                        { id: 'fallida', label: 'Cinta Dañada', color: '#f87171' }
-                      ].map(s => {
-                        const isCurrent = item.status === s.id;
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => handleItemStatusChange(selectedOrder.id, item.id, s.id as any)}
-                            style={{
-                              padding: '0.35rem 0.7rem',
-                              borderRadius: '6px',
-                              border: isCurrent ? `1px solid ${s.color}` : '1px solid rgba(255, 255, 255, 0.08)',
-                              background: isCurrent ? `${s.color}25` : 'transparent',
-                              color: isCurrent ? s.color : 'var(--mac-text-muted)',
-                              fontSize: '0.74rem',
-                              fontWeight: isCurrent ? 800 : 500,
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            {s.label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {/* Diagnostic Inspector for Damaged Tapes */}
+                    {item.status === 'fallida' && (
+                      <div style={{
+                        width: '100%',
+                        padding: '0.85rem 1rem',
+                        borderRadius: '10px',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.65rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#f87171', fontSize: '0.82rem', fontWeight: 800 }}>
+                            <AlertTriangle size={15} />
+                            <span>Diagnóstico de Laboratorio: Especificar Motivo de Falla</span>
+                          </div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--mac-text-muted)' }}>
+                            Se guardará en el expediente de la orden
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
+                          <div>
+                            <label style={{ fontSize: '0.72rem', color: 'var(--mac-text-secondary)', fontWeight: 700, display: 'block', marginBottom: '0.3rem' }}>
+                              Motivo Técnico Específico *
+                            </label>
+                            <select
+                              className="mac-input"
+                              style={{ width: '100%', fontSize: '0.78rem', padding: '0.45rem 0.65rem', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                              value={item.failureReason || 'Cinta en blanco / sin señal grabada'}
+                              onChange={e => handleUpdateItemField(selectedOrder.id, item.id, { failureReason: e.target.value })}
+                            >
+                              <option value="Cinta en blanco / sin señal grabada">📼 Cinta en blanco / sin señal grabada</option>
+                              <option value="Cinta rota o desprendida del carrete">✂️ Cinta rota o desprendida del carrete</option>
+                              <option value="Moho u hongo severo (adhesión química)">🦠 Moho u hongo severo (adhesión química)</option>
+                              <option value="Desmagnetización severa / señal irrecuperable">🧲 Desmagnetización / pérdida total de señal</option>
+                              <option value="Mecanismo de cartucho trabado / carcasa fracturada">⚙️ Mecanismo de cartucho trabado o roto</option>
+                              <option value="Disco con rayas profundas / errores de lectura I/O">💿 Disco rayado con error de lectura I/O</option>
+                              <option value="Daño por humedad o calor extremo">🔥 Daño por humedad o calor extremo</option>
+                              <option value="Otro motivo técnico">🔍 Otro motivo técnico (especificar notas)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '0.72rem', color: 'var(--mac-text-secondary)', fontWeight: 700, display: 'block', marginBottom: '0.3rem' }}>
+                              Observaciones Técnicas / Notas de Laboratorio
+                            </label>
+                            <input
+                              type="text"
+                              className="mac-input"
+                              placeholder="ej. Requirió empalme en minuto 12; moho limpiado..."
+                              style={{ width: '100%', fontSize: '0.78rem', padding: '0.45rem 0.65rem' }}
+                              value={item.notes || ''}
+                              onChange={e => handleUpdateItemField(selectedOrder.id, item.id, { notes: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

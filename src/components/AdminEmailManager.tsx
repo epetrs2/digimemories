@@ -14,7 +14,11 @@ import {
   Check, 
   Trash2, 
   ExternalLink,
-  X
+  X,
+  BookOpen,
+  Copy,
+  Sparkles,
+  Search as SearchIcon
 } from 'lucide-react';
 import { 
   fetchServerEmailConfig, 
@@ -26,6 +30,7 @@ import {
   type EmailServerConfig, 
   type ServerOutboxRecord 
 } from '../lib/emailService';
+import { EMAIL_TEMPLATES, renderEmailTemplate, type EmailTemplate } from '../lib/emailTemplates';
 import type { Order } from '../lib/store';
 import { sanitizeHtml } from '../lib/security';
 
@@ -70,6 +75,54 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
   const [composeTrackingId, setComposeTrackingId] = useState('');
   const [isSendingCustom, setIsSendingCustom] = useState(false);
   const [composeFeedback, setComposeFeedback] = useState<{ success: boolean; text: string } | null>(null);
+
+  // Email Tabs & Template Library State
+  const [activeEmailTab, setActiveEmailTab] = useState<'compose' | 'templates' | 'config'>('compose');
+  const [templateCategory, setTemplateCategory] = useState<string>('all');
+  const [templateSearch, setTemplateSearch] = useState<string>('');
+  const [templateSelectedOrderId, setTemplateSelectedOrderId] = useState<string>('');
+  const [templateCopiedId, setTemplateCopiedId] = useState<string | null>(null);
+  const composeFormContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const handleApplyTemplate = (template: EmailTemplate) => {
+    const ord = orders.find(o => o.id === templateSelectedOrderId) || (orders.length > 0 ? orders[0] : undefined);
+    const rendered = renderEmailTemplate(template, {
+      nombre: ord ? ord.clientName : composeName || 'Cliente',
+      ordenId: ord ? ord.id : composeTrackingId || '0000',
+      formato: ord?.items?.[0]?.format || 'VHS',
+      cantidadCintas: ord?.items?.length || 5,
+      downloadUrl: ord ? `${window.location.origin}/track?orderId=${ord.id}` : undefined,
+      trackingUrl: ord ? `${window.location.origin}/track?orderId=${ord.id}` : undefined,
+      saldoPendiente: ord ? (ord.depositPaid ? Math.round(ord.estimatedTotal * 0.5) : ord.estimatedTotal) : 450
+    });
+
+    setComposeSubject(rendered.subject);
+    setComposeMessage(rendered.body);
+    if (ord) {
+      setComposeTo(ord.clientEmail);
+      setComposeName(ord.clientName);
+      setComposeTrackingId(ord.id);
+    }
+    setActiveEmailTab('compose');
+    setComposeFeedback({ success: true, text: `✓ Plantilla "${template.name}" cargada en el redactor.` });
+    setTimeout(() => setComposeFeedback(null), 4000);
+    setTimeout(() => {
+      composeFormContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const handleCopyTemplate = (template: EmailTemplate) => {
+    const ord = orders.find(o => o.id === templateSelectedOrderId);
+    const rendered = renderEmailTemplate(template, {
+      nombre: ord ? ord.clientName : 'Cliente',
+      ordenId: ord ? ord.id : '0000',
+      formato: ord?.items?.[0]?.format || 'VHS',
+      cantidadCintas: ord?.items?.length || 5
+    });
+    navigator.clipboard.writeText(`${rendered.subject}\n\n${rendered.body}`);
+    setTemplateCopiedId(template.id);
+    setTimeout(() => setTemplateCopiedId(null), 2500);
+  };
 
   const loadData = async (isManual = false) => {
     try {
@@ -333,11 +386,302 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
         </div>
       )}
 
-      {/* 2-COLUMN GRID: CONFIGURATION & COMPOSE */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
-        
-        {/* COLUMN 1: GMAIL & SMTP CONFIGURATION */}
-        <div className="glass" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', border: '1px solid rgba(214, 204, 194, 0.7)' }}>
+      {/* NAVIGATION SUB-TABS */}
+      <div style={{
+        display: 'flex',
+        gap: '0.65rem',
+        padding: '0.35rem',
+        background: '#f5f5f4',
+        borderRadius: '14px',
+        border: '1px solid rgba(214, 204, 194, 0.7)',
+        width: 'fit-content',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          type="button"
+          onClick={() => setActiveEmailTab('compose')}
+          style={{
+            padding: '0.55rem 1.15rem',
+            borderRadius: '10px',
+            border: activeEmailTab === 'compose' ? '1px solid var(--accent-color)' : '1px solid transparent',
+            background: activeEmailTab === 'compose' ? '#ffffff' : 'transparent',
+            color: activeEmailTab === 'compose' ? 'var(--accent-color)' : 'var(--text-secondary)',
+            fontWeight: activeEmailTab === 'compose' ? 800 : 600,
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            boxShadow: activeEmailTab === 'compose' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
+          }}
+        >
+          <Mail size={16} /> Redactor & Bandeja de Salida
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveEmailTab('templates')}
+          style={{
+            padding: '0.55rem 1.15rem',
+            borderRadius: '10px',
+            border: activeEmailTab === 'templates' ? '1px solid var(--accent-color)' : '1px solid transparent',
+            background: activeEmailTab === 'templates' ? '#ffffff' : 'transparent',
+            color: activeEmailTab === 'templates' ? 'var(--accent-color)' : 'var(--text-secondary)',
+            fontWeight: activeEmailTab === 'templates' ? 800 : 600,
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            boxShadow: activeEmailTab === 'templates' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
+          }}
+        >
+          <BookOpen size={16} /> Biblioteca de Plantillas ({EMAIL_TEMPLATES.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveEmailTab('config')}
+          style={{
+            padding: '0.55rem 1.15rem',
+            borderRadius: '10px',
+            border: activeEmailTab === 'config' ? '1px solid var(--accent-color)' : '1px solid transparent',
+            background: activeEmailTab === 'config' ? '#ffffff' : 'transparent',
+            color: activeEmailTab === 'config' ? 'var(--accent-color)' : 'var(--text-secondary)',
+            fontWeight: activeEmailTab === 'config' ? 800 : 600,
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            boxShadow: activeEmailTab === 'config' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
+          }}
+        >
+          <Key size={16} /> Configuración SMTP
+        </button>
+      </div>
+
+      {/* VIEW 1: TEMPLATES LIBRARY */}
+      {activeEmailTab === 'templates' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          {/* Templates Filter & Personalization Bar */}
+          <div className="glass" style={{ padding: '1.5rem', background: '#ffffff', borderRadius: '18px', border: '1px solid rgba(214, 204, 194, 0.7)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                  Catálogo de Plantillas de Laboratorio ({EMAIL_TEMPLATES.length} Redacciones)
+                </h4>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
+                  Selecciona una orden para previsualizar variables personalizadas (nombre, ID, saldo, links de seguimiento).
+                </p>
+              </div>
+
+              {orders.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                    Personalizar con:
+                  </span>
+                  <select
+                    className="input-field"
+                    style={{ fontSize: '0.82rem', padding: '0.4rem 0.65rem' }}
+                    value={templateSelectedOrderId}
+                    onChange={e => setTemplateSelectedOrderId(e.target.value)}
+                  >
+                    <option value="">(Datos de muestra genéricos)</option>
+                    {orders.map(o => (
+                      <option key={o.id} value={o.id}>
+                        #{o.id} — {o.clientName} ({o.items?.length || 0} cintas)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Search & Category Pills */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'all', label: 'Todas (11)' },
+                  { id: 'Recepción & Diagnóstico', label: 'Recepción & Diagnóstico' },
+                  { id: 'Incidencias Técnicas', label: 'Incidencias Técnicas' },
+                  { id: 'Entrega de Archivos', label: 'Entrega de Archivos' },
+                  { id: 'Facturación & Pagos', label: 'Facturación & Pagos' },
+                  { id: 'Fidelización & Fidelidad', label: 'Fidelización' },
+                  { id: 'Comercial', label: 'Comercial' }
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setTemplateCategory(cat.id)}
+                    style={{
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '8px',
+                      border: templateCategory === cat.id ? '1px solid var(--accent-color)' : '1px solid rgba(0,0,0,0.1)',
+                      background: templateCategory === cat.id ? 'rgba(234, 88, 12, 0.12)' : '#ffffff',
+                      color: templateCategory === cat.id ? 'var(--accent-color)' : 'var(--text-secondary)',
+                      fontWeight: templateCategory === cat.id ? 800 : 500,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ position: 'relative', minWidth: '240px' }}>
+                <SearchIcon size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                <input
+                  type="text"
+                  placeholder="Buscar plantilla por motivo..."
+                  className="input-field"
+                  value={templateSearch}
+                  onChange={e => setTemplateSearch(e.target.value)}
+                  style={{ paddingLeft: '2rem', fontSize: '0.82rem', width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Grid of Templates */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+            {EMAIL_TEMPLATES
+              .filter(t => {
+                if (templateCategory !== 'all' && t.category !== templateCategory) return false;
+                if (templateSearch.trim()) {
+                  const q = templateSearch.toLowerCase();
+                  return t.name.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q) || t.body.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
+                }
+                return true;
+              })
+              .map(template => {
+                const sampleOrd = orders.find(o => o.id === templateSelectedOrderId) || (orders.length > 0 ? orders[0] : undefined);
+                const rendered = renderEmailTemplate(template, {
+                  nombre: sampleOrd ? sampleOrd.clientName : 'Carlos Mendoza',
+                  ordenId: sampleOrd ? sampleOrd.id : '1084',
+                  formato: sampleOrd?.items?.[0]?.format || 'VHS',
+                  cantidadCintas: sampleOrd?.items?.length || 6,
+                  downloadUrl: sampleOrd ? `${window.location.origin}/track?orderId=${sampleOrd.id}` : undefined,
+                  trackingUrl: sampleOrd ? `${window.location.origin}/track?orderId=${sampleOrd.id}` : undefined,
+                  saldoPendiente: sampleOrd ? (sampleOrd.depositPaid ? Math.round(sampleOrd.estimatedTotal * 0.5) : sampleOrd.estimatedTotal) : 520
+                });
+
+                const isCopied = templateCopiedId === template.id;
+
+                return (
+                  <div 
+                    key={template.id} 
+                    className="glass" 
+                    style={{
+                      padding: '1.5rem',
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(214, 204, 194, 0.7)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div>
+                      {/* Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.4rem' }}>{template.icon}</span>
+                          <h4 style={{ margin: 0, fontSize: '1.02rem', fontWeight: 800 }}>
+                            {template.name}
+                          </h4>
+                        </div>
+                        <span style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '6px',
+                          background: 'rgba(234, 88, 12, 0.1)',
+                          color: 'var(--accent-color)',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {template.category}
+                        </span>
+                      </div>
+
+                      <p style={{ margin: '0 0 0.85rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.35 }}>
+                        {template.description}
+                      </p>
+
+                      {/* Subject Preview */}
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '0.2rem' }}>
+                          Asunto:
+                        </span>
+                        <div style={{
+                          padding: '0.5rem 0.75rem',
+                          borderRadius: '8px',
+                          background: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          color: '#1e293b'
+                        }}>
+                          {rendered.subject}
+                        </div>
+                      </div>
+
+                      {/* Body Preview */}
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '0.2rem' }}>
+                          Cuerpo del Mensaje:
+                        </span>
+                        <div style={{
+                          padding: '0.75rem',
+                          borderRadius: '8px',
+                          background: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          fontSize: '0.78rem',
+                          color: '#334155',
+                          whiteSpace: 'pre-wrap',
+                          maxHeight: '140px',
+                          overflowY: 'auto',
+                          lineHeight: 1.45,
+                          fontFamily: 'system-ui, sans-serif'
+                        }}>
+                          {rendered.body}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: '0.65rem', borderTop: '1px solid #f1f5f9', paddingTop: '1rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTemplate(template)}
+                        className="btn btn-secondary"
+                        style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
+                      >
+                        {isCopied ? <Check size={14} color="#16a34a" /> : <Copy size={14} />}
+                        {isCopied ? '¡Copiado!' : 'Copiar Texto'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleApplyTemplate(template)}
+                        className="btn btn-primary"
+                        style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
+                      >
+                        <Sparkles size={14} /> Cargar en Redactor
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 2: SMTP CONFIGURATION */}
+      {activeEmailTab === 'config' && (
+        <div className="glass" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', border: '1px solid rgba(214, 204, 194, 0.7)', maxWidth: '720px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Key size={20} className="text-accent" />
@@ -371,7 +715,7 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
                 <li>Entra a tu cuenta Google y activa la <strong>Verificación en 2 pasos</strong> si no la tienes activa.</li>
                 <li>Ve a: <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" style={{ color: '#c2410c', textDecoration: 'underline', fontWeight: 700 }}>myaccount.google.com/apppasswords</a></li>
                 <li>Escribe un nombre (ej. <em>"DigiMemories Web"</em>) y dale a <strong>Crear</strong>.</li>
-                <li>Google te mostrará un código amarillo de <strong>16 letras</strong> (ej: <code>abcd efgh ijkl mnop</code>).</li>
+                <li>Google te mostrará un código de <strong>16 letras</strong> (ej: <code>abcd efgh ijkl mnop</code>).</li>
                 <li>Pégalo aquí en el campo <strong>Contraseña de Aplicación</strong> y guarda.</li>
               </ol>
             </div>
@@ -393,29 +737,26 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
-                Contraseña de Aplicación de Google (16 caracteres)
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input 
-                  type={showPass ? 'text' : 'password'}
-                  className="input-field"
-                  placeholder={config?.hasPassword ? '•••••••••••••••• (Guardada y activa)' : 'Pega aquí tu clave de 16 letras'}
-                  value={smtpForm.pass}
-                  onChange={e => setSmtpForm({ ...smtpForm, pass: e.target.value })}
-                  style={{ paddingRight: '2.5rem' }}
-                />
-                <button
-                  type="button"
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                  Contraseña de Aplicación de Google (16 caracteres)
+                </label>
+                <button 
+                  type="button" 
                   onClick={() => setShowPass(!showPass)}
-                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#78716c' }}
+                  style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                 >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />} {showPass ? 'Ocultar' : 'Ver'}
                 </button>
               </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-                No uses tu contraseña habitual de Gmail. Usa la Contraseña de Aplicación generada por Google.
-              </span>
+              <input 
+                type={showPass ? 'text' : 'password'}
+                className="input-field"
+                placeholder="ej. abcd efgh ijkl mnop"
+                value={smtpForm.pass}
+                onChange={e => setSmtpForm({ ...smtpForm, pass: e.target.value })}
+                required
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -428,27 +769,27 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
                   className="input-field"
                   value={smtpForm.fromName}
                   onChange={e => setSmtpForm({ ...smtpForm, fromName: e.target.value })}
-                  placeholder="DigiMemories Preservación"
                 />
               </div>
 
               <div>
                 <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
-                  Correo de Respuesta (Reply-To)
+                  Puerto SMTP
                 </label>
                 <input 
-                  type="email"
+                  type="number"
                   className="input-field"
-                  value={smtpForm.fromEmail}
-                  onChange={e => setSmtpForm({ ...smtpForm, fromEmail: e.target.value })}
-                  placeholder="contacto@digimemories.mx"
+                  value={smtpForm.port}
+                  onChange={e => setSmtpForm({ ...smtpForm, port: parseInt(e.target.value) || 465 })}
                 />
               </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
               {saveSuccessMsg && (
-                <span style={{ color: '#16a34a', fontSize: '0.85rem', fontWeight: 600 }}>{saveSuccessMsg}</span>
+                <span style={{ color: '#16a34a', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <CheckCircle2 size={16} /> {saveSuccessMsg}
+                </span>
               )}
               {!saveSuccessMsg && <span></span>}
 
@@ -456,7 +797,7 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
                 type="submit" 
                 disabled={isSavingConfig}
                 className="btn btn-primary"
-                style={{ padding: '0.7rem 1.5rem', fontSize: '0.9rem' }}
+                style={{ padding: '0.65rem 1.75rem', fontSize: '0.9rem' }}
               >
                 {isSavingConfig ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
                 Guardar Configuración
@@ -464,127 +805,171 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
             </div>
           </form>
         </div>
+      )}
 
-        {/* COLUMN 2: CUSTOM CLIENT EMAIL COMPOSER */}
-        <div className="glass" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', border: '1px solid rgba(214, 204, 194, 0.7)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-            <Send size={20} className="text-accent" />
-            <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Compositor de Correos a Clientes</h4>
-          </div>
-
-          <form onSubmit={handleSendCompose} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {orders.length > 0 && (
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem', color: 'var(--text-secondary)' }}>
-                  Seleccionar Orden Existente (Opcional):
-                </label>
-                <select 
-                  className="input-field"
-                  style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}
-                  onChange={e => handleSelectOrderForCompose(e.target.value)}
-                  defaultValue=""
-                >
-                  <option value="">Seleccionar una orden para autocompletar...</option>
-                  {orders.map(o => (
-                    <option key={o.id} value={o.id}>
-                      #{o.id} - {o.clientName} ({o.clientEmail})
-                    </option>
-                  ))}
-                </select>
+      {/* VIEW 3: COMPOSE DIRECT MESSAGE & OUTBOX TABLE */}
+      {activeEmailTab === 'compose' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Direct Message Compose Panel */}
+          <div ref={composeFormContainerRef} className="glass" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', border: '1px solid rgba(214, 204, 194, 0.7)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Send size={20} className="text-accent" />
+                <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Compositor de Correos a Clientes</h4>
               </div>
-            )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setActiveEmailTab('templates')}
+                style={{
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '8px',
+                  background: 'rgba(234, 88, 12, 0.1)',
+                  border: '1px solid rgba(234, 88, 12, 0.3)',
+                  color: 'var(--accent-color)',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+              >
+                <BookOpen size={14} /> Abrir Biblioteca de Plantillas ({EMAIL_TEMPLATES.length})
+              </button>
+            </div>
+
+            <form onSubmit={handleSendCompose} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {orders.length > 0 && (
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem', color: 'var(--text-secondary)' }}>
+                    Seleccionar Orden Existente para Autocompletar:
+                  </label>
+                  <select 
+                    className="input-field"
+                    style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}
+                    onChange={e => handleSelectOrderForCompose(e.target.value)}
+                    value={composeTrackingId || ''}
+                  >
+                    <option value="">Seleccionar una orden para autocompletar...</option>
+                    {orders.map(o => (
+                      <option key={o.id} value={o.id}>
+                        #{o.id} - {o.clientName} ({o.clientEmail})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem' }}>
+                    Correo Destinatario *
+                  </label>
+                  <input 
+                    type="email"
+                    className="input-field"
+                    placeholder="cliente@ejemplo.com"
+                    value={composeTo}
+                    onChange={e => setComposeTo(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem' }}>
+                    Nombre del Cliente
+                  </label>
+                  <input 
+                    type="text"
+                    className="input-field"
+                    placeholder="Nombre y Apellido"
+                    value={composeName}
+                    onChange={e => setComposeName(e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div>
                 <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem' }}>
-                  Correo Destinatario
+                  Asunto del Correo *
                 </label>
                 <input 
-                  type="email"
+                  type="text"
                   className="input-field"
-                  placeholder="cliente@ejemplo.com"
-                  value={composeTo}
-                  onChange={e => setComposeTo(e.target.value)}
+                  placeholder="ej. Notificación sobre tus cintas VHS"
+                  value={composeSubject}
+                  onChange={e => setComposeSubject(e.target.value)}
                   required
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem' }}>
-                  Nombre del Cliente
-                </label>
-                <input 
-                  type="text"
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                    Mensaje *
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <select
+                      className="input-field"
+                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.76rem', background: '#f8fafc' }}
+                      onChange={(e) => {
+                        const t = EMAIL_TEMPLATES.find(x => x.id === e.target.value);
+                        if (t) handleApplyTemplate(t);
+                      }}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>⚡ Cargar plantilla rápida...</option>
+                      {EMAIL_TEMPLATES.map(t => (
+                        <option key={t.id} value={t.id}>{t.icon} {t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <textarea 
                   className="input-field"
-                  placeholder="Nombre y Apellido"
-                  value={composeName}
-                  onChange={e => setComposeName(e.target.value)}
-                />
+                  rows={5}
+                  placeholder="Escribe el mensaje que deseas enviar al cliente o selecciona una plantilla arriba..."
+                  value={composeMessage}
+                  onChange={e => setComposeMessage(e.target.value)}
+                  required
+                ></textarea>
               </div>
-            </div>
 
-            <div>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem' }}>
-                Asunto del Correo
-              </label>
-              <input 
-                type="text"
-                className="input-field"
-                placeholder="ej. Notificación sobre tus cintas VHS"
-                value={composeSubject}
-                onChange={e => setComposeSubject(e.target.value)}
-                required
-              />
-            </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+                {composeFeedback && (
+                  <span style={{ color: composeFeedback.success ? '#16a34a' : '#dc2626', fontSize: '0.85rem', fontWeight: 600 }}>
+                    {composeFeedback.text}
+                  </span>
+                )}
+                {!composeFeedback && <span></span>}
 
-            <div>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem' }}>
-                Mensaje (Plantilla de Marca Automática)
-              </label>
-              <textarea 
-                className="input-field"
-                rows={4}
-                placeholder="Escribe el mensaje que deseas enviar al cliente..."
-                value={composeMessage}
-                onChange={e => setComposeMessage(e.target.value)}
-                required
-              ></textarea>
-            </div>
+                <button 
+                  type="submit" 
+                  disabled={isSendingCustom}
+                  className="btn btn-primary"
+                  style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem' }}
+                >
+                  {isSendingCustom ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+                  Despachar Correo
+                </button>
+              </div>
+            </form>
+          </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
-              {composeFeedback && (
-                <span style={{ color: composeFeedback.success ? '#16a34a' : '#dc2626', fontSize: '0.85rem', fontWeight: 600 }}>
-                  {composeFeedback.text}
-                </span>
-              )}
-              {!composeFeedback && <span></span>}
-
-              <button 
-                type="submit" 
-                disabled={isSendingCustom}
-                className="btn btn-primary"
-                style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem' }}
-              >
-                {isSendingCustom ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
-                Despachar Correo
-              </button>
-            </div>
-          </form>
-        </div>
-
-      </div>
-
-      {/* 3. FULL OUTBOX LOGS & PREVIEW TABLE */}
-      <div className="glass" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', border: '1px solid rgba(214, 204, 194, 0.7)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <Mail size={22} className="text-accent" />
-              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
-                Bandeja de Salida en Tiempo Real (Outbox)
-              </h3>
-              <span className="badge">{outbox.length} despachados</span>
-            </div>
+          {/* FULL OUTBOX LOGS & PREVIEW TABLE */}
+          <div className="glass" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', border: '1px solid rgba(214, 204, 194, 0.7)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Mail size={22} className="text-accent" />
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
+                    Bandeja de Salida en Tiempo Real (Outbox)
+                  </h3>
+                  <span className="badge">{outbox.length} despachados</span>
+                </div>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.3rem 0 0 0' }}>
               Historial de correos enviados por el servidor, estado de entrega, enlaces de previsualización y adjuntos.
             </p>
@@ -701,6 +1086,8 @@ export const AdminEmailManager: React.FC<Props> = ({ orders }) => {
           )}
         </div>
       </div>
+    </div>
+  )}
 
       {/* 4. MODAL: RENDERED HTML EMAIL PREVIEW */}
       {selectedPreview && (

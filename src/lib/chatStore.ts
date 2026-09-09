@@ -132,14 +132,20 @@ export const getChatThreads = (): ChatThread[] => {
   }
 };
 
-export const saveChatThreads = (threads: ChatThread[]) => {
+export const saveChatThreads = (threads: ChatThread[], threadToSync?: ChatThread) => {
   try {
     localStorage.setItem(THREADS_KEY, JSON.stringify(threads));
     window.dispatchEvent(new CustomEvent('digimemories_chat_sync'));
-    // Persist active visitor thread to cloud for multi-device admin
+
+    // 1. Persist explicitly modified thread to cloud
+    if (threadToSync) {
+      saveChatThreadToCloud(threadToSync);
+    }
+
+    // 2. Persist active visitor thread to cloud for multi-device admin
     const visitorId = getVisitorThreadId();
     const currentVisitorThread = threads.find(t => t.id === visitorId);
-    if (currentVisitorThread) {
+    if (currentVisitorThread && currentVisitorThread.id !== threadToSync?.id) {
       saveChatThreadToCloud(currentVisitorThread);
     }
   } catch (err) {
@@ -184,7 +190,7 @@ export const getOrCreateVisitorThread = (visitorName = 'Visitante Web', route = 
       ]
     };
     threads.unshift(thread);
-    saveChatThreads(threads);
+    saveChatThreads(threads, thread);
   }
 
   return thread;
@@ -205,7 +211,7 @@ export const addMessageToThread = (
     id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
     sender,
     text,
-    senderName: senderName || (sender === 'admin' ? 'Operador Admin' : sender === 'bot' ? 'Guillermo' : thread.visitorName),
+    senderName: senderName || (sender === 'admin' ? 'Operador de Laboratorio' : sender === 'bot' ? 'Guillermo' : thread.visitorName),
     timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
     imageUrl
   };
@@ -221,7 +227,7 @@ export const addMessageToThread = (
     thread.needsHumanAttention = false;
   }
 
-  saveChatThreads(threads);
+  saveChatThreads(threads, thread);
   return thread;
 };
 
@@ -243,7 +249,7 @@ export const triggerHumanEscalation = (threadId: string, _reason?: string) => {
     thread.messages.push(escalationMsg);
     thread.updatedAt = new Date().toISOString();
 
-    saveChatThreads(threads);
+    saveChatThreads(threads, thread);
   }
 };
 
@@ -264,7 +270,7 @@ export const archiveChatThread = (threadId: string, closedBy: 'admin' | 'visitor
     thread.messages.push(closeMsg);
     thread.updatedAt = new Date().toISOString();
 
-    saveChatThreads(threads);
+    saveChatThreads(threads, thread);
   }
 };
 
@@ -274,24 +280,26 @@ export const setThreadMode = (threadId: string, mode: 'bot' | 'human') => {
   if (thread) {
     thread.mode = mode;
     if (mode === 'human') thread.needsHumanAttention = false;
-    saveChatThreads(threads);
+    saveChatThreads(threads, thread);
   }
 };
 
 export const markThreadAsReadByAdmin = (threadId: string) => {
   const threads = getChatThreads();
   const thread = threads.find(t => t.id === threadId);
-  if (thread && thread.unreadByAdmin > 0) {
+  if (thread) {
     thread.unreadByAdmin = 0;
-    saveChatThreads(threads);
+    saveChatThreads(threads, thread);
+    saveChatThreadToCloud(thread);
   }
 };
 
 export const markThreadAsReadByVisitor = (threadId: string) => {
   const threads = getChatThreads();
   const thread = threads.find(t => t.id === threadId);
-  if (thread && thread.unreadByVisitor > 0) {
+  if (thread) {
     thread.unreadByVisitor = 0;
-    saveChatThreads(threads);
+    saveChatThreads(threads, thread);
+    saveChatThreadToCloud(thread);
   }
 };

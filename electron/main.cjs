@@ -175,7 +175,7 @@ function buildAppMenu() {
       label: 'Módulos',
       submenu: [
         { 
-          label: 'Chats en Vivo', 
+          label: 'Chats en Vivo & Visitantes', 
           accelerator: 'CmdOrCtrl+1', 
           click: () => mainWindow?.webContents.send('menu-action', 'nav_chat') 
         },
@@ -185,17 +185,17 @@ function buildAppMenu() {
           click: () => mainWindow?.webContents.send('menu-action', 'nav_orders') 
         },
         { 
-          label: 'Métricas & Facturación', 
+          label: 'Telemetría & Tráfico en Tiempo Real', 
           accelerator: 'CmdOrCtrl+3', 
           click: () => mainWindow?.webContents.send('menu-action', 'nav_analytics') 
         },
         { 
-          label: 'Bandeja de Correos', 
+          label: 'Bandeja de Correos & Redactor', 
           accelerator: 'CmdOrCtrl+4', 
           click: () => mainWindow?.webContents.send('menu-action', 'nav_emails') 
         },
         { 
-          label: 'Configuración de Laboratorio', 
+          label: 'Configuración de Precios & Taller', 
           accelerator: 'CmdOrCtrl+5', 
           click: () => mainWindow?.webContents.send('menu-action', 'nav_business') 
         },
@@ -206,7 +206,18 @@ function buildAppMenu() {
         },
         { type: 'separator' },
         { 
-          label: 'Búsqueda Global', 
+          label: 'Biblioteca de Plantillas de Correo (11)', 
+          accelerator: 'CmdOrCtrl+Shift+P', 
+          click: () => mainWindow?.webContents.send('menu-action', 'nav_templates') 
+        },
+        { 
+          label: 'Nueva Orden de Laboratorio', 
+          accelerator: 'CmdOrCtrl+N', 
+          click: () => mainWindow?.webContents.send('menu-action', 'new_order') 
+        },
+        { type: 'separator' },
+        { 
+          label: 'Búsqueda Rápida Spotlight', 
           accelerator: 'CmdOrCtrl+K', 
           click: () => mainWindow?.webContents.send('menu-action', 'quick_search') 
         }
@@ -225,15 +236,52 @@ function buildAppMenu() {
       ]
     },
     {
+      label: 'Herramientas',
+      submenu: [
+        { 
+          label: 'Sincronizar Supabase Cloud Ahora', 
+          accelerator: 'CmdOrCtrl+Shift+S', 
+          click: () => mainWindow?.webContents.send('menu-action', 'force_sync') 
+        },
+        { 
+          label: 'Probar Conexión SMTP y Enviar Diagnóstico', 
+          accelerator: 'CmdOrCtrl+Shift+T', 
+          click: () => mainWindow?.webContents.send('menu-action', 'test_smtp') 
+        },
+        { 
+          label: 'Simular Evento de Visita Web en Vivo', 
+          click: () => mainWindow?.webContents.send('menu-action', 'simulate_traffic') 
+        },
+        { type: 'separator' },
+        { 
+          label: 'Probar Notificación de Escritorio macOS', 
+          click: () => {
+            if (Notification.isSupported()) {
+              new Notification({
+                title: 'DigiMemories Laboratorio',
+                body: 'Sistema de notificaciones nativo de macOS activo y enlazado.'
+              }).show();
+            }
+          } 
+        }
+      ]
+    },
+    {
       label: 'Ver',
       submenu: [
-        { role: 'reload', label: 'Recargar' },
-        { role: 'forceReload', label: 'Forzar Recarga' },
-        { role: 'toggleDevTools', label: 'Herramientas de Desarrollador' },
+        { 
+          label: 'Alternar Tema Claro / Oscuro / Sistema', 
+          accelerator: 'CmdOrCtrl+T', 
+          click: () => mainWindow?.webContents.send('menu-action', 'toggle_theme') 
+        },
+        { type: 'separator' },
+        { role: 'reload', label: 'Recargar Interfaz' },
+        { role: 'forceReload', label: 'Forzar Recarga Completa' },
+        { role: 'toggleDevTools', label: 'Herramientas de Desarrollador WebKit' },
         { type: 'separator' },
         { role: 'resetZoom', label: 'Tamaño Real' },
-        { role: 'zoomIn', label: 'Acercar' },
-        { role: 'zoomOut', label: 'Alejar' },
+        { role: 'zoomIn', label: 'Acercar Zoom' },
+        { role: 'zoomOut', label: 'Alejar Zoom' },
         { type: 'separator' },
         { role: 'togglefullscreen', label: 'Pantalla Completa' }
       ]

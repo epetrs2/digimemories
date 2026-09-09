@@ -13,7 +13,7 @@ import DesktopSecurityVault from './views/DesktopSecurityVault';
 import { validateAdminSession, destroyAdminSession } from '../lib/security';
 import { getOrders, type Order } from '../lib/store';
 import { getChatThreads, type ChatThread } from '../lib/chatStore';
-import { fetchOrdersFromCloud, fetchChatThreadsFromCloud, initSupabaseRealtimeListeners } from '../lib/supabase';
+import { fetchOrdersFromCloud, fetchChatThreadsFromCloud, initSupabaseRealtimeListeners, saveChatThreadToCloud } from '../lib/supabase';
 import { Search, X, Package, MessageSquare } from 'lucide-react';
 
 export const DesktopApp: React.FC = () => {
@@ -24,6 +24,44 @@ export const DesktopApp: React.FC = () => {
   const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isOnline, setIsOnline] = useState<boolean>(true);
+
+  // Theme state: system, dark, or light
+  const [themePreference, setThemePreference] = useState<'system' | 'dark' | 'light'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('digimemories_desktop_theme') as any) || 'system';
+    }
+    return 'system';
+  });
+
+  const [systemIsDark, setSystemIsDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e: MediaQueryListEvent) => setSystemIsDark(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
+  const effectiveTheme: 'dark' | 'light' = themePreference === 'system' 
+    ? (systemIsDark ? 'dark' : 'light') 
+    : themePreference;
+
+  const handleThemeChange = (newTheme: 'system' | 'dark' | 'light') => {
+    setThemePreference(newTheme);
+    localStorage.setItem('digimemories_desktop_theme', newTheme);
+  };
+
+  const handleToggleTheme = () => {
+    const next: 'system' | 'dark' | 'light' = 
+      themePreference === 'system' ? 'dark' : themePreference === 'dark' ? 'light' : 'system';
+    handleThemeChange(next);
+  };
 
   // Auto-lock idle timer (15 minutes)
   const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
@@ -83,8 +121,17 @@ export const DesktopApp: React.FC = () => {
         setOrders(cloudOrders);
       }
       if (cloudChats) {
-        localStorage.setItem('digimemories_chat_threads_v3', JSON.stringify(cloudChats));
-        setChatThreads(cloudChats);
+        const localThreads = getChatThreads();
+        const reconciled = cloudChats.map(cloudT => {
+          const localT = localThreads.find(l => l.id === cloudT.id);
+          if (localT && localT.unreadByAdmin === 0 && cloudT.unreadByAdmin > 0 && (localT.messages?.length || 0) >= (cloudT.messages?.length || 0)) {
+            cloudT.unreadByAdmin = 0;
+            saveChatThreadToCloud(cloudT);
+          }
+          return cloudT;
+        });
+        localStorage.setItem('digimemories_chat_threads_v3', JSON.stringify(reconciled));
+        setChatThreads(reconciled);
       }
       setIsOnline(true);
     } catch (e) {
@@ -134,6 +181,10 @@ export const DesktopApp: React.FC = () => {
           e.preventDefault();
           setShowSearchModal(prev => !prev);
         }
+        else if (e.key === 't' || e.key === 'T') {
+          e.preventDefault();
+          handleToggleTheme();
+        }
       }
       if (e.key === 'Escape' && showSearchModal) {
         setShowSearchModal(false);
@@ -156,6 +207,11 @@ export const DesktopApp: React.FC = () => {
         else if (action === 'nav_emails') setActiveTab('emails');
         else if (action === 'nav_business') setActiveTab('business');
         else if (action === 'nav_security') setActiveTab('security');
+        else if (action === 'toggle_theme') handleToggleTheme();
+        else if (action === 'force_sync') { syncWithCloud(); refreshData(); }
+        else if (action === 'nav_templates') setActiveTab('emails');
+        else if (action === 'simulate_traffic') setActiveTab('analytics');
+        else if (action === 'new_order') setActiveTab('orders');
       });
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
@@ -189,13 +245,15 @@ export const DesktopApp: React.FC = () => {
   } : null;
 
   return (
-    <div className="mac-app-container">
+    <div className="mac-app-container" data-theme={effectiveTheme}>
       {/* 1. TOP TITLEBAR */}
       <MacTitleBar 
         isLocked={!isAuthenticated}
         onLock={handleLock}
         onQuickSearch={() => setShowSearchModal(true)}
         isOnline={isOnline}
+        themePreference={themePreference}
+        onThemeChange={handleThemeChange}
       />
 
       {/* 2. MAIN WORKSTATION BODY */}

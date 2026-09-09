@@ -126,7 +126,7 @@ export const DesktopChatCenter: React.FC = () => {
       <div style={{
         width: '320px',
         borderRight: '1px solid var(--mac-border)',
-        background: 'rgba(20, 17, 15, 0.7)',
+        background: 'var(--mac-bg-sidebar)',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0
@@ -134,7 +134,7 @@ export const DesktopChatCenter: React.FC = () => {
         {/* Search & Filter Header */}
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--mac-border)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f5f5f4' }}>
+            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
               Conversaciones ({threads.length})
             </span>
             <button
@@ -301,7 +301,7 @@ export const DesktopChatCenter: React.FC = () => {
 
       {/* 2. CENTER COLUMN: ACTIVE CHAT CONVERSATION */}
       {selectedThread ? (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'rgba(12, 10, 9, 0.5)' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--mac-bg-base)' }}>
           {/* Chat Header */}
           <div style={{
             height: '56px',
@@ -310,12 +310,12 @@ export const DesktopChatCenter: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(18, 16, 15, 0.6)',
+            background: 'var(--mac-bg-surface)',
             backdropFilter: 'blur(12px)'
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#f5f5f4' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
                   {selectedThread.visitorName}
                 </h3>
                 {selectedThread.currentRoute && (
@@ -375,11 +375,11 @@ export const DesktopChatCenter: React.FC = () => {
                       padding: '0.75rem 1rem',
                       borderRadius: isVisitor ? '16px 16px 16px 4px' : '16px 16px 4px 16px',
                       background: isVisitor 
-                        ? 'rgba(255, 255, 255, 0.08)' 
+                        ? 'var(--mac-bg-card)' 
                         : isBot 
                         ? 'rgba(245, 158, 11, 0.15)' 
                         : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                      color: '#ffffff',
+                      color: isVisitor ? 'var(--mac-text-primary)' : isBot ? '#f59e0b' : '#ffffff',
                       fontSize: '0.88rem',
                       lineHeight: 1.45,
                       border: isVisitor ? '1px solid var(--mac-border)' : 'none',
@@ -418,7 +418,7 @@ export const DesktopChatCenter: React.FC = () => {
           </div>
 
           {/* Message Input Bar */}
-          <form onSubmit={handleSendReply} style={{ padding: '0.85rem 1.5rem', borderTop: '1px solid var(--mac-border)', display: 'flex', gap: '0.75rem', background: 'rgba(18, 16, 15, 0.8)' }}>
+          <form onSubmit={handleSendReply} style={{ padding: '0.85rem 1.5rem', borderTop: '1px solid var(--mac-border)', display: 'flex', gap: '0.75rem', background: 'var(--mac-bg-surface)' }}>
             <input 
               type="text"
               placeholder="Escribe una respuesta como Operador de Laboratorio..."
@@ -444,7 +444,7 @@ export const DesktopChatCenter: React.FC = () => {
         <div style={{
           width: '260px',
           borderLeft: '1px solid var(--mac-border)',
-          background: 'rgba(18, 16, 15, 0.65)',
+          background: 'var(--mac-bg-sidebar)',
           padding: '1.25rem',
           display: 'flex',
           flexDirection: 'column',
@@ -455,7 +455,7 @@ export const DesktopChatCenter: React.FC = () => {
             <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--mac-text-muted)' }}>
               Ficha del Cliente
             </span>
-            <h4 style={{ margin: '0.35rem 0 0.1rem 0', fontSize: '1rem', fontWeight: 800, color: '#f5f5f4' }}>
+            <h4 style={{ margin: '0.35rem 0 0.1rem 0', fontSize: '1rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
               {selectedThread.visitorName}
             </h4>
             <span style={{ fontSize: '0.75rem', color: 'var(--mac-text-muted)' }}>

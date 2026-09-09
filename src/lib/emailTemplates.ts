@@ -571,3 +571,280 @@ export function getTestEmailHtml(data: TestEmailTemplateData): string {
 </html>
   `;
 }
+
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  category: 'Recepción & Diagnóstico' | 'Incidencias Técnicas' | 'Entrega de Archivos' | 'Facturación & Pagos' | 'Fidelización & Fidelidad' | 'Comercial';
+  subject: string;
+  body: string;
+  icon: string;
+  description: string;
+}
+
+export const EMAIL_TEMPLATES: EmailTemplate[] = [
+  {
+    id: 'recepcion_taller',
+    name: 'Recepción e Inspección Inicial',
+    category: 'Recepción & Diagnóstico',
+    icon: '📼',
+    description: 'Confirmación de ingreso al taller y comienzo de inspección física preliminar.',
+    subject: '📼 Tus recuerdos han ingresado con éxito al laboratorio DigiMemories (Orden #{{ordenId}})',
+    body: `Estimado/a {{nombre}},
+
+Te confirmamos que tu material con {{cantidadCintas}} cintas/elementos ha ingresado a nuestra estación técnica de laboratorio bajo el número de orden #{{ordenId}}.
+
+En este momento iniciamos el protocolo de inspección física preliminar: revisión de tensión de cinta, verificación de estado de carretes, ausencia de moho y compatibilidad de cabezales para la digitalización 1:1 en tiempo real.
+
+Puedes consultar el avance de tu orden en cualquier momento en nuestro portal de seguimiento:
+{{trackingUrl}}
+
+Te mantendremos al tanto de cada fase del proceso.
+
+Atentamente,
+Equipo Técnico DigiMemories`
+  },
+  {
+    id: 'alerta_moho',
+    name: 'Alerta de Moho / Descontaminación',
+    category: 'Incidencias Técnicas',
+    icon: '🦠',
+    description: 'Aviso sobre moho en carretes y aplicación de ciclo térmico preventivo.',
+    subject: '⚠️ Notificación técnica: Hallazgo de humedad/moho en cinta (Orden #{{ordenId}})',
+    body: `Hola {{nombre}},
+
+Durante la inspección de tus cintas correspondientes a la orden #{{ordenId}}, detectamos presencia de humedad/moho en uno o más carretes (formato {{formato}}).
+
+Para no comprometer la cinta ni los cabezales de lectura magnética, realizaremos un ciclo preventivo de secado y descontaminación física controlada antes de ingresar la cinta a la digitalizadora.
+
+Este procedimiento es parte de nuestro protocolo de preservación analógica para maximizar el rescate del metraje original.
+
+Cualquier duda o comentario, estamos a tus órdenes en este correo o vía nuestro chat en vivo en la plataforma.
+
+Atentamente,
+Laboratorio de Restauración DigiMemories`
+  },
+  {
+    id: 'cinta_rota_empalme',
+    name: 'Cinta Rota / Empalme Realizado',
+    category: 'Incidencias Técnicas',
+    icon: '✂️',
+    description: 'Notificación de cinta desprendida reparada mediante empalme de precisión.',
+    subject: '✂️ Reparación técnica completada: Cinta empalmada exitosamente (Orden #{{ordenId}})',
+    body: `Hola {{nombre}},
+
+Te notificamos que una de tus cintas de la orden #{{ordenId}} presentaba un desprendimiento o rotura del carrete original.
+
+Nuestro especialista técnico realizó un empalme de precisión con cinta de adhesión magnética de grado de archivo, logrando reconstruir la guía y recuperar la reproducción continua del material sin pérdida de metraje grabado.
+
+La digitalización de este cassette continúa en marcha según lo programado.
+
+Atentamente,
+Equipo Técnico DigiMemories`
+  },
+  {
+    id: 'cinta_en_blanco',
+    name: 'Cinta en Blanco / Sin Señal',
+    category: 'Incidencias Técnicas',
+    icon: '📼',
+    description: 'Diagnóstico técnico informando que el cassette no contiene metraje grabado.',
+    subject: '📼 Reporte de inspección: Cinta sin material grabado (Orden #{{ordenId}})',
+    body: `Hola {{nombre}},
+
+Te informamos que al reproducir el cassette especificado en tu orden #{{ordenId}} en nuestro reproductor analógico de precisión, se constató que la cinta se encuentra en blanco (cinta virgen o sin señal de video registrada).
+
+Revisamos la totalidad de la longitud del carrete para asegurar que no existiera ninguna toma grabada en ninguna sección.
+
+Este ítem ha sido catalogado como sin metraje para no generar cobro de digitalización innecesario en tu cuenta final.
+
+Atentamente,
+Laboratorio DigiMemories`
+  },
+  {
+    id: 'carcasa_reemplazo',
+    name: 'Carcasa Rota / Trasplante de Carrete',
+    category: 'Incidencias Técnicas',
+    icon: '⚙️',
+    description: 'Informe sobre trasplante de carretes a cartucho nuevo por daño mecánico.',
+    subject: '⚙️ Mantenimiento mecánico: Reemplazo de carcasa efectuado (Orden #{{ordenId}})',
+    body: `Estimado/a {{nombre}},
+
+Al examinar los cassettes de tu orden #{{ordenId}}, identificamos una carcasa plástica fracturada con engranajes trabados que impedían el giro seguro de las bobinas.
+
+Para garantizar la captura sin fricción ni atascos, procedimos a trasplantar los carretes magnéticos a un cartucho de reemplazo en condiciones óptimas.
+
+El material ya fue digitalizado con excelente estabilidad de señal y sincronización de audio.
+
+Saludos cordiales,
+Laboratorio DigiMemories`
+  },
+  {
+    id: 'digitalizacion_completada',
+    name: 'Digitalización Concluida / Descarga Lista',
+    category: 'Entrega de Archivos',
+    icon: '✨',
+    description: 'Entrega de archivos MP4 en la nube con enlace directo seguro.',
+    subject: '✨ ¡Tus videos han sido digitalizados! Accede a tus archivos (Orden #{{ordenId}})',
+    body: `¡Excelentes noticias, {{nombre}}!
+
+La digitalización de tus cintas de la orden #{{ordenId}} ha concluido con éxito en nuestro laboratorio.
+
+Tus recuerdos ya se encuentran convertidos en formato digital MP4 en alta definición, listos para disfrutarse en cualquier computadora, smartphone o Smart TV.
+
+Puedes acceder y descargar tus archivos desde el siguiente enlace privado de alta velocidad:
+{{downloadUrl}}
+
+Te recomendamos guardar una copia en tu disco duro personal o almacenamiento familiar.
+
+¡Muchas gracias por confiar en DigiMemories para rescatar tu historia!
+
+Atentamente,
+DigiMemories Preservación Digital`
+  },
+  {
+    id: 'listo_recoger',
+    name: 'Listo para Recoger en Laboratorio',
+    category: 'Entrega de Archivos',
+    icon: '📦',
+    description: 'Aviso de que los cassettes físicos y USB están listos en el taller.',
+    subject: '📦 Tu orden #{{ordenId}} está lista para ser recogida en nuestro taller',
+    body: `Hola {{nombre}},
+
+Te informamos que tu orden #{{ordenId}} está 100% finalizada y resguardada en nuestro laboratorio.
+
+Tus cassettes originales, junto con la memoria USB con los archivos solicitados, están listos para ser entregados en nuestras instalaciones:
+
+📍 Dirección del Laboratorio: DigiMemories, CDMX
+⏰ Horario de Atención: Lunes a Sábado de 10:00 AM a 6:00 PM
+
+Por favor presenta tu número de orden #{{ordenId}} o identificación al acudir.
+
+¡Te esperamos!
+
+Atentamente,
+Equipo DigiMemories`
+  },
+  {
+    id: 'despacho_paqueteria',
+    name: 'Despacho por Paquetería & Guía',
+    category: 'Entrega de Archivos',
+    icon: '🚚',
+    description: 'Envío de guía de mensajería y enlace de rastreo de paquete en tránsito.',
+    subject: '🚚 Tus cintas y memorias van en camino (Guía #{{numeroGuia}} - Orden #{{ordenId}})',
+    body: `Estimado/a {{nombre}},
+
+Tu paquete con los cassettes originales y el almacenamiento digital de la orden #{{ordenId}} ha sido recolectado por el servicio de mensajería.
+
+Detalles del envío:
+• Empresa: {{paqueteria}}
+• Número de Guía: {{numeroGuia}}
+• Enlace de Rastreo: {{trackingGuiaUrl}}
+
+El paquete va debidamente acolchado con material de amortiguación para proteger tus cintas durante el trayecto.
+
+Cualquier eventualidad, estamos a tu total disposición.
+
+Saludos cordiales,
+Logística DigiMemories`
+  },
+  {
+    id: 'recordatorio_saldo',
+    name: 'Recordatorio de Saldo Pendiente',
+    category: 'Facturación & Pagos',
+    icon: '💳',
+    description: 'Notificación amable para liquidar saldo y desbloquear accesos.',
+    subject: '💳 Notificación de saldo pendiente para entrega de archivos (Orden #{{ordenId}})',
+    body: `Hola {{nombre}},
+
+Tus materiales de la orden #{{ordenId}} están listos en laboratorio. Para habilitar el enlace de descarga o programar el envío de tus memorias físicas, te recordamos que existe un saldo pendiente de \${{saldoPendiente}} MXN.
+
+Puedes liquidar tu saldo de forma ágil mediante MercadoPago o transferencia bancaria ingresando a tu portal de orden:
+{{trackingUrl}}
+
+En cuanto se confirme el pago, tus accesos se habilitarán de manera inmediata y automatizada.
+
+Quedamos a tus órdenes,
+Administración DigiMemories`
+  },
+  {
+    id: 'encuesta_satisfaccion',
+    name: 'Encuesta de Satisfacción y Testimonio',
+    category: 'Fidelización & Fidelidad',
+    icon: '⭐',
+    description: 'Seguimiento post-servicio para evaluar la calidad del video y atención.',
+    subject: '⭐ ¿Qué te pareció revivir tus momentos? Tu opinión en DigiMemories',
+    body: `Hola {{nombre}},
+
+Esperamos que hayas disfrutado revivir esos momentos tan especiales junto a tu familia con la digitalización de tu orden #{{ordenId}}.
+
+Para nosotros es fundamental conocer tu experiencia: ¿cómo encontraste la nitidez del video y la atención brindada por nuestro equipo de laboratorio?
+
+Si tienes un minuto, nos encantaría que nos compartas una breve reseña en Google o nos respondas directamente a este correo contándonos qué recuerdos redescubriste.
+
+¡Gracias por permitirnos ser los guardianes de tus memorias!
+
+Con aprecio,
+Equipo DigiMemories`
+  },
+  {
+    id: 'promocion_volumen',
+    name: 'Promoción por Lote Familiar Adicional',
+    category: 'Comercial',
+    icon: '🎁',
+    description: 'Beneficio preferente para clientes que desean digitalizar más cassettes.',
+    subject: '🎁 Descuento exclusivo para digitalizar más recuerdos familiares (Orden #{{ordenId}})',
+    body: `Estimado/a {{nombre}},
+
+Como cliente de DigiMemories, queremos agradecerte por rescatar tus cassettes de la orden #{{ordenId}}.
+
+Sabemos que con frecuencia las familias descubren más cintas VHS, MiniDV o carretes guardados en casa de familiares. Por ello, te ofrecemos un 15% de descuento en cualquier lote adicional de 5 o más cintas que ingreses durante los próximos 30 días.
+
+Código de beneficio preferencial: FAMILIA-{{ordenId}}
+Puedes ingresarlo en nuestra calculadora en línea o mencionarlo directamente con tu asesor técnico.
+
+¡Será un gusto seguir rescatando el legado de tu familia!
+
+Atentamente,
+DigiMemories`
+  }
+];
+
+export function renderEmailTemplate(
+  template: EmailTemplate, 
+  data: {
+    nombre?: string;
+    ordenId?: string;
+    formato?: string;
+    cantidadCintas?: number | string;
+    downloadUrl?: string;
+    trackingUrl?: string;
+    numeroGuia?: string;
+    paqueteria?: string;
+    trackingGuiaUrl?: string;
+    saldoPendiente?: number | string;
+  }
+): { subject: string; body: string } {
+  let subject = template.subject;
+  let body = template.body;
+
+  const replaceMap: Record<string, string> = {
+    '{{nombre}}': data.nombre || 'Cliente',
+    '{{ordenId}}': data.ordenId || '0000',
+    '{{formato}}': data.formato || 'VHS / Video8',
+    '{{cantidadCintas}}': String(data.cantidadCintas || 'tus'),
+    '{{downloadUrl}}': data.downloadUrl || 'https://digimemories.mx/track',
+    '{{trackingUrl}}': data.trackingUrl || `https://digimemories.mx/track?orderId=${data.ordenId || ''}`,
+    '{{numeroGuia}}': data.numeroGuia || 'Pendiente de asignación',
+    '{{paqueteria}}': data.paqueteria || 'FedEx / DHL',
+    '{{trackingGuiaUrl}}': data.trackingGuiaUrl || 'https://www.fedex.com/fedextrack/',
+    '{{saldoPendiente}}': String(data.saldoPendiente || '0')
+  };
+
+  Object.entries(replaceMap).forEach(([token, val]) => {
+    subject = subject.split(token).join(val);
+    body = body.split(token).join(val);
+  });
+
+  return { subject, body };
+}

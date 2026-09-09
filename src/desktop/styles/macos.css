@@ -42,6 +42,64 @@
   flex-direction: column;
   user-select: none;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* =========================================================================
+   LIGHT MODE DESIGN SYSTEM (macOS Light Acrylic)
+   ========================================================================= */
+.mac-app-container[data-theme="light"] {
+  --mac-bg-base: #f5f4f0;
+  --mac-bg-surface: rgba(255, 255, 255, 0.92);
+  --mac-bg-sidebar: rgba(243, 240, 235, 0.96);
+  --mac-bg-card: rgba(255, 255, 255, 0.88);
+  --mac-bg-card-hover: rgba(255, 255, 255, 0.98);
+  --mac-border: rgba(0, 0, 0, 0.1);
+  --mac-border-highlight: rgba(234, 88, 12, 0.45);
+  
+  --mac-text-primary: #1c1917;
+  --mac-text-secondary: #57534e;
+  --mac-text-muted: #78716c;
+  
+  --mac-accent: #ea580c;
+  --mac-accent-glow: rgba(234, 88, 12, 0.2);
+  --mac-emerald: #059669;
+  --mac-emerald-glow: rgba(5, 150, 105, 0.15);
+  --mac-ruby: #dc2626;
+  --mac-amber: #d97706;
+}
+
+.mac-app-container[data-theme="light"] header {
+  background: rgba(245, 243, 240, 0.94) !important;
+}
+
+.mac-app-container[data-theme="light"] .mac-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.mac-app-container[data-theme="light"] .mac-btn-secondary {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--mac-text-primary);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.mac-app-container[data-theme="light"] .mac-btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.09);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.mac-app-container[data-theme="light"] .mac-input {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1c1917;
+}
+
+.mac-app-container[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.mac-app-container[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
 }
 
 /* Window Drag Area for macOS */
