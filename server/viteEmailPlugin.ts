@@ -30,8 +30,8 @@ try {
   }
 } catch {}
 
-export const DEFAULT_MP_ACCESS_TOKEN = 'TEST-1691694472433668-090816-bdad26f2526b7165785e886fe461e27d-256102028';
-export const DEFAULT_MP_PUBLIC_KEY = 'TEST-698d2178-2eba-4208-b6f1-2cbb4ce2cad6';
+export const DEFAULT_MP_ACCESS_TOKEN = 'APP_USR-1691694472433668-090816-2dba2cc0bf20589ac9b9d0d2846665f1-256102028';
+export const DEFAULT_MP_PUBLIC_KEY = 'APP_USR-42dc43f2-be28-4b70-ad33-a77ee464a7bd';
 
 /**
  * Helper to read JSON request body from IncomingMessage

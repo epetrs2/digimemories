@@ -86,10 +86,10 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   bankPaymentInstructions: 'Favor de ingresar tu Número de Orden o PIN en el concepto de la transferencia y enviar comprobante a contactodigimemories@gmail.com o por WhatsApp.',
 
   mercadopagoEnabled: true,
-  mercadopagoAccessToken: 'TEST-1691694472433668-090816-bdad26f2526b7165785e886fe461e27d-256102028',
-  mercadopagoPublicKey: 'TEST-698d2178-2eba-4208-b6f1-2cbb4ce2cad6',
+  mercadopagoAccessToken: 'APP_USR-1691694472433668-090816-2dba2cc0bf20589ac9b9d0d2846665f1-256102028',
+  mercadopagoPublicKey: 'APP_USR-42dc43f2-be28-4b70-ad33-a77ee464a7bd',
   mercadopagoPaymentLink: '',
-  mercadopagoSandbox: true,
+  mercadopagoSandbox: false,
 
   priceTape: 150,
   priceDvd: 120,
@@ -121,10 +121,10 @@ export function getBusinessSettings(): BusinessSettings {
       return DEFAULT_BUSINESS_SETTINGS;
     }
     const parsed = JSON.parse(raw);
-    const tokenToUse = (parsed.mercadopagoAccessToken && parsed.mercadopagoAccessToken.startsWith('TEST-'))
+    const tokenToUse = (parsed.mercadopagoAccessToken && parsed.mercadopagoAccessToken.startsWith('APP_USR-'))
       ? parsed.mercadopagoAccessToken.trim()
       : DEFAULT_BUSINESS_SETTINGS.mercadopagoAccessToken;
-    const publicKeyToUse = (parsed.mercadopagoPublicKey && parsed.mercadopagoPublicKey.startsWith('TEST-'))
+    const publicKeyToUse = (parsed.mercadopagoPublicKey && parsed.mercadopagoPublicKey.startsWith('APP_USR-'))
       ? parsed.mercadopagoPublicKey.trim()
       : DEFAULT_BUSINESS_SETTINGS.mercadopagoPublicKey;
 
@@ -133,13 +133,13 @@ export function getBusinessSettings(): BusinessSettings {
       ...parsed,
       mercadopagoAccessToken: tokenToUse,
       mercadopagoPublicKey: publicKeyToUse,
-      mercadopagoSandbox: true,
+      mercadopagoSandbox: false,
       mercadopagoPaymentLink: (parsed.mercadopagoPaymentLink && !parsed.mercadopagoPaymentLink.includes('link.mercadopago.com.mx/digimemories'))
         ? parsed.mercadopagoPaymentLink
         : ''
     };
-    // Sync back so all components see test credentials
-    if (parsed.mercadopagoAccessToken !== tokenToUse || !parsed.mercadopagoSandbox) {
+    // Sync back so all components see production credentials
+    if (parsed.mercadopagoAccessToken !== tokenToUse || parsed.mercadopagoSandbox) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
     }
     return merged;
@@ -198,12 +198,26 @@ export async function fetchCloudBusinessSettings(): Promise<BusinessSettings> {
 
     if (error || !data || !data.body_html) return getBusinessSettings();
 
+    const current = getBusinessSettings();
     const parsed: BusinessSettings = JSON.parse(data.body_html);
+    const merged: BusinessSettings = {
+      ...current,
+      ...parsed,
+      mercadopagoAccessToken: (parsed.mercadopagoAccessToken && parsed.mercadopagoAccessToken.startsWith('APP_USR-'))
+        ? parsed.mercadopagoAccessToken.trim()
+        : current.mercadopagoAccessToken,
+      mercadopagoPublicKey: (parsed.mercadopagoPublicKey && parsed.mercadopagoPublicKey.startsWith('APP_USR-'))
+        ? parsed.mercadopagoPublicKey.trim()
+        : current.mercadopagoPublicKey,
+      mercadopagoSandbox: false,
+      mercadopagoPaymentLink: ''
+    };
+
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
-      window.dispatchEvent(new CustomEvent('digimemories_business_settings_sync', { detail: parsed }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      window.dispatchEvent(new CustomEvent('digimemories_business_settings_sync', { detail: merged }));
     }
-    return parsed;
+    return merged;
   } catch {
     return getBusinessSettings();
   }

@@ -32,7 +32,7 @@ export async function createMercadoPagoPreference(params: CheckoutPreferencePara
 
   const mpToken = (settings.mercadopagoAccessToken && settings.mercadopagoAccessToken.trim() !== '')
     ? settings.mercadopagoAccessToken.trim()
-    : 'TEST-1691694472433668-090816-bdad26f2526b7165785e886fe461e27d-256102028';
+    : 'APP_USR-1691694472433668-090816-2dba2cc0bf20589ac9b9d0d2846665f1-256102028';
 
   const isSandboxMode = mpToken.startsWith('TEST-') || !!settings.mercadopagoSandbox;
 
