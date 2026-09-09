@@ -5,4 +5,4 @@ Disallow: /api/
 Disallow: /quote/
 Disallow: /cotizacion/
 
-Sitemap: https://digimemories.vercel.app/sitemap.xml
+Sitemap: https://digimemories.com.mx/sitemap.xml
