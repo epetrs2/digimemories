@@ -40,7 +40,7 @@
       "destination": "/api/mercadopago"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/((?!api/|.*\\.[\\w]+$).*)",
       "destination": "/index.html"
     }
   ]
