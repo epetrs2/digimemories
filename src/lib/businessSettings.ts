@@ -110,7 +110,7 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   announcementBannerText: '🚚 Servicio de recolección y entrega a domicilio disponible en toda la CDMX y envíos a todo México.',
   
   geminiApiKey: '',
-  geminiModel: 'gemini-1.5-flash',
+  geminiModel: 'gemini-2.5-flash',
   geminiEnabled: true,
 
   updatedAt: new Date().toISOString()
@@ -137,6 +137,13 @@ export function getBusinessSettings(): BusinessSettings {
       ? parsed.mercadopagoPublicKey.trim()
       : DEFAULT_BUSINESS_SETTINGS.mercadopagoPublicKey;
 
+    const geminiKeyToUse = (parsed.geminiApiKey && parsed.geminiApiKey.trim())
+      ? parsed.geminiApiKey.trim()
+      : '';
+    const geminiModelToUse = (!parsed.geminiModel || parsed.geminiModel === 'gemini-1.5-flash')
+      ? 'gemini-2.5-flash'
+      : parsed.geminiModel;
+
     const merged = { 
       ...DEFAULT_BUSINESS_SETTINGS, 
       ...parsed,
@@ -145,10 +152,13 @@ export function getBusinessSettings(): BusinessSettings {
       mercadopagoSandbox: false,
       mercadopagoPaymentLink: (parsed.mercadopagoPaymentLink && !parsed.mercadopagoPaymentLink.includes('link.mercadopago.com.mx/digimemories'))
         ? parsed.mercadopagoPaymentLink
-        : ''
+        : '',
+      geminiApiKey: geminiKeyToUse,
+      geminiModel: geminiModelToUse,
+      geminiEnabled: parsed.geminiEnabled !== false
     };
     // Sync back so all components see production credentials
-    if (parsed.mercadopagoAccessToken !== tokenToUse || parsed.mercadopagoSandbox) {
+    if (parsed.mercadopagoAccessToken !== tokenToUse || parsed.mercadopagoSandbox || parsed.geminiApiKey !== geminiKeyToUse || parsed.geminiModel !== geminiModelToUse) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
     }
     return merged;

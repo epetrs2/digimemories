@@ -1032,13 +1032,14 @@ export const AdminBusinessSettings: React.FC = () => {
                   Modelo de Gemini
                 </label>
                 <select
-                  value={settings.geminiModel || 'gemini-1.5-flash'}
+                  value={settings.geminiModel || 'gemini-2.5-flash'}
                   onChange={e => handleChange('geminiModel', e.target.value)}
                   className="input-field"
                   style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px', background: '#ffffff' }}
                 >
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash (Recomendado - Ultrarrápido, Multimodal y Gratuito)</option>
-                  <option value="gemini-2.0-flash">Gemini 2.0 Flash (Nueva Generación)</option>
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recomendado - Ultrarrápido, Multimodal y Gratuito)</option>
+                  <option value="gemini-flash-latest">Gemini Flash Latest (Última versión disponible)</option>
+                  <option value="gemini-2.5-pro">Gemini 2.5 Pro (Razonamiento profundo)</option>
                 </select>
               </div>
 
@@ -1047,7 +1048,7 @@ export const AdminBusinessSettings: React.FC = () => {
                   type="button"
                   onClick={async () => {
                     setGeminiTestStatus({ loading: true });
-                    const res = await testGeminiConnection(settings.geminiApiKey, settings.geminiModel || 'gemini-1.5-flash');
+                    const res = await testGeminiConnection(settings.geminiApiKey, settings.geminiModel || 'gemini-2.5-flash');
                     setGeminiTestStatus({ loading: false, success: res.success, message: res.message });
                   }}
                   disabled={geminiTestStatus?.loading || !settings.geminiApiKey}

@@ -52,6 +52,13 @@ INSTRUCCIONES MULTIMODALES (CUANDO EL CLIENTE ADJUNTA UNA IMAGEN):
 - Dale un diagnóstico claro: dile qué formato es, confírmale si podemos digitalizarlo, indícale su costo estimado y dale las instrucciones para mandarlo por Uber Flash o paquetería.
 - Si es un formato no soportado (como carrete de cine Super 8 o VHS-C), explícaselo amablemente y dale alternativas si aplica.`;
 
+export function normalizeModel(model?: string): string {
+  if (!model || model === 'gemini-1.5-flash' || model === 'gemini-2.0-flash') {
+    return 'gemini-2.5-flash';
+  }
+  return model;
+}
+
 export async function askGeminiAssistant(
   userText: string,
   imageBase64?: string,
@@ -66,7 +73,7 @@ export async function askGeminiAssistant(
 
   // Key priority: Business settings > VITE environment variable
   const apiKey = (settings.geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY || '').trim();
-  const model = settings.geminiModel || 'gemini-1.5-flash';
+  const model = normalizeModel(settings.geminiModel);
 
   // If no API key configured in browser, attempt call via backend endpoint /api/gemini
   if (!apiKey) {
@@ -156,7 +163,7 @@ export async function askGeminiAssistant(
 
 export async function testGeminiConnection(
   apiKey: string,
-  model: string = 'gemini-1.5-flash'
+  model: string = 'gemini-2.5-flash'
 ): Promise<{ success: boolean; message: string }> {
   const cleanKey = (apiKey || '').trim();
   if (!cleanKey) {
@@ -166,8 +173,10 @@ export async function testGeminiConnection(
     };
   }
 
+  const effectiveModel = normalizeModel(model);
+
   try {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(effectiveModel)}:generateContent?key=${encodeURIComponent(cleanKey)}`;
 
     const response = await fetch(endpoint, {
       method: 'POST',

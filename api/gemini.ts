@@ -102,7 +102,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   try {
     const body = await readJsonBody(req);
-    const { prompt, imageBase64, mimeType = 'image/jpeg', model = 'gemini-1.5-flash', apiKey: providedKey } = body;
+    const { prompt, imageBase64, mimeType = 'image/jpeg', model = 'gemini-2.5-flash', apiKey: providedKey } = body;
+    const effectiveModel = (!model || model === 'gemini-1.5-flash' || model === 'gemini-2.0-flash') ? 'gemini-2.5-flash' : model;
 
     const apiKey = (providedKey || process.env.GEMINI_API_KEY || '').trim();
     if (!apiKey) {
@@ -126,7 +127,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     
     parts.push({ text: textPrompt });
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(effectiveModel)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
     const response = await fetch(endpoint, {
       method: 'POST',
