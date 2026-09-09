@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /quote/
+Disallow: /cotizacion/
+
+Sitemap: https://digimemories.vercel.app/sitemap.xml
