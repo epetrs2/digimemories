@@ -324,6 +324,76 @@ export function viteEmailPlugin(): Plugin {
           }
         }
 
+        // -------------------------------------------------------------
+        // Route 3: /api/gemini (Gemini Flash Multimodal Endpoint)
+        // -------------------------------------------------------------
+        if (req.url && (req.url === '/api/gemini' || req.url.startsWith('/api/gemini'))) {
+          if (req.method === 'OPTIONS') {
+            res.statusCode = 204;
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            res.end();
+            return;
+          }
+
+          if (req.method !== 'POST') {
+            return sendJson(res, 405, { error: 'Method Not Allowed' });
+          }
+
+          try {
+            const body = await readJsonBody(req);
+            const { prompt, imageBase64, mimeType = 'image/jpeg', model = 'gemini-1.5-flash', apiKey: providedKey } = body;
+            const apiKey = (providedKey || process.env.GEMINI_API_KEY || '').trim();
+
+            if (!apiKey) {
+              return sendJson(res, 400, { error: 'No se ha configurado la API Key de Gemini Flash.' });
+            }
+
+            const parts: any[] = [];
+            if (imageBase64) {
+              const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
+              parts.push({
+                inlineData: {
+                  mimeType,
+                  data: cleanBase64
+                }
+              });
+            }
+
+            const textPrompt = (prompt || '').trim() || (imageBase64 
+              ? 'Hola Guillermo, te adjunto una foto de mis cintas para que por favor me digas qué formato son, su estado y cómo las pueden digitalizar.'
+              : 'Hola, tengo dudas sobre el servicio de digitalización.');
+            
+            parts.push({ text: textPrompt });
+
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+            const geminiRes = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ role: 'user', parts }],
+                generationConfig: {
+                  temperature: 0.35,
+                  maxOutputTokens: 900
+                }
+              })
+            });
+
+            if (!geminiRes.ok) {
+              const errText = await geminiRes.text();
+              return sendJson(res, geminiRes.status, { error: 'Error de Google AI API', details: errText });
+            }
+
+            const data = (await geminiRes.json()) as any;
+            const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            return sendJson(res, 200, { text: candidateText.trim(), model });
+          } catch (err: any) {
+            return sendJson(res, 500, { error: 'Error interno en servicio Gemini', details: err?.message });
+          }
+        }
+
         next();
       });
     }

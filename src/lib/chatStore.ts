@@ -4,6 +4,7 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   senderName?: string;
+  imageUrl?: string;
 }
 
 export interface ChatThread {
@@ -59,14 +60,14 @@ const DEMO_SEEDS: ChatThread[] = [
       {
         id: 'm-1',
         sender: 'visitor',
-        text: 'Hola, tengo 4 cintas VHS con algo de hongo blanco, ¿las pueden revisar antes?',
-        timestamp: '11:45 AM',
+        text: 'Hola, tengo 4 cintas VHS que se ven algo empolvadas. ¿Se pueden recuperar?',
+        timestamp: '11:42 AM',
         senderName: 'Sofía'
       },
       {
         id: 'm-2',
         sender: 'bot',
-        text: '¡Hola Sofía! Hacemos inspección física sin costo para evaluar si es seguro reproducirlas.',
+        text: '¡Hola Sofía! Con gusto. En DigiMemories realizamos inspección previa y limpieza para remover polvo y moho sin dañar la película. ¿Gustas cotizarlas ahora mismo?',
         timestamp: '11:45 AM',
         senderName: 'Guillermo (Bot)'
       },
@@ -109,9 +110,9 @@ const DEMO_SEEDS: ChatThread[] = [
       {
         id: 'm-202',
         sender: 'bot',
-        text: 'El tiempo promedio es de 3 a 7 días hábiles para 10 cintas con digitalización 1:1 de alta fidelidad.',
-        timestamp: '10:15 AM',
-        senderName: 'Guillermo (Bot)'
+        text: '¡Hola Carlos! Para 10 cintas nuestro tiempo estándar es de 3 a 5 días hábiles, garantizando captura 1:1 en tiempo real.',
+        timestamp: '10:16 AM',
+        senderName: 'Guillermo'
       }
     ]
   }
@@ -119,13 +120,14 @@ const DEMO_SEEDS: ChatThread[] = [
 
 export const getChatThreads = (): ChatThread[] => {
   try {
-    const data = localStorage.getItem(THREADS_KEY);
-    if (!data) {
+    const raw = localStorage.getItem(THREADS_KEY);
+    if (!raw) {
       localStorage.setItem(THREADS_KEY, JSON.stringify(DEMO_SEEDS));
       return DEMO_SEEDS;
     }
-    return JSON.parse(data);
-  } catch {
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error('Failed to load chat threads', err);
     return DEMO_SEEDS;
   }
 };
@@ -134,18 +136,21 @@ export const saveChatThreads = (threads: ChatThread[]) => {
   try {
     localStorage.setItem(THREADS_KEY, JSON.stringify(threads));
     window.dispatchEvent(new CustomEvent('digimemories_chat_sync'));
-    
-    // Sync top active threads to Supabase in background
-    threads.slice(0, 5).forEach(t => saveChatThreadToCloud(t));
+    // Persist active visitor thread to cloud for multi-device admin
+    const visitorId = getVisitorThreadId();
+    const currentVisitorThread = threads.find(t => t.id === visitorId);
+    if (currentVisitorThread) {
+      saveChatThreadToCloud(currentVisitorThread);
+    }
   } catch (err) {
-    console.error('Error saving chat threads', err);
+    console.error('Failed to save chat threads', err);
   }
 };
 
 export const getVisitorThreadId = (): string => {
   let id = localStorage.getItem(CURRENT_VISITOR_KEY);
   if (!id) {
-    id = `visitor-${Math.floor(100000 + Math.random() * 900000)}`;
+    id = `visitor-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 4)}`;
     localStorage.setItem(CURRENT_VISITOR_KEY, id);
   }
   return id;
@@ -173,7 +178,7 @@ export const getOrCreateVisitorThread = (visitorName = 'Visitante Web', route = 
           id: `init-${Date.now()}`,
           sender: 'bot',
           senderName: 'Guillermo (Asistente)',
-          text: '¡Hola! 👋 Soy Guillermo, especialista en preservación analógica de DigiMemories. ¿Tienes dudas sobre cómo rescatar tus cintas VHS, fotos o discos?',
+          text: '¡Hola! 👋 Soy Guillermo, especialista en preservación analógica de DigiMemories. ¿Tienes dudas sobre cómo rescatar tus cintas VHS, fotos o discos? También puedes enviarme una foto de tus cassettes aquí mismo para identificarlos.',
           timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
         }
       ]
@@ -189,7 +194,8 @@ export const addMessageToThread = (
   threadId: string, 
   sender: 'visitor' | 'bot' | 'admin' | 'system', 
   text: string, 
-  senderName?: string
+  senderName?: string,
+  imageUrl?: string
 ): ChatThread | undefined => {
   const threads = getChatThreads();
   const thread = threads.find(t => t.id === threadId);
@@ -200,7 +206,8 @@ export const addMessageToThread = (
     sender,
     text,
     senderName: senderName || (sender === 'admin' ? 'Operador Admin' : sender === 'bot' ? 'Guillermo' : thread.visitorName),
-    timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+    timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+    imageUrl
   };
 
   thread.messages.push(newMsg);

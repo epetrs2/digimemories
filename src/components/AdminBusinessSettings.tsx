@@ -6,6 +6,7 @@ import {
   type BusinessSettings 
 } from '../lib/businessSettings';
 import { testMercadoPagoConnection } from '../lib/mercadoPagoService';
+import { testGeminiConnection } from '../lib/geminiService';
 import { 
   Truck,
   CreditCard, 
@@ -19,15 +20,21 @@ import {
   RefreshCw,
   ShieldCheck,
   AlertCircle,
-  Zap
+  Zap,
+  Sparkles,
+  Eye,
+  EyeOff,
+  Bot
 } from 'lucide-react';
 
 export const AdminBusinessSettings: React.FC = () => {
   const [settings, setSettings] = useState<BusinessSettings>(() => getBusinessSettings());
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [activeSection, setActiveSection] = useState<'location' | 'bank' | 'pricing' | 'contact' | 'banner'>('location');
+  const [activeSection, setActiveSection] = useState<'location' | 'bank' | 'pricing' | 'contact' | 'banner' | 'gemini'>('location');
   const [mpTestStatus, setMpTestStatus] = useState<{ loading: boolean; message?: string; success?: boolean } | null>(null);
+  const [geminiTestStatus, setGeminiTestStatus] = useState<{ loading: boolean; message?: string; success?: boolean } | null>(null);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
 
   useEffect(() => {
     fetchCloudBusinessSettings().then(cloud => {
@@ -211,6 +218,27 @@ export const AdminBusinessSettings: React.FC = () => {
           }}
         >
           <Megaphone size={16} /> Aviso de Cabecera
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection('gemini')}
+          style={{
+            padding: '0.6rem 1.1rem',
+            fontSize: '0.85rem',
+            fontWeight: 800,
+            borderRadius: '12px',
+            border: 'none',
+            background: activeSection === 'gemini' ? 'linear-gradient(135deg, #4338ca 0%, #312e81 100%)' : '#f5f5f4',
+            color: activeSection === 'gemini' ? '#ffffff' : '#78716c',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            boxShadow: activeSection === 'gemini' ? '0 4px 12px rgba(67, 56, 202, 0.3)' : 'none'
+          }}
+        >
+          <Sparkles size={16} color={activeSection === 'gemini' ? '#a5b4fc' : '#818cf8'} /> Asistente IA (Gemini Flash)
         </button>
       </div>
 
@@ -860,6 +888,227 @@ export const AdminBusinessSettings: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* SECTION 6: ASISTENTE IA GEMINI FLASH (MULTIMODAL GRATUITO) */}
+        {activeSection === 'gemini' && (
+          <div className="glass animate-on-load" style={{ padding: '2rem', background: '#ffffff', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+            
+            {/* Header */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)' }}>
+                    <Sparkles size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#1c1917' }}>
+                      Asistente Virtual con Google Gemini Flash (Multimodal)
+                    </h3>
+                    <p style={{ fontSize: '0.82rem', color: '#78716c', margin: '0.15rem 0 0 0' }}>
+                      Inteligencia artificial que responde preguntas técnicas y analiza fotografías de cassettes en tiempo real.
+                    </p>
+                  </div>
+                </div>
+
+                <span style={{ 
+                  padding: '0.4rem 0.8rem', 
+                  borderRadius: '20px', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 800, 
+                  background: '#ecfdf5', 
+                  color: '#047857',
+                  border: '1px solid #a7f3d0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}>
+                  <CheckCircle2 size={14} /> Nivel Gratuito de Google AI (Cero Costo)
+                </span>
+              </div>
+            </div>
+
+            {/* Explanation Banner */}
+            <div style={{ 
+              padding: '1.25rem', 
+              background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', 
+              borderRadius: '16px', 
+              border: '1px solid #cbd5e1',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.6rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#334155', fontSize: '0.9rem' }}>
+                <Bot size={18} color="#4f46e5" /> ¿Cómo funciona Gemini Flash en DigiMemories?
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.6, margin: 0 }}>
+                • <strong>Capacidad Multimodal con Fotos:</strong> El cliente puede subir una foto de su cassette, disco o álbum en el chat. Gemini analiza la imagen, identifica el formato exacto (VHS, Hi8, Betamax, etc.) y detecta si tiene hongos o daño para darle un diagnóstico profesional inmediato.<br />
+                • <strong>Cero Costo (Google AI Studio):</strong> Google ofrece un cupo gratuito de hasta 15 consultas por minuto y 1,500 consultas por día sin necesidad de tarjeta bancaria.<br />
+                • <strong>Seguridad y Respaldo (Fallback):</strong> Si la API se satura o no tiene clave, el chat pasa automáticamente a su motor de respuestas pre-entrenadas sin interrumpir la atención.
+              </p>
+            </div>
+
+            {/* Main Toggle */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              padding: '1.25rem', 
+              background: settings.geminiEnabled ? '#eef2ff' : '#f5f5f4', 
+              borderRadius: '16px', 
+              border: settings.geminiEnabled ? '1px solid #c7d2fe' : '1px solid #e7e2d9' 
+            }}>
+              <div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1c1917' }}>
+                  Habilitar Asistente Inteligente Gemini Flash
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.2rem' }}>
+                  Permite que Guillermo responda con IA generativa multimodal en el chat en vivo.
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                id="geminiEnabled"
+                checked={settings.geminiEnabled}
+                onChange={e => handleChange('geminiEnabled', e.target.checked)}
+                style={{ width: '22px', height: '22px', accentColor: '#4f46e5', cursor: 'pointer' }}
+              />
+            </div>
+
+            {/* API Key Configuration */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155' }}>
+                  Google AI Studio API Key (Clave Gratuita)
+                </label>
+                <a 
+                  href="https://aistudio.google.com/app/apikey" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '0.78rem', fontWeight: 700, color: '#4f46e5', textDecoration: 'underline' }}
+                >
+                  Obtener mi clave gratuita en Google AI Studio ↗
+                </a>
+              </div>
+              
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input
+                  type={showGeminiKey ? 'text' : 'password'}
+                  value={settings.geminiApiKey}
+                  onChange={e => handleChange('geminiApiKey', e.target.value)}
+                  placeholder="AIzaSy..."
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.75rem 3rem 0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGeminiKey(!showGeminiKey)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  title={showGeminiKey ? 'Ocultar clave' : 'Mostrar clave'}
+                >
+                  {showGeminiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.35rem' }}>
+                Tu clave se almacena de forma segura en tu base de datos y permite la atención multimodal 24/7 sin costo.
+              </p>
+            </div>
+
+            {/* Model Selector & Connection Test */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '0.4rem' }}>
+                  Modelo de Gemini
+                </label>
+                <select
+                  value={settings.geminiModel || 'gemini-1.5-flash'}
+                  onChange={e => handleChange('geminiModel', e.target.value)}
+                  className="input-field"
+                  style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px', background: '#ffffff' }}
+                >
+                  <option value="gemini-1.5-flash">Gemini 1.5 Flash (Recomendado - Ultrarrápido, Multimodal y Gratuito)</option>
+                  <option value="gemini-2.0-flash">Gemini 2.0 Flash (Nueva Generación)</option>
+                </select>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setGeminiTestStatus({ loading: true });
+                    const res = await testGeminiConnection(settings.geminiApiKey, settings.geminiModel || 'gemini-1.5-flash');
+                    setGeminiTestStatus({ loading: false, success: res.success, message: res.message });
+                  }}
+                  disabled={geminiTestStatus?.loading || !settings.geminiApiKey}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1.25rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: '1px solid #c7d2fe',
+                    background: '#eef2ff',
+                    color: '#3730a3',
+                    cursor: (!settings.geminiApiKey || geminiTestStatus?.loading) ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <Zap size={16} />
+                  {geminiTestStatus?.loading ? 'Comprobando conexión...' : 'Probar Conexión con Gemini'}
+                </button>
+              </div>
+            </div>
+
+            {/* Test Status Feedback */}
+            {geminiTestStatus && (
+              <div style={{
+                padding: '1rem',
+                borderRadius: '12px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: geminiTestStatus.success ? '#ecfdf5' : '#fef2f2',
+                color: geminiTestStatus.success ? '#065f46' : '#991b1b',
+                border: geminiTestStatus.success ? '1px solid #a7f3d0' : '1px solid #fecaca'
+              }}>
+                {geminiTestStatus.success ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                <span>{geminiTestStatus.message}</span>
+              </div>
+            )}
+
+            {/* Quick 3-step Instructions Card */}
+            <div style={{ 
+              padding: '1.25rem', 
+              background: '#f8fafc', 
+              borderRadius: '14px', 
+              border: '1px dashed #cbd5e1' 
+            }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#334155', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Pasos para activar tu clave gratuita de Google en 60 segundos:
+              </div>
+              <ol style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.82rem', color: '#475569', lineHeight: 1.7 }}>
+                <li>Abre <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: '#4f46e5', fontWeight: 700 }}>aistudio.google.com/app/apikey</a> con tu cuenta de Google.</li>
+                <li>Haz clic en el botón azul <strong>"Create API key"</strong> (Crear clave de API).</li>
+                <li>Copia el código que te da y pégalo arriba en el campo de <strong>API Key</strong>. ¡Listo!</li>
+              </ol>
+            </div>
+
           </div>
         )}
 

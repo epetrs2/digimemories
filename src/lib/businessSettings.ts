@@ -56,6 +56,11 @@ export interface BusinessSettings {
   announcementBannerEnabled: boolean;
   announcementBannerText: string;
 
+  // 7. Asistente IA Gemini Flash Multimodal
+  geminiApiKey: string;
+  geminiModel: string;
+  geminiEnabled: boolean;
+
   updatedAt: string;
 }
 
@@ -104,6 +109,10 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   announcementBannerEnabled: true,
   announcementBannerText: '🚚 Servicio de recolección y entrega a domicilio disponible en toda la CDMX y envíos a todo México.',
   
+  geminiApiKey: '',
+  geminiModel: 'gemini-1.5-flash',
+  geminiEnabled: true,
+
   updatedAt: new Date().toISOString()
 };
 

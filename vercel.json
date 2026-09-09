@@ -40,6 +40,10 @@
       "destination": "/api/mercadopago"
     },
     {
+      "source": "/api/gemini/:match*",
+      "destination": "/api/gemini"
+    },
+    {
       "source": "/((?!api/|.*\\.[\\w]+$).*)",
       "destination": "/index.html"
     }

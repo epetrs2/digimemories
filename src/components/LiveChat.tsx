@@ -6,7 +6,8 @@ import {
   Send, 
   RefreshCw,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Camera
 } from 'lucide-react';
 import { 
   getOrCreateVisitorThread, 
@@ -16,6 +17,7 @@ import {
 } from '../lib/chatStore';
 import type { ChatThread } from '../lib/chatStore';
 import { getBotResponse, type BotReplyResult } from '../lib/botTrainer';
+import { askGeminiAssistant } from '../lib/geminiService';
 
 const FAQ_SUGGESTIONS = [
   "¿Cuánto cuesta digitalizar mis cintas?",
@@ -34,14 +36,59 @@ export const LiveChat: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [thread, setThread] = useState<ChatThread | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [activeQuickReplies, setActiveQuickReplies] = useState<{ label: string; action: string }[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const syncThread = () => {
     const current = getOrCreateVisitorThread('Visitante', location.pathname);
     setThread(current);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 12 * 1024 * 1024) {
+      alert('La imagen no debe superar los 12MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          setSelectedImage(dataUrl);
+        } else {
+          setSelectedImage(reader.result as string);
+        }
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   useEffect(() => {
@@ -72,7 +119,7 @@ export const LiveChat: React.FC = () => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [thread?.messages.length, isTyping, isOpen, activeQuickReplies]);
+  }, [thread?.messages.length, isTyping, isOpen, activeQuickReplies, selectedImage]);
 
   // Clear unread when opened
   useEffect(() => {
@@ -84,14 +131,18 @@ export const LiveChat: React.FC = () => {
     }
   }, [isOpen]);
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputText).trim();
-    if (!query || !thread) return;
+    const imageToSend = selectedImage;
+
+    if ((!query && !imageToSend) || !thread) return;
 
     setActiveQuickReplies([]);
+    setSelectedImage(null);
 
-    // 1. Add visitor message
-    addMessageToThread(thread.id, 'visitor', query, 'Tú');
+    // 1. Add visitor message (with photo if present)
+    const userDisplayMsg = query || (imageToSend ? '📸 Te adjunto esta fotografía de mis cintas para que me digas qué formato son y su estado.' : '');
+    addMessageToThread(thread.id, 'visitor', userDisplayMsg, 'Tú', imageToSend || undefined);
     if (!textToSend) setInputText('');
     syncThread();
 
@@ -100,25 +151,39 @@ export const LiveChat: React.FC = () => {
       return;
     }
 
-    // 3. Intelligent bot evaluation
+    // 3. Intelligent bot evaluation (Gemini Flash Multimodal with fallback to botTrainer)
     setIsTyping(true);
 
-    setTimeout(() => {
-      const result: BotReplyResult = getBotResponse(query);
+    try {
+      const geminiReply = await askGeminiAssistant(query, imageToSend || undefined);
 
-      if (result.isEscalation) {
-        triggerHumanEscalation(thread.id, query);
+      if (geminiReply) {
+        addMessageToThread(thread.id, 'bot', geminiReply, 'Guillermo (IA)');
       } else {
-        addMessageToThread(thread.id, 'bot', result.text, 'Guillermo (Asistente IA)');
-      }
+        // Fallback to rule engine
+        const result: BotReplyResult = getBotResponse(query || (imageToSend ? 'fotos' : ''));
+        if (result.isEscalation) {
+          triggerHumanEscalation(thread.id, query || 'Consulta con fotografía adjunta');
+        } else {
+          let botText = result.text;
+          if (imageToSend && !query) {
+            botText = `📸 **Fotografía de recuerdos recibida.**\n\nHe recibido la imagen de tus cintas. Un especialista de nuestro laboratorio inspeccionará el formato y su estado físico en breve.\n\n` + botText;
+          }
+          addMessageToThread(thread.id, 'bot', botText, 'Guillermo (Asistente)');
+        }
 
-      if (result.quickReplies && result.quickReplies.length > 0) {
-        setActiveQuickReplies(result.quickReplies);
+        if (result.quickReplies && result.quickReplies.length > 0) {
+          setActiveQuickReplies(result.quickReplies);
+        }
       }
-
+    } catch (err) {
+      console.warn('Error en respuesta del asistente:', err);
+      const result = getBotResponse(query || 'fotos');
+      addMessageToThread(thread.id, 'bot', result.text, 'Guillermo (Asistente)');
+    } finally {
       setIsTyping(false);
       syncThread();
-    }, 600);
+    }
   };
 
   const renderFormattedMessage = (text: string, isMe: boolean) => {
@@ -521,6 +586,15 @@ export const LiveChat: React.FC = () => {
                     wordBreak: 'break-word',
                     whiteSpace: 'pre-line'
                   }}>
+                    {msg.imageUrl && (
+                      <div style={{ marginBottom: msg.text ? '0.6rem' : 0, borderRadius: '12px', overflow: 'hidden' }}>
+                        <img 
+                          src={msg.imageUrl} 
+                          alt="Foto adjunta" 
+                          style={{ maxWidth: '100%', maxHeight: '220px', borderRadius: '10px', objectFit: 'cover', display: 'block' }}
+                        />
+                      </div>
+                    )}
                     {renderFormattedMessage(msg.text, isMe)}
                   </div>
                 </div>
@@ -574,7 +648,7 @@ export const LiveChat: React.FC = () => {
                 boxShadow: 'var(--shadow-sm)',
                 border: '1px solid var(--glass-border)'
               }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Guillermo está escribiendo</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Guillermo está analizando</span>
                 <span className="typing-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent-color)' }} />
                 <span className="typing-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent-color)', animationDelay: '0.2s' }} />
                 <span className="typing-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent-color)', animationDelay: '0.4s' }} />
@@ -586,69 +660,145 @@ export const LiveChat: React.FC = () => {
 
           {/* Input Footer */}
           <div style={{
-            padding: '0.85rem 1rem',
             background: '#ffffff',
             borderTop: '1px solid var(--glass-border)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem'
+            flexDirection: 'column'
           }}>
-            {isArchived ? (
-              <div style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', padding: '0.4rem 0' }}>
-                Esta conversación ha finalizado.{' '}
-                <button 
-                  onClick={handleStartNewChat}
-                  style={{ background: 'none', border: 'none', color: 'var(--accent-color)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
-                >
-                  Iniciar nuevo chat
-                </button>
-              </div>
-            ) : (
-              <form 
-                onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}
-              >
-                <input 
-                  ref={inputRef}
-                  type="text"
-                  placeholder={isHumanMode ? "Escribe un mensaje al operador..." : "Escribe tu consulta o cotización..."}
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem 1rem',
-                    borderRadius: '16px',
-                    border: '1.5px solid rgba(214, 204, 194, 0.8)',
-                    outline: 'none',
-                    fontSize: '0.875rem',
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)'
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = 'var(--accent-color)')}
-                  onBlur={(e) => (e.target.style.borderColor = 'rgba(214, 204, 194, 0.8)')}
-                />
+            {/* Image Preview Banner if selected */}
+            {selectedImage && (
+              <div style={{
+                padding: '0.5rem 0.85rem',
+                background: '#fff7ed',
+                borderBottom: '1px solid #fed7aa',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                  <img 
+                    src={selectedImage} 
+                    alt="Previsualización" 
+                    style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid #ea580c', flexShrink: 0 }} 
+                  />
+                  <div style={{ fontSize: '0.75rem', color: '#9a3412', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    Foto lista para analizar formato y estado
+                  </div>
+                </div>
                 <button
-                  type="submit"
-                  disabled={!inputText.trim()}
+                  type="button"
+                  onClick={() => setSelectedImage(null)}
                   style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '14px',
-                    background: inputText.trim() ? 'var(--accent-color)' : '#e7e2d9',
-                    color: '#ffffff',
+                    background: '#ffedd5',
                     border: 'none',
+                    color: '#c2410c',
+                    cursor: 'pointer',
+                    padding: '0.25rem',
+                    borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: inputText.trim() ? 'pointer' : 'default',
-                    transition: 'background 0.2s ease',
                     flexShrink: 0
                   }}
+                  title="Quitar foto"
                 >
-                  <Send size={18} />
+                  <X size={16} />
                 </button>
-              </form>
+              </div>
             )}
+
+            <div style={{
+              padding: '0.85rem 1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem'
+            }}>
+              {isArchived ? (
+                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', padding: '0.4rem 0' }}>
+                  Esta conversación ha finalizado.{' '}
+                  <button 
+                    onClick={handleStartNewChat}
+                    style={{ background: 'none', border: 'none', color: 'var(--accent-color)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Iniciar nuevo chat
+                  </button>
+                </div>
+              ) : (
+                <form 
+                  onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}
+                >
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={handleImageSelect} 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Subir foto de cintas o recuerdos para análisis"
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '14px',
+                      background: selectedImage ? '#ffedd5' : 'var(--bg-secondary)',
+                      color: selectedImage ? '#ea580c' : 'var(--text-muted)',
+                      border: selectedImage ? '1.5px solid #ea580c' : '1.5px solid rgba(214, 204, 194, 0.8)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      flexShrink: 0
+                    }}
+                  >
+                    <Camera size={19} />
+                  </button>
+                  <input 
+                    ref={inputRef}
+                    type="text"
+                    placeholder={selectedImage ? "Añade detalles o presiona enviar..." : (isHumanMode ? "Escribe un mensaje al operador..." : "Escribe tu consulta o cotización...")}
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '0.75rem 1rem',
+                      borderRadius: '16px',
+                      border: '1.5px solid rgba(214, 204, 194, 0.8)',
+                      outline: 'none',
+                      fontSize: '0.875rem',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)'
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = 'var(--accent-color)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(214, 204, 194, 0.8)')}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!inputText.trim() && !selectedImage}
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '14px',
+                      background: (inputText.trim() || selectedImage) ? 'var(--accent-color)' : '#e7e2d9',
+                      color: '#ffffff',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: (inputText.trim() || selectedImage) ? 'pointer' : 'default',
+                      transition: 'background 0.2s ease',
+                      flexShrink: 0
+                    }}
+                  >
+                    <Send size={18} />
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       )}
