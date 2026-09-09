@@ -1519,44 +1519,22 @@ const Admin: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               
-              {/* Direct macOS DMG Download Button */}
+              {/* Native macOS Desktop App Card */}
               <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '16px', border: '1.5px solid #cbd5e1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <Download size={18} color="#0284c7" />
+                  <span style={{ fontSize: '1.2rem' }}>🖥️</span>
                   <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
-                    🖥️ App Nativa para Mac (Instalador .DMG para Apple Silicon)
+                    Estación de Trabajo Nativa para Mac (Apple Silicon)
                   </span>
                 </div>
-                <p style={{ fontSize: '0.8rem', color: '#475569', lineHeight: 1.5, margin: '0 0 0.85rem 0' }}>
-                  Instalador nativo <strong>.dmg</strong> para tu Mac (Apple Silicon M1/M2/M3/M4). Sin necesidad de comandos: descargas el instalador, lo abres y arrastras a tu carpeta de Aplicaciones:
+                <p style={{ fontSize: '0.8rem', color: '#475569', lineHeight: 1.5, margin: '0 0 0.5rem 0' }}>
+                  Tu aplicación de administración está instalada y lista en tu carpeta <strong>Aplicaciones</strong> y con acceso directo en tu <strong>Escritorio</strong>. Cuenta con desbloqueo Touch ID, conexión en vivo a Supabase y servicio de correo Gmail SMTP integrado.
                 </p>
-
-                <a
-                  href="/DigiMemories-Admin.dmg"
-                  download="DigiMemories-Admin.dmg"
-                  style={{
-                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                    color: '#ffffff',
-                    padding: '0.85rem 1.25rem',
-                    borderRadius: '12px',
-                    fontWeight: 800,
-                    fontSize: '0.9rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <Download size={18} /> Descargar Instalador macOS (.dmg - Apple Silicon)
-                </a>
-
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.65rem' }}>
-                  💡 <em>Al abrir el .dmg, simplemente arrastra el icono de DigiMemories a la carpeta Aplicaciones y ábrela desde tu Launchpad o Dock con soporte de Touch ID.</em>
+                <div style={{ fontSize: '0.75rem', color: '#0369a1', fontWeight: 700 }}>
+                  ✓ Lista para abrir desde Launchpad o con Cmd + Espacio (Spotlight)
                 </div>
               </div>
+
 
               {/* Direct APK Download Button */}
               <div style={{ background: '#f0fdf4', padding: '1.25rem', borderRadius: '16px', border: '1.5px solid #86efac' }}>
