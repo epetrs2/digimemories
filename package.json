@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "mac:dev": "electron .",
     "mac:app": "npm run build && ELECTRON_PROD=1 electron .",
+    "mac:dist": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --arm64",
     "cap:sync": "cap sync",
     "cap:open": "cap open android",
     "build:apk": "npm run build && npx cap sync android && cd android && ./gradlew assembleDebug"
@@ -37,9 +38,60 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
     "oxlint": "^1.75.0",
     "sharp": "^0.35.4",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
+  },
+  "build": {
+    "appId": "com.digimemories.admin",
+    "productName": "DigiMemories Admin",
+    "copyright": "Copyright © 2026 DigiMemories",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["arm64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "identity": null
+    },
+    "dmg": {
+      "title": "DigiMemories Admin Installer",
+      "icon": "build/icon.png",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    }
   }
 }

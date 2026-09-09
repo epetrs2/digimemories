@@ -28,3 +28,8 @@ dist-ssr
 .env.*
 server/smtpConfig.json
 server/outboxLogs.json
+
+# Desktop Application Releases
+release/
+*.dmg
+*.blockmap
