@@ -13,6 +13,7 @@ import DesktopSecurityVault from './views/DesktopSecurityVault';
 import { validateAdminSession, destroyAdminSession } from '../lib/security';
 import { getOrders, type Order } from '../lib/store';
 import { getChatThreads, type ChatThread } from '../lib/chatStore';
+import { fetchOrdersFromCloud, fetchChatThreadsFromCloud, initSupabaseRealtimeListeners } from '../lib/supabase';
 import { Search, X, Package, MessageSquare } from 'lucide-react';
 
 export const DesktopApp: React.FC = () => {
@@ -52,7 +53,7 @@ export const DesktopApp: React.FC = () => {
     };
   }, [isAuthenticated, handleUserActivity]);
 
-  // Load Realtime Data
+  // Load Realtime Data from cache & update Dock
   const refreshData = useCallback(() => {
     const fetchedOrders = getOrders();
     const fetchedChats = getChatThreads();
@@ -69,20 +70,50 @@ export const DesktopApp: React.FC = () => {
     }
   }, []);
 
+  // 100% Direct Cloud Sync with Supabase Database
+  const syncWithCloud = useCallback(async () => {
+    try {
+      const [cloudOrders, cloudChats] = await Promise.all([
+        fetchOrdersFromCloud(),
+        fetchChatThreadsFromCloud()
+      ]);
+
+      if (cloudOrders) {
+        localStorage.setItem('digimemories_orders_mock', JSON.stringify(cloudOrders));
+        setOrders(cloudOrders);
+      }
+      if (cloudChats) {
+        localStorage.setItem('digimemories_chat_threads_v3', JSON.stringify(cloudChats));
+        setChatThreads(cloudChats);
+      }
+      setIsOnline(true);
+    } catch (e) {
+      console.warn('[DesktopApp] Supabase Cloud sync warning:', e);
+      setIsOnline(false);
+    }
+  }, []);
+
   useEffect(() => {
+    initSupabaseRealtimeListeners();
     refreshData();
-    const interval = setInterval(refreshData, 3500);
+    syncWithCloud();
+
+    const localInterval = setInterval(refreshData, 3000);
+    const cloudInterval = setInterval(syncWithCloud, 6000);
+
     window.addEventListener('digimemories_orders_sync', refreshData);
     window.addEventListener('digimemories_chat_sync', refreshData);
-    window.addEventListener('online', () => setIsOnline(true));
+    window.addEventListener('online', () => { setIsOnline(true); syncWithCloud(); });
     window.addEventListener('offline', () => setIsOnline(false));
 
     return () => {
-      clearInterval(interval);
+      clearInterval(localInterval);
+      clearInterval(cloudInterval);
       window.removeEventListener('digimemories_orders_sync', refreshData);
       window.removeEventListener('digimemories_chat_sync', refreshData);
     };
-  }, [refreshData]);
+  }, [refreshData, syncWithCloud]);
+
 
   // Keyboard Shortcuts (Cmd+1..6, Cmd+L, Cmd+K)
   useEffect(() => {

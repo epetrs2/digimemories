@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, Notification, systemPreferences, Menu } = r
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
+const { initStorage, handleApiRequest, testSmtpConnection, sendEmail, getSanitizedConfig } = require('./embeddedApi.cjs');
 
 let mainWindow = null;
 let localServer = null;
@@ -33,9 +34,16 @@ function startLocalServer() {
   return new Promise((resolve, reject) => {
     const distDir = path.resolve(__dirname, '../dist');
 
-    localServer = http.createServer((req, res) => {
+    localServer = http.createServer(async (req, res) => {
       try {
         const parsedUrl = new URL(req.url, 'http://127.0.0.1');
+
+        // Handle internal backend API requests (Email, SMTP test, MercadoPago, etc.)
+        if (parsedUrl.pathname.startsWith('/api/')) {
+          const handled = await handleApiRequest(req, res, parsedUrl, app.getPath('userData'));
+          if (handled) return;
+        }
+
         let pathname = decodeURIComponent(parsedUrl.pathname);
         let rel = pathname.replace(/^\/+/, '');
         if (!rel) rel = 'index.html';
@@ -73,6 +81,7 @@ function startLocalServer() {
       localServerPort = localServer.address().port;
       resolve(localServerPort);
     });
+
 
     localServer.on('error', reject);
   });
@@ -297,8 +306,14 @@ ipcMain.on('window-close', () => {
   if (mainWindow) mainWindow.close();
 });
 
+// Email Service IPC Handlers
+ipcMain.handle('email-get-config', () => getSanitizedConfig());
+ipcMain.handle('email-test-smtp', (_event, targetEmail) => testSmtpConnection(targetEmail, app.getPath('userData')));
+ipcMain.handle('email-send', (_event, payload) => sendEmail(payload, app.getPath('userData')));
+
 // App Lifecycle
 app.whenReady().then(() => {
+  initStorage(app.getPath('userData'));
   buildAppMenu();
   createMainWindow();
 
@@ -316,3 +331,4 @@ app.on('before-quit', () => {
     try { localServer.close(); } catch {}
   }
 });
+

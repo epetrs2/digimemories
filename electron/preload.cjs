@@ -16,6 +16,11 @@ contextBridge.exposeInMainWorld('macOSAdminApi', {
   maximizeWindow: () => ipcRenderer.send('window-maximize'),
   closeWindow: () => ipcRenderer.send('window-close'),
   
+  // Email Service API
+  getEmailConfig: () => ipcRenderer.invoke('email-get-config'),
+  testSmtp: (targetEmail) => ipcRenderer.invoke('email-test-smtp', targetEmail),
+  sendEmail: (payload) => ipcRenderer.invoke('email-send', payload),
+  
   // Menu bar shortcut events
   onMenuAction: (callback) => {
     const listener = (_event, action) => callback(action);
@@ -23,3 +28,4 @@ contextBridge.exposeInMainWorld('macOSAdminApi', {
     return () => ipcRenderer.removeListener('menu-action', listener);
   }
 });
+

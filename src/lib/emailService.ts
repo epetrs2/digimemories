@@ -82,10 +82,10 @@ export function getLocalStoredConfig(): {
         host: parsed.host || 'smtp.gmail.com',
         port: Number(parsed.port) || 465,
         secure: parsed.secure !== false,
-        user: (parsed.user || '').trim(),
-        pass: (parsed.pass || '').trim(),
+        user: (parsed.user || 'contactodigimemories@gmail.com').trim(),
+        pass: (parsed.pass || 'eguperkyhqcslpql').trim(),
         fromName: parsed.fromName || 'DigiMemories Preservación',
-        fromEmail: (parsed.fromEmail || parsed.user || '').trim()
+        fromEmail: (parsed.fromEmail || parsed.user || 'contactodigimemories@gmail.com').trim()
       };
     }
   } catch {}
@@ -94,7 +94,7 @@ export function getLocalStoredConfig(): {
     port: 465,
     secure: true,
     user: 'contactodigimemories@gmail.com',
-    pass: '',
+    pass: 'eguperkyhqcslpql',
     fromName: 'DigiMemories Preservación',
     fromEmail: 'contactodigimemories@gmail.com'
   };
@@ -133,6 +133,39 @@ export async function sendEmailViaInternalServer(options: SendEmailOptions): Pro
   });
 
   const localConfig = getLocalStoredConfig();
+
+  // Try Native macOS Electron IPC first if available
+  if (typeof window !== 'undefined' && (window as any).macOSAdminApi?.sendEmail) {
+    try {
+      const nativeRes = await (window as any).macOSAdminApi.sendEmail({
+        to: options.toEmail,
+        toName: options.toName,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+        attachments,
+        config: localConfig,
+        metadata: {
+          trackingId: options.trackingId,
+          type: options.type,
+          ...options.metadata
+        }
+      });
+      if (nativeRes && nativeRes.success) {
+        return {
+          success: true,
+          messageId: nativeRes.messageId,
+          status: nativeRes.status || 'delivered',
+          mode: nativeRes.mode || 'gmail_live',
+          previewUrl: nativeRes.previewUrl,
+          message: 'Correo enviado directamente a la bandeja de entrada del cliente.',
+          emailRecord: localRecord
+        };
+      }
+    } catch (nativeErr) {
+      console.warn('[EmailService] Native Electron sendEmail fallback to fetch:', nativeErr);
+    }
+  }
 
   // 3. Dispatch to internal server API
   try {
@@ -304,6 +337,16 @@ export async function testServerSmtp(targetEmail?: string): Promise<{
   previewUrl?: string | null;
   details?: any;
 }> {
+  // Check Native Electron IPC first
+  if (typeof window !== 'undefined' && (window as any).macOSAdminApi?.testSmtp) {
+    try {
+      const nativeRes = await (window as any).macOSAdminApi.testSmtp(targetEmail);
+      if (nativeRes) return nativeRes;
+    } catch (err) {
+      console.warn('[EmailService] Native testSmtp failed, fallback to fetch:', err);
+    }
+  }
+
   const localConfig = getLocalStoredConfig();
   try {
     const res = await fetch('/api/email/test', {
@@ -334,6 +377,16 @@ export async function testServerSmtp(targetEmail?: string): Promise<{
  * Get current sanitized SMTP configuration with local storage & Supabase Cloud sync
  */
 export async function fetchServerEmailConfig(): Promise<{ success: boolean; config: EmailServerConfig }> {
+  // Check Native Electron IPC first
+  if (typeof window !== 'undefined' && (window as any).macOSAdminApi?.getEmailConfig) {
+    try {
+      const nativeCfg = await (window as any).macOSAdminApi.getEmailConfig();
+      if (nativeCfg && nativeCfg.user) {
+        return { success: true, config: nativeCfg };
+      }
+    } catch {}
+  }
+
   let localSaved = getLocalStoredConfig();
 
   // If local is empty, try fetching from Supabase Cloud
@@ -364,6 +417,7 @@ export async function fetchServerEmailConfig(): Promise<{ success: boolean; conf
     isConfigured: isLocalConfigured,
     mode: isLocalConfigured ? 'gmail_live' : 'sandbox'
   };
+
 
   try {
     const res = await fetch('/api/email/config');
