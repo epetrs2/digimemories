@@ -60,7 +60,36 @@ const VAULT_CLOUD_ROW_ID = 'admin_security_vault_v1';
 
 // Initial default configuration for first run (admin123)
 const DEFAULT_SALT = 'e7b8f9a0c1d2e3f4';
-const DEFAULT_ADMIN_HASH = '50b458beb1d23e97fea9b4d2cd02af394c9d07a3a2e1410282ad5aa21bb7bb8d'; // SHA-256 for admin123 + salt
+const DEFAULT_ADMIN_HASH = 'e06f985ea9bb562719234d7829114819855af96c55ba98f8f738a5dab9c1df35'; // SHA-256 for admin123 + salt
+
+/**
+ * Normalizes any vault payload ensuring all required properties and arrays are always valid
+ */
+export function normalizeVault(raw: any): AdminSecurityVault {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      passwordHash: DEFAULT_ADMIN_HASH,
+      passwordSalt: DEFAULT_SALT,
+      isDefaultPassword: true,
+      updatedAt: new Date().toISOString(),
+      passkeys: [],
+      recoveryCodes: []
+    };
+  }
+
+  const isDefault = typeof raw.isDefaultPassword === 'boolean'
+    ? raw.isDefaultPassword
+    : (!raw.passwordHash || raw.passwordHash === DEFAULT_ADMIN_HASH);
+
+  return {
+    passwordHash: typeof raw.passwordHash === 'string' && raw.passwordHash ? raw.passwordHash : DEFAULT_ADMIN_HASH,
+    passwordSalt: typeof raw.passwordSalt === 'string' && raw.passwordSalt ? raw.passwordSalt : DEFAULT_SALT,
+    isDefaultPassword: isDefault,
+    updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : new Date().toISOString(),
+    passkeys: Array.isArray(raw.passkeys) ? raw.passkeys : [],
+    recoveryCodes: Array.isArray(raw.recoveryCodes) ? raw.recoveryCodes : []
+  };
+}
 
 /**
  * Generate a cryptographically secure random salt in hex format
@@ -120,7 +149,7 @@ export async function fetchSecurityVault(): Promise<AdminSecurityVault> {
   let localVault: AdminSecurityVault | null = null;
   try {
     const raw = localStorage.getItem(VAULT_LOCAL_KEY);
-    if (raw) localVault = JSON.parse(raw);
+    if (raw) localVault = normalizeVault(JSON.parse(raw));
   } catch {}
 
   try {
@@ -131,7 +160,8 @@ export async function fetchSecurityVault(): Promise<AdminSecurityVault> {
       .maybeSingle();
 
     if (!error && data && data.body_html) {
-      const cloudVault: AdminSecurityVault = JSON.parse(data.body_html);
+      const parsed = JSON.parse(data.body_html);
+      const cloudVault = normalizeVault(parsed);
       localStorage.setItem(VAULT_LOCAL_KEY, JSON.stringify(cloudVault));
       return cloudVault;
     }
@@ -144,15 +174,7 @@ export async function fetchSecurityVault(): Promise<AdminSecurityVault> {
   }
 
   // Initial pristine state
-  const initialVault: AdminSecurityVault = {
-    passwordHash: DEFAULT_ADMIN_HASH,
-    passwordSalt: DEFAULT_SALT,
-    isDefaultPassword: true,
-    updatedAt: new Date().toISOString(),
-    passkeys: [],
-    recoveryCodes: []
-  };
-
+  const initialVault = normalizeVault(null);
   localStorage.setItem(VAULT_LOCAL_KEY, JSON.stringify(initialVault));
   return initialVault;
 }
@@ -161,12 +183,13 @@ export async function fetchSecurityVault(): Promise<AdminSecurityVault> {
  * Saves the Security Vault to Supabase Cloud and LocalStorage
  */
 export async function saveSecurityVault(vault: AdminSecurityVault): Promise<boolean> {
-  vault.updatedAt = new Date().toISOString();
+  const normalized = normalizeVault(vault);
+  normalized.updatedAt = new Date().toISOString();
   
   // 1. Local Cache
   try {
-    localStorage.setItem(VAULT_LOCAL_KEY, JSON.stringify(vault));
-    window.dispatchEvent(new CustomEvent('digimemories_vault_updated', { detail: vault }));
+    localStorage.setItem(VAULT_LOCAL_KEY, JSON.stringify(normalized));
+    window.dispatchEvent(new CustomEvent('digimemories_vault_updated', { detail: normalized }));
   } catch (e) {
     console.warn('[Security Vault] Local storage write notice:', e);
   }
@@ -181,10 +204,10 @@ export async function saveSecurityVault(vault: AdminSecurityVault): Promise<bool
         to_email: 'security-vault@digimemories.local',
         to_name: 'Bóveda Criptográfica DigiMemories',
         subject: 'ADMIN_SECURITY_VAULT_PAYLOAD',
-        snippet: `Vault actualizado: ${vault.passkeys.length} Passkeys • Personalizado: ${!vault.isDefaultPassword}`,
+        snippet: `Vault actualizado: ${normalized.passkeys.length} Passkeys • Personalizado: ${!normalized.isDefaultPassword}`,
         type: 'security_vault',
-        sent_at: vault.updatedAt,
-        body_html: JSON.stringify(vault)
+        sent_at: normalized.updatedAt,
+        body_html: JSON.stringify(normalized)
       }, { onConflict: 'id' });
 
     return !error;
@@ -207,7 +230,8 @@ export async function verifyAdminPassword(password: string): Promise<{
   const clean = (password || '').trim();
   if (!clean) return { isValid: false };
 
-  const vault = await fetchSecurityVault();
+  const rawVault = await fetchSecurityVault();
+  const vault = normalizeVault(rawVault);
 
   // 1. If vault is still in pristine/default state
   if (vault.isDefaultPassword) {
@@ -230,19 +254,21 @@ export async function verifyAdminPassword(password: string): Promise<{
   }
 
   // 4. Emergency recovery code check
+  const recoveryCodes = Array.isArray(vault.recoveryCodes) ? vault.recoveryCodes : [];
   const cleanRecoveryInput = clean.replace(/[-\s]/g, '').toUpperCase();
   const recoveryHash = await hashPassword(cleanRecoveryInput, vault.passwordSalt);
-  const matchedIndex = vault.recoveryCodes.findIndex(rc => !rc.used && rc.codeHash === recoveryHash);
+  const matchedIndex = recoveryCodes.findIndex(rc => !rc.used && rc.codeHash === recoveryHash);
 
   if (matchedIndex !== -1) {
-    vault.recoveryCodes[matchedIndex].used = true;
-    vault.recoveryCodes[matchedIndex].usedAt = new Date().toISOString();
+    recoveryCodes[matchedIndex].used = true;
+    recoveryCodes[matchedIndex].usedAt = new Date().toISOString();
+    vault.recoveryCodes = recoveryCodes;
     await saveSecurityVault(vault);
     resetFailedAttempts('admin');
     logSecurityEvent(
       'RECOVERY_CODE_USED',
       'critical',
-      `Se utilizó con éxito el Código de Recuperación de Emergencia (${vault.recoveryCodes[matchedIndex].preview}) para acceder al panel.`
+      `Se utilizó con éxito el Código de Recuperación de Emergencia (${recoveryCodes[matchedIndex].preview}) para acceder al panel.`
     );
     return { isValid: true, isRecoveryCode: true };
   }
@@ -414,7 +440,8 @@ export async function registerPasskey(customName?: string): Promise<{
     }
 
     const base64Id = bufferToBase64URL(credential.rawId);
-    const vault = await fetchSecurityVault();
+    const rawVault = await fetchSecurityVault();
+    const vault = normalizeVault(rawVault);
 
     // Check if already registered
     const existingIndex = vault.passkeys.findIndex(p => p.id === base64Id);
@@ -467,7 +494,8 @@ export async function authenticateWithPasskey(): Promise<{
     };
   }
 
-  const vault = await fetchSecurityVault();
+  const rawVault = await fetchSecurityVault();
+  const vault = normalizeVault(rawVault);
   if (!vault.passkeys || vault.passkeys.length === 0) {
     return {
       success: false,
@@ -531,7 +559,8 @@ export async function authenticateWithPasskey(): Promise<{
  * Revokes / removes a registered passkey from the vault
  */
 export async function removePasskey(passkeyId: string): Promise<{ success: boolean; message: string }> {
-  const vault = await fetchSecurityVault();
+  const rawVault = await fetchSecurityVault();
+  const vault = normalizeVault(rawVault);
   const initialCount = vault.passkeys.length;
   vault.passkeys = vault.passkeys.filter(pk => pk.id !== passkeyId);
 
