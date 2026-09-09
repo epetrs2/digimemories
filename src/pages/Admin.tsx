@@ -27,7 +27,8 @@ import {
   destroyAdminSession, 
   checkLockoutStatus, 
   recordFailedLoginAttempt,
-  resetFailedAttempts 
+  isPasskeySupported,
+  authenticateWithPasskey
 } from '../lib/security';
 import { 
   Package, 
@@ -54,7 +55,9 @@ import {
   Zap,
   Archive,
   ArchiveRestore,
-  Trash2
+  Trash2,
+  Fingerprint,
+  RefreshCw
 } from 'lucide-react';
 
 const Admin: React.FC = () => {
@@ -63,6 +66,9 @@ const Admin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [hasPasskeySupport, setHasPasskeySupport] = useState<boolean>(false);
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState<boolean>(false);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   
   // Tab sync with URL query param ?tab=chat
   const initialTab = (searchParams.get('tab') as any) || 'chat';
@@ -82,6 +88,10 @@ const Admin: React.FC = () => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    isPasskeySupported().then(supported => setHasPasskeySupport(supported));
   }, []);
 
   // Auto-logout for security when leaving the Admin section
@@ -137,6 +147,7 @@ const Admin: React.FC = () => {
     setLoginError(null);
 
     const cleanPass = password.trim();
+    if (!cleanPass) return;
 
     // 1. Check lockout status
     const lockout = checkLockoutStatus('admin');
@@ -145,20 +156,52 @@ const Admin: React.FC = () => {
       return;
     }
 
-    // 2. Cryptographic password verification (SHA-256 + Salt)
-    const isValid = await verifyAdminPassword(cleanPass);
-    if (isValid) {
-      createAdminSession();
-      setIsAuthenticated(true);
-      setPassword('');
-      setLoginError(null);
-    } else {
-      const result = recordFailedLoginAttempt('admin');
-      if (result.locked) {
-        setLoginError(`🚨 Se alcanzó el límite de 5 intentos fallidos. Tu acceso ha sido bloqueado temporalmente por 15 minutos.`);
+    setIsLoggingIn(true);
+    try {
+      // 2. Cryptographic password & emergency recovery verification
+      const verification = await verifyAdminPassword(cleanPass);
+      if (verification.isValid) {
+        createAdminSession();
+        setIsAuthenticated(true);
+        setPassword('');
+        setLoginError(null);
       } else {
-        setLoginError(`Contraseña incorrecta. Te quedan ${result.remainingAttempts} intento(s) antes del bloqueo de seguridad.`);
+        const result = recordFailedLoginAttempt('admin');
+        if (result.locked) {
+          setLoginError(`🚨 Se alcanzó el límite de 5 intentos fallidos. Tu acceso ha sido bloqueado temporalmente por 15 minutos.`);
+        } else {
+          setLoginError(`Credencial incorrecta. Te quedan ${result.remainingAttempts} intento(s) antes del bloqueo de seguridad.`);
+        }
       }
+    } catch (err: any) {
+      setLoginError(`Error al verificar credenciales: ${err?.message || 'Error del sistema'}`);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    setLoginError(null);
+    const lockout = checkLockoutStatus('admin');
+    if (lockout.locked) {
+      setLoginError(`🚫 Acceso bloqueado por seguridad ante múltiples intentos fallidos. Intenta nuevamente en ${lockout.minutesRemaining} minuto(s).`);
+      return;
+    }
+
+    setIsPasskeyLoading(true);
+    try {
+      const result = await authenticateWithPasskey();
+      if (result.success) {
+        setIsAuthenticated(true);
+        setPassword('');
+        setLoginError(null);
+      } else {
+        setLoginError(result.message);
+      }
+    } catch (err: any) {
+      setLoginError(`Error biométrico: ${err?.message || 'No se pudo completar la verificación'}`);
+    } finally {
+      setIsPasskeyLoading(false);
     }
   };
 
@@ -245,7 +288,7 @@ const Admin: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <div className="container section animate-on-load" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <div className="glass" style={{ maxWidth: '460px', width: '100%', padding: '3rem 2.5rem', borderRadius: '28px', textAlign: 'center', background: '#ffffff', boxShadow: '0 20px 40px rgba(0,0,0,0.06)', border: '1px solid rgba(214, 204, 194, 0.8)' }}>
+        <div className="glass" style={{ maxWidth: '480px', width: '100%', padding: '3rem 2.5rem', borderRadius: '28px', textAlign: 'center', background: '#ffffff', boxShadow: '0 20px 40px rgba(0,0,0,0.06)', border: '1px solid rgba(214, 204, 194, 0.8)' }}>
           
           <div style={{ width: '68px', height: '68px', background: '#fff7ed', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem auto', color: '#ea580c', border: '1px solid #fed7aa', boxShadow: '0 8px 16px rgba(234, 88, 12, 0.15)' }}>
             <KeyRound size={34} />
@@ -270,57 +313,79 @@ const Admin: React.FC = () => {
               marginBottom: '1.25rem',
               textAlign: 'left',
               display: 'flex',
-              flexDirection: 'column',
-              gap: '0.4rem'
+              alignItems: 'flex-start',
+              gap: '0.5rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#dc2626' }} />
-                <span>{loginError}</span>
-              </div>
-              
+              <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#dc2626' }} />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          {/* Passkey 1-Tap Biometric Authentication */}
+          {hasPasskeySupport && (
+            <div style={{ marginBottom: '1.5rem' }}>
               <button
                 type="button"
-                onClick={() => {
-                  resetFailedAttempts('admin');
-                  setLoginError(null);
-                }}
+                onClick={handlePasskeyLogin}
+                disabled={isPasskeyLoading}
                 style={{
-                  alignSelf: 'flex-start',
-                  background: 'none',
-                  border: 'none',
-                  color: '#dc2626',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  padding: 0,
-                  marginTop: '0.2rem'
+                  width: '100%',
+                  padding: '0.9rem 1.25rem',
+                  borderRadius: '14px',
+                  border: '1.5px solid #10b981',
+                  background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                  color: '#065f46',
+                  fontWeight: 800,
+                  fontSize: '0.95rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.65rem',
+                  cursor: isPasskeyLoading ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.18)',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                ↻ Restablecer intentos y desbloquear
+                {isPasskeyLoading ? (
+                  <>
+                    <RefreshCw size={20} className="animate-spin" />
+                    <span>Verificando Passkey...</span>
+                  </>
+                ) : (
+                  <>
+                    <Fingerprint size={22} style={{ color: '#059669' }} />
+                    <span>Ingresar con Passkey (Touch ID / Face ID)</span>
+                  </>
+                )}
               </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', margin: '1.25rem 0', gap: '0.75rem' }}>
+                <div style={{ flex: 1, height: '1px', background: '#e7e5e4' }}></div>
+                <span style={{ fontSize: '0.75rem', color: '#a8a29e', fontWeight: 700, textTransform: 'uppercase' }}>O con contraseña</span>
+                <div style={{ flex: 1, height: '1px', background: '#e7e5e4' }}></div>
+              </div>
             </div>
           )}
 
           <form onSubmit={handleLogin} style={{ textAlign: 'left' }}>
             <div style={{ marginBottom: '1.25rem' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#292524', marginBottom: '0.4rem' }}>
-                Contraseña de Acceso
+                Contraseña o Código de Emergencia
               </label>
 
               <div style={{ position: 'relative' }}>
                 <input 
                   type={showPassword ? 'text' : 'password'} 
-                  placeholder="••••••••" 
+                  placeholder="Contraseña o DM-XXXX-XXXX" 
                   className="input-field" 
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   style={{ 
                     paddingRight: '2.75rem', 
-                    fontSize: '1rem',
+                    fontSize: '0.95rem',
                     borderRadius: '12px'
                   }}
-                  autoFocus
+                  autoFocus={!hasPasskeySupport}
                 />
                 <button
                   type="button"
@@ -342,19 +407,31 @@ const Admin: React.FC = () => {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              <span style={{ display: 'block', marginTop: '0.35rem', fontSize: '0.75rem', color: '#78716c' }}>
+                Acepta tu contraseña habitual o un Código de Recuperación de Emergencia.
+              </span>
             </div>
 
             <button 
               type="submit" 
+              disabled={isLoggingIn}
               className="btn btn-primary" 
               style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', fontWeight: 700, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
             >
-              <Lock size={16} /> Ingresar al Panel Seguro
+              {isLoggingIn ? (
+                <>
+                  <RefreshCw size={16} className="animate-spin" /> Verificando...
+                </>
+              ) : (
+                <>
+                  <Lock size={16} /> Ingresar al Panel Seguro
+                </>
+              )}
             </button>
           </form>
           
           <div style={{ marginTop: '1.75rem', padding: '0.75rem', background: '#f5f5f4', borderRadius: '12px', fontSize: '0.75rem', color: '#78716c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-            <span>🔒 Acceso protegido con SHA-256 + Salt y defensa anti-fuerza bruta.</span>
+            <span>🔒 Acceso protegido con SHA-256 + Salt, Bóveda en la nube y Passkeys.</span>
           </div>
         </div>
       </div>
