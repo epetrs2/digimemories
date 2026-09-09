@@ -14,6 +14,7 @@ import QuoteView from './pages/QuoteView';
 import { recordPageView } from './lib/analytics';
 import { destroyAdminSession } from './lib/security';
 import { fetchCloudBusinessSettings } from './lib/businessSettings';
+import DesktopApp from './desktop/DesktopApp';
 
 function NavigationSecurityWatcher() {
   const location = useLocation();
@@ -36,9 +37,18 @@ function NavigationSecurityWatcher() {
 }
 
 function App() {
+  const isDesktopMode = 
+    (typeof window !== 'undefined' && Boolean((window as any).macOSAdminApi?.isElectron)) ||
+    (typeof window !== 'undefined' && window.location.search.includes('desktop=true')) ||
+    (typeof window !== 'undefined' && window.location.pathname.startsWith('/desktop'));
+
   useEffect(() => {
     fetchCloudBusinessSettings().catch(() => {});
   }, []);
+
+  if (isDesktopMode) {
+    return <DesktopApp />;
+  }
 
   return (
     <Router>
@@ -56,6 +66,7 @@ function App() {
             <Route path="/quote/:id" element={<QuoteView />} />
             <Route path="/cotizacion/:id" element={<QuoteView />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/desktop" element={<DesktopApp />} />
           </Routes>
         </main>
         <Footer />
