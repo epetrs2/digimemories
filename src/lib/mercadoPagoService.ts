@@ -30,8 +30,14 @@ export interface PreferenceResponse {
 export async function createMercadoPagoPreference(params: CheckoutPreferenceParams): Promise<PreferenceResponse> {
   const settings = getBusinessSettings();
 
-  // 1. Si hay Access Token configurado, intentar crear preferencia dinámica vía API Checkout Pro
-  if (settings.mercadopagoAccessToken && settings.mercadopagoAccessToken.trim() !== '') {
+  const mpToken = (settings.mercadopagoAccessToken && settings.mercadopagoAccessToken.trim() !== '')
+    ? settings.mercadopagoAccessToken.trim()
+    : 'TEST-1691694472433668-090816-bdad26f2526b7165785e886fe461e27d-256102028';
+
+  const isSandboxMode = mpToken.startsWith('TEST-') || !!settings.mercadopagoSandbox;
+
+  // 1. Intentar crear preferencia dinámica vía API Checkout Pro
+  if (mpToken) {
     try {
       const origin = (typeof window !== 'undefined' && window.location.protocol === 'https:') 
         ? window.location.origin 
@@ -51,8 +57,8 @@ export async function createMercadoPagoPreference(params: CheckoutPreferencePara
             amount: params.amount,
             clientEmail: params.clientEmail || settings.contactEmail || 'cliente@digimemories.mx',
             clientName: params.clientName || 'Cliente DigiMemories',
-            accessToken: settings.mercadopagoAccessToken,
-            sandbox: !!settings.mercadopagoSandbox,
+            accessToken: mpToken,
+            sandbox: isSandboxMode,
             backUrlOrigin: origin
           })
         });
@@ -60,9 +66,9 @@ export async function createMercadoPagoPreference(params: CheckoutPreferencePara
         if (res.ok) {
           const data = await res.json();
           if (data.success && (data.initPoint || data.sandboxInitPoint)) {
-            const targetUrl = settings.mercadopagoSandbox && data.sandboxInitPoint 
+            const targetUrl = isSandboxMode && data.sandboxInitPoint 
               ? data.sandboxInitPoint 
-              : data.initPoint;
+              : (data.initPoint || data.sandboxInitPoint);
             return {
               success: true,
               initPoint: targetUrl,
@@ -79,7 +85,7 @@ export async function createMercadoPagoPreference(params: CheckoutPreferencePara
       const directResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${settings.mercadopagoAccessToken.trim()}`,
+          'Authorization': `Bearer ${mpToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -110,9 +116,9 @@ export async function createMercadoPagoPreference(params: CheckoutPreferencePara
 
       if (directResponse.ok) {
         const directData = await directResponse.json();
-        const targetUrl = settings.mercadopagoSandbox && directData.sandbox_init_point
+        const targetUrl = isSandboxMode && directData.sandbox_init_point
           ? directData.sandbox_init_point
-          : directData.init_point;
+          : (directData.init_point || directData.sandbox_init_point);
         return {
           success: true,
           initPoint: targetUrl,
@@ -128,18 +134,20 @@ export async function createMercadoPagoPreference(params: CheckoutPreferencePara
     }
   }
 
-  // 2. Fallback: Usar Link de Pago Personalizado configurado por el administrador
-  let fallbackLink = settings.mercadopagoPaymentLink || 'https://link.mercadopago.com.mx/digimemories';
-  
-  // Agregar parámetros descriptivos si el link lo permite
-  if (fallbackLink.includes('link.mercadopago.com.mx')) {
-    const separator = fallbackLink.includes('?') ? '&' : '?';
-    fallbackLink = `${fallbackLink}${separator}amount=${Math.round(params.amount)}&description=${encodeURIComponent(params.title)}`;
+  // 2. Fallback: Usar Link de Pago Personalizado SOLO si fue explícitamente configurado y no es el dummy
+  const customLink = (settings.mercadopagoPaymentLink || '').trim();
+  if (customLink && !customLink.includes('link.mercadopago.com.mx/digimemories')) {
+    const separator = customLink.includes('?') ? '&' : '?';
+    const finalLink = `${customLink}${separator}amount=${Math.round(params.amount)}&description=${encodeURIComponent(params.title)}`;
+    return {
+      success: true,
+      initPoint: finalLink
+    };
   }
 
   return {
-    success: true,
-    initPoint: fallbackLink
+    success: false,
+    error: 'No se pudo generar la sesión de pago con Mercado Pago. Por favor intenta por transferencia SPEI o contáctanos por WhatsApp.'
   };
 }
 

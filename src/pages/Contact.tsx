@@ -96,6 +96,7 @@ const Contact = () => {
   const [trackingId, setTrackingId] = useState('');
   const [copied, setCopied] = useState(false);
   const [isPayingWithMp, setIsPayingWithMp] = useState(false);
+  const [mpCheckoutUrl, setMpCheckoutUrl] = useState<string>('');
 
   const updateQuantity = (id: string, amount: number) => {
     const newQty = Math.max(0, amount);
@@ -255,6 +256,26 @@ const Contact = () => {
     const depositAmount = Math.round(total * 0.5);
     const remainingAmount = total - depositAmount;
 
+    // Pre-generate Mercado Pago preference so both email button and success screen have direct active link
+    let pregeneratedMpUrl = '';
+    if (preferredPaymentMethod === 'mercadopago') {
+      try {
+        const pref = await createMercadoPagoPreference({
+          orderId: newTrackingId,
+          title: `Anticipo 50% - Orden #${newTrackingId}`,
+          amount: depositAmount,
+          clientEmail: formData.email,
+          clientName: formData.name
+        });
+        if (pref.success && pref.initPoint) {
+          pregeneratedMpUrl = pref.initPoint;
+          setMpCheckoutUrl(pref.initPoint);
+        }
+      } catch (err) {
+        console.warn('[Contact] Error pre-generating MP preference:', err);
+      }
+    }
+
     const emailResult = await sendQuoteEmailWithPdf({
       quoteData: {
         clientName: formData.name,
@@ -272,7 +293,8 @@ const Contact = () => {
         tallerAddress: 'Recepción por Uber Flash (CDMX) y Paquetería Nacional (DHL / FedEx / Estafeta)',
         tallerPhone: '55 4888 9876',
         trackUrl: `${window.location.origin}/track`,
-        quoteUrl: `${window.location.origin}/quote/${newTrackingId}`
+        quoteUrl: `${window.location.origin}/quote/${newTrackingId}`,
+        mercadopagoCheckoutUrl: pregeneratedMpUrl || undefined
       },
       pdfDoc
     });
@@ -453,6 +475,10 @@ const Contact = () => {
 
                 <button 
                   onClick={async () => {
+                    if (mpCheckoutUrl) {
+                      window.location.href = mpCheckoutUrl;
+                      return;
+                    }
                     setIsPayingWithMp(true);
                     try {
                       const pref = await createMercadoPagoPreference({
@@ -463,6 +489,7 @@ const Contact = () => {
                         clientName: formData.name
                       });
                       if (pref.success && pref.initPoint) {
+                        setMpCheckoutUrl(pref.initPoint);
                         window.location.href = pref.initPoint;
                       } else {
                         alert(pref.error || 'No se pudo generar la orden de pago. Intenta de nuevo.');

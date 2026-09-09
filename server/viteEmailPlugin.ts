@@ -1,5 +1,7 @@
 import type { Plugin } from 'vite';
 import type { IncomingMessage, ServerResponse } from 'http';
+import fs from 'fs';
+import path from 'path';
 import { 
   sendEmail, 
   testSmtpConnection, 
@@ -8,6 +10,28 @@ import {
   getOutbox, 
   clearOutbox 
 } from './mailer.ts';
+
+// Preload .env into process.env if present
+try {
+  const envPath = path.resolve(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf-8');
+    envContent.split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx > 0) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+          process.env[key] = val;
+        }
+      }
+    });
+  }
+} catch {}
+
+export const DEFAULT_MP_ACCESS_TOKEN = 'TEST-1691694472433668-090816-bdad26f2526b7165785e886fe461e27d-256102028';
+export const DEFAULT_MP_PUBLIC_KEY = 'TEST-698d2178-2eba-4208-b6f1-2cbb4ce2cad6';
 
 /**
  * Helper to read JSON request body from IncomingMessage
@@ -195,7 +219,7 @@ export function viteEmailPlugin(): Plugin {
             const { action } = body;
 
             if (action === 'test-connection') {
-              const accessToken = body.accessToken || process.env.MERCADOPAGO_ACCESS_TOKEN;
+              const accessToken = body.accessToken || process.env.MERCADOPAGO_ACCESS_TOKEN || DEFAULT_MP_ACCESS_TOKEN;
               if (!accessToken || accessToken.trim().length < 10) {
                 return sendJson(res, 400, { success: false, error: 'Access Token no proporcionado' });
               }
@@ -225,7 +249,7 @@ export function viteEmailPlugin(): Plugin {
             }
 
             if (action === 'create-preference') {
-              const accessToken = body.accessToken || process.env.MERCADOPAGO_ACCESS_TOKEN;
+              const accessToken = body.accessToken || process.env.MERCADOPAGO_ACCESS_TOKEN || DEFAULT_MP_ACCESS_TOKEN;
               if (!accessToken || accessToken.trim().length < 10) {
                 return sendJson(res, 400, { success: false, error: 'Access Token de Mercado Pago no configurado' });
               }
@@ -281,10 +305,14 @@ export function viteEmailPlugin(): Plugin {
               }
 
               const prefData = (await prefResponse.json()) as any;
+              const isSandbox = accessToken.startsWith('TEST-') || body.sandbox;
+              const chosenInitPoint = (isSandbox && prefData.sandbox_init_point) 
+                ? prefData.sandbox_init_point 
+                : prefData.init_point;
               return sendJson(res, 200, {
                 success: true,
                 preferenceId: prefData.id,
-                initPoint: prefData.init_point,
+                initPoint: chosenInitPoint,
                 sandboxInitPoint: prefData.sandbox_init_point
               });
             }

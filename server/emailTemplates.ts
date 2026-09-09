@@ -21,6 +21,7 @@ export interface QuoteTemplateData {
   tallerPhone?: string;
   trackUrl?: string;
   quoteUrl?: string;
+  mercadopagoCheckoutUrl?: string;
 }
 
 export interface DepositConfirmedTemplateData {
@@ -363,7 +364,7 @@ export function getQuoteEmailHtml(data: QuoteTemplateData): string {
                   <div style="font-size: 12px; color: #57534e; margin-bottom: 8px;">
                     Puedes abonar tu anticipo de $${data.depositAmount.toLocaleString('es-MX')} MXN de forma 100% segura con el enlace:
                   </div>
-                  <a href="https://link.mercadopago.com.mx/digimemories?amount=${data.depositAmount}&description=Anticipo+Orden+${data.trackingId}" target="_blank" style="display: inline-block; background: #009ee3; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 12px; text-decoration: none;">
+                  <a href="${data.mercadopagoCheckoutUrl || `${quoteUrl}?pay=mercadopago`}" target="_blank" style="display: inline-block; background: #009ee3; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13px; text-decoration: none; box-shadow: 0 2px 6px rgba(0, 158, 227, 0.35);">
                     Pagar $${data.depositAmount.toLocaleString('es-MX')} con Mercado Pago →
                   </a>
                 ` : `

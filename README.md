@@ -8,7 +8,7 @@ Plataforma integral y moderna para la digitalización y preservación de memoria
 
 ### 1. 🧮 Cotizador y Generador de Presupuestos PDF
 * Cálculo en tiempo real según formato y cantidad.
-* Generación instantánea de presupuestos oficiales en PDF vectorial con código de barras y desglose fiscal.
+* Generación instantánea de presupuestos en PDF vectorial con código de barras y desglose fiscal.
 * Despacho automático de copia en PDF al correo del cliente.
 
 ### 2. 🔍 Portal de Seguimiento para Clientes (`/track`)
@@ -18,7 +18,7 @@ Plataforma integral y moderna para la digitalización y preservación de memoria
 
 ### 3. 💬 Chat en Vivo & Asistente Inteligente
 * Asistente automático con respuestas inmediatas para preguntas frecuentes sobre precios, formatos y tiempos.
-* Escalamiento transparente a operador humano con alertas sonoras y visuales en el panel de control.
+* Escalamiento directo a operador humano con alertas sonoras y visuales en el panel de control.
 
 ### 4. 🛡️ Suite Integral de Ciberseguridad (OWASP & Web Crypto)
 * **Autenticación Hasheada (SHA-256 + Salt):** Cero contraseñas en texto plano.

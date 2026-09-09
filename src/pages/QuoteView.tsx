@@ -34,7 +34,7 @@ export const QuoteView: React.FC = () => {
     let active = true;
     const targetId = (id || '').replace('#', '').trim();
 
-    // Revisa si regresó de un cobro exitoso en Mercado Pago
+    // Revisa si regresó de un cobro exitoso en Mercado Pago o si viene para pagar
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       handleMercadoPagoCallback(searchParams).then(res => {
@@ -482,7 +482,7 @@ export const QuoteView: React.FC = () => {
               </div>
 
               {/* Payment card */}
-              <div style={{ background: '#ffffff', border: '1px solid #e7e2d9', borderRadius: '14px', padding: '1.25rem' }}>
+              <div id="payment-section" style={{ background: '#ffffff', border: '1px solid #e7e2d9', borderRadius: '14px', padding: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#0369a1', fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.5rem' }}>
                   <CreditCard size={18} /> Pago de Anticipo (50%)
                 </div>

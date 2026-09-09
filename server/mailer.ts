@@ -41,6 +41,25 @@ export interface OutboxEmailRecord {
 const CONFIG_FILE = path.resolve(process.cwd(), 'server', 'smtpConfig.json');
 const OUTBOX_FILE = path.resolve(process.cwd(), 'server', 'outboxLogs.json');
 
+// Preload .env into process.env if present
+try {
+  const envPath = path.resolve(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf-8');
+    envContent.split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx > 0) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+          process.env[key] = val;
+        }
+      }
+    });
+  }
+} catch {}
+
 // Default initial configuration
 let currentConfig: SmtpConfig = {
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -49,7 +68,7 @@ let currentConfig: SmtpConfig = {
   user: process.env.SMTP_USER || '',
   pass: process.env.SMTP_PASS || '',
   fromName: process.env.SMTP_FROM_NAME || 'DigiMemories Preservación',
-  fromEmail: process.env.SMTP_FROM_EMAIL || '',
+  fromEmail: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || '',
   enabled: true
 };
 
