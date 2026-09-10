@@ -1,6 +1,6 @@
 import React from 'react';
 import ContactSection from '../components/ContactSection';
-import { ShieldCheck, Truck, Clock, HelpCircle, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Clock, HelpCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Contacto: React.FC = () => {
@@ -42,10 +42,6 @@ export const Contacto: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 600 }}>
               <Clock size={18} style={{ color: 'var(--accent-color)' }} />
               <span>Respuesta rápida el mismo día</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 600 }}>
-              <Truck size={18} style={{ color: 'var(--accent-color)' }} />
-              <span>Recolección en CDMX & Envíos Nacionales</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 600 }}>
               <ShieldCheck size={18} style={{ color: 'var(--accent-color)' }} />

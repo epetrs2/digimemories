@@ -10,7 +10,9 @@ import {
   Truck, 
   RefreshCw, 
   Check,
-  AlertTriangle
+  AlertTriangle,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { 
   getOrders, 
@@ -76,6 +78,7 @@ const DebouncedTapeInput: React.FC<{
 export const DesktopOrderCockpit: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'activas' | 'pendientes' | 'en_proceso' | 'completadas' | 'archivadas' | 'todas'>('activas');
   const [isGeneratingPin, setIsGeneratingPin] = useState(false);
@@ -186,8 +189,57 @@ export const DesktopOrderCockpit: React.FC = () => {
   const handleDelete = (orderId: string) => {
     if (window.confirm('¿Seguro que deseas eliminar definitivamente esta orden?')) {
       deleteOrder(orderId);
+      setSelectedOrderIds(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
       loadOrders();
     }
+  };
+
+  const toggleSelectOrder = (orderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedOrderIds(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
+  const handleSelectAllOrders = () => {
+    if (selectedOrderIds.size === filteredOrders.length && filteredOrders.length > 0) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(filteredOrders.map(o => o.id)));
+    }
+  };
+
+  const handleBulkDeleteOrders = () => {
+    if (selectedOrderIds.size === 0) return;
+    const count = selectedOrderIds.size;
+    if (window.confirm(`¿Confirmas eliminar definitivamente ${count} ${count === 1 ? 'orden seleccionada' : 'órdenes seleccionadas'}? Se borrarán del sistema y de la nube Supabase.`)) {
+      const ids = Array.from(selectedOrderIds);
+      for (const id of ids) {
+        deleteOrder(id);
+      }
+      setSelectedOrderIds(new Set());
+      loadOrders();
+      if (selectedOrderId && ids.includes(selectedOrderId)) {
+        setSelectedOrderId(null);
+      }
+    }
+  };
+
+  const handleBulkArchiveOrders = () => {
+    if (selectedOrderIds.size === 0) return;
+    const ids = Array.from(selectedOrderIds);
+    for (const id of ids) {
+      archiveOrder(id);
+    }
+    setSelectedOrderIds(new Set());
+    loadOrders();
   };
 
   const totalCassettes = orders.reduce((acc, o) => acc + (o.items?.length || 0), 0);
@@ -196,7 +248,7 @@ export const DesktopOrderCockpit: React.FC = () => {
     .reduce((acc, o) => acc + (o.items?.length || 0), 0);
 
   return (
-    <div style={{ display: 'flex', width: '100%', height: 'calc(100vh - 48px)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', width: '100%', height: '100%', maxHeight: '100%', minHeight: 0, boxSizing: 'border-box', overflow: 'hidden' }}>
       
       {/* 1. LEFT COLUMN: ORDERS LIST */}
       <div style={{
@@ -205,10 +257,13 @@ export const DesktopOrderCockpit: React.FC = () => {
         background: 'var(--mac-bg-sidebar)',
         display: 'flex',
         flexDirection: 'column',
-        flexShrink: 0
+        flexShrink: 0,
+        minHeight: 0,
+        height: '100%',
+        boxSizing: 'border-box'
       }}>
         {/* Header & Filters */}
-        <div style={{ padding: '1rem', borderBottom: '1px solid var(--mac-border)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+        <div style={{ padding: '0.9rem 1rem', borderBottom: '1px solid var(--mac-border)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
               Órdenes de Laboratorio ({orders.length})
@@ -257,12 +312,120 @@ export const DesktopOrderCockpit: React.FC = () => {
               </button>
             ))}
           </div>
+
+          {/* Bulk Selection Toggle Row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.25rem' }}>
+            <button
+              type="button"
+              onClick={handleSelectAllOrders}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--mac-accent)',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: 0
+              }}
+            >
+              {selectedOrderIds.size === filteredOrders.length && filteredOrders.length > 0 ? (
+                <>
+                  <CheckSquare size={13} />
+                  <span>Deseleccionar todas ({filteredOrders.length})</span>
+                </>
+              ) : (
+                <>
+                  <Square size={13} />
+                  <span>Seleccionar todas ({filteredOrders.length})</span>
+                </>
+              )}
+            </button>
+
+            {selectedOrderIds.size > 0 && (
+              <span style={{ fontSize: '0.7rem', color: '#f87171', fontWeight: 800 }}>
+                {selectedOrderIds.size} seleccionadas
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Floating Bulk Action Bar for Orders */}
+        {selectedOrderIds.size > 0 && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(185, 28, 28, 0.25) 100%)',
+            borderBottom: '1px solid rgba(239, 68, 68, 0.35)',
+            padding: '0.5rem 0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            flexShrink: 0
+          }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#fca5a5' }}>
+              {selectedOrderIds.size} {selectedOrderIds.size === 1 ? 'orden' : 'órdenes'}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedOrderIds(new Set())}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--mac-text-muted)',
+                  fontSize: '0.72rem',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkArchiveOrders}
+                className="mac-btn-secondary"
+                style={{
+                  fontSize: '0.72rem',
+                  padding: '0.22rem 0.55rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}
+                title="Archivar órdenes seleccionadas"
+              >
+                <Archive size={12} /> Archivar
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteOrders}
+                className="mac-btn-primary"
+                style={{
+                  background: '#ef4444',
+                  borderColor: '#dc2626',
+                  fontSize: '0.72rem',
+                  padding: '0.22rem 0.6rem',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem'
+                }}
+                title="Eliminar de un jalón las órdenes seleccionadas"
+              >
+                <Trash2 size={12} />
+                Eliminar ({selectedOrderIds.size})
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Orders Scroll List */}
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {filteredOrders.map(o => {
             const isSelected = selectedOrder?.id === o.id;
+            const isChecked = selectedOrderIds.has(o.id);
             const finalTotal = calculateFinalTotal(o);
 
             return (
@@ -270,49 +433,76 @@ export const DesktopOrderCockpit: React.FC = () => {
                 key={o.id}
                 onClick={() => setSelectedOrderId(o.id)}
                 style={{
-                  padding: '0.9rem 1rem',
+                  padding: '0.8rem 0.95rem',
                   borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                  background: isSelected ? 'rgba(234, 88, 12, 0.12)' : 'transparent',
-                  borderLeft: isSelected ? '3px solid var(--mac-accent)' : '3px solid transparent',
+                  background: isChecked 
+                    ? 'rgba(239, 68, 68, 0.12)' 
+                    : isSelected 
+                    ? 'rgba(234, 88, 12, 0.12)' 
+                    : 'transparent',
+                  borderLeft: isChecked
+                    ? '3px solid #ef4444'
+                    : isSelected 
+                    ? '3px solid var(--mac-accent)' 
+                    : '3px solid transparent',
                   cursor: 'pointer',
-                  transition: 'all 0.15s ease'
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  gap: '0.55rem',
+                  alignItems: 'flex-start'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
-                    #{o.id} — {o.clientName}
-                  </span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#34d399' }}>
-                    ${finalTotal.toLocaleString('es-MX')} MXN
-                  </span>
+                {/* Checkbox */}
+                <div
+                  onClick={(e) => toggleSelectOrder(o.id, e)}
+                  style={{
+                    paddingTop: '0.15rem',
+                    cursor: 'pointer',
+                    color: isChecked ? '#ef4444' : 'var(--mac-text-muted)',
+                    flexShrink: 0
+                  }}
+                  title={isChecked ? 'Deseleccionar orden' : 'Seleccionar orden'}
+                >
+                  {isChecked ? <CheckSquare size={16} /> : <Square size={16} />}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--mac-text-muted)' }}>
-                  <span>{o.items?.length || 0} cintas ({o.items?.map(i => i.format).slice(0, 3).join(', ')})</span>
-                  <span>{new Date(o.createdAt).toLocaleDateString('es-MX')}</span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.45rem' }}>
-                  <span style={{
-                    fontSize: '0.68rem',
-                    padding: '0.1rem 0.45rem',
-                    borderRadius: '4px',
-                    fontWeight: 800,
-                    background: o.status === 'completada' ? 'rgba(16, 185, 129, 0.2)' : o.status === 'en_proceso' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                    color: o.status === 'completada' ? '#34d399' : o.status === 'en_proceso' ? '#fbbf24' : '#d6d3d1'
-                  }}>
-                    {o.status === 'completada' ? 'Completada' : o.status === 'en_proceso' ? 'En Digitalización' : 'Pendiente Depósito'}
-                  </span>
-
-                  {o.pin ? (
-                    <span style={{ fontSize: '0.68rem', color: '#38bdf8', fontWeight: 800 }}>
-                      PIN: {o.pin}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--mac-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                      #{o.id} — {o.clientName}
                     </span>
-                  ) : (
-                    <span style={{ fontSize: '0.68rem', color: '#f87171', fontWeight: 700 }}>
-                      Sin PIN
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#34d399', flexShrink: 0 }}>
+                      ${finalTotal.toLocaleString('es-MX')} MXN
                     </span>
-                  )}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--mac-text-muted)' }}>
+                    <span>{o.items?.length || 0} cintas ({o.items?.map(i => i.format).slice(0, 3).join(', ')})</span>
+                    <span>{new Date(o.createdAt).toLocaleDateString('es-MX')}</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.45rem' }}>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      padding: '0.1rem 0.45rem',
+                      borderRadius: '4px',
+                      fontWeight: 800,
+                      background: o.status === 'completada' ? 'rgba(16, 185, 129, 0.2)' : o.status === 'en_proceso' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                      color: o.status === 'completada' ? '#34d399' : o.status === 'en_proceso' ? '#fbbf24' : '#d6d3d1'
+                    }}>
+                      {o.status === 'completada' ? 'Completada' : o.status === 'en_proceso' ? 'En Digitalización' : 'Pendiente Depósito'}
+                    </span>
+
+                    {o.pin ? (
+                      <span style={{ fontSize: '0.68rem', color: '#38bdf8', fontWeight: 800 }}>
+                        PIN: {o.pin}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.68rem', color: '#f87171', fontWeight: 700 }}>
+                        Sin PIN
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -328,7 +518,7 @@ export const DesktopOrderCockpit: React.FC = () => {
 
       {/* 2. RIGHT COLUMN: WORKSTATION COCKPIT INSPECTOR */}
       {selectedOrder ? (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--mac-bg-base)', overflowY: 'auto' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--mac-bg-base)', overflowY: 'auto', minHeight: 0, height: '100%', boxSizing: 'border-box' }}>
           
           {/* Cockpit Top Bar */}
           <div style={{

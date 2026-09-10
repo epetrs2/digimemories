@@ -14,6 +14,7 @@ import {
 import Carousel from '../components/Carousel';
 import BeforeAfterSlider from '../components/BeforeAfterSlider';
 import ContactSection from '../components/ContactSection';
+import VhsExploded3D from '../components/VhsExploded3D';
 
 const Home = () => {
   return (
@@ -133,6 +134,9 @@ const Home = () => {
 
         </div>
       </section>
+
+      {/* 3D Exploded VHS Scrollytelling Experience */}
+      <VhsExploded3D />
 
       {/* Before / After Restoration Section */}
       <section className="section" style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)' }}>

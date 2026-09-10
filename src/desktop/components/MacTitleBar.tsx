@@ -41,7 +41,7 @@ export const MacTitleBar: React.FC<MacTitleBarProps> = ({
       {/* Center Left: App Title & Branch */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f5f5f4', letterSpacing: '-0.01em' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--mac-text-primary)', letterSpacing: '-0.01em' }}>
             DigiMemories
           </span>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--mac-text-muted)' }}>

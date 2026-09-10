@@ -31,12 +31,20 @@
   --mac-blur: blur(24px);
 }
 
+.mac-app-container,
+.mac-app-container *,
+.mac-app-container *::before,
+.mac-app-container *::after {
+  box-sizing: border-box;
+}
+
 .mac-app-container {
   font-family: var(--mac-font);
   background-color: var(--mac-bg-base);
   color: var(--mac-text-primary);
   width: 100vw;
   height: 100vh;
+  max-height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;

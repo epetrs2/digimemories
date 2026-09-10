@@ -3,22 +3,14 @@ import {
   BarChart3, 
   TrendingUp, 
   Activity, 
-  Layers, 
   RefreshCw, 
   Film,
-  Zap,
   Globe,
-  Smartphone,
-  Monitor,
-  Clock,
-  MapPin,
-  CheckCircle2,
   Radio,
-  Compass
+  Smartphone, Monitor, MapPin, Compass, Clock, Layers
 } from 'lucide-react';
 import { 
   fetchCloudTrafficVisits, 
-  recordPageView,
   subscribeToRealtimeTraffic, 
   computeYouTubeMetrics, 
   type YouTubeStyleMetrics,
@@ -33,7 +25,6 @@ export const DesktopAnalyticsHUD: React.FC = () => {
   const [livePresences, setLivePresences] = useState<LiveVisitorPresence[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hoveredMinute, setHoveredMinute] = useState<{ label: string; count: number } | null>(null);
-  const [testEventFeedback, setTestEventFeedback] = useState(false);
   const orders = getOrders();
 
   const loadData = async () => {
@@ -79,49 +70,6 @@ export const DesktopAnalyticsHUD: React.FC = () => {
     };
   }, []);
 
-  const handleSimulateLiveEvent = () => {
-    const testPages = [
-      { path: '/calculator', title: 'Calculadora de Presupuestos', section: 'Calculando 8 cintas VHS', action: 'Seleccionando formato VHS' },
-      { path: '/track', title: 'Portal de Rastreo en Vivo', section: 'Consultando orden #302308', action: 'Revisando estado de digitalización' },
-      { path: '/', title: 'DigiMemories — Inicio', section: 'Sección Comparativa', action: 'Moviendo comparador de video' },
-      { path: '/contact', title: 'Contacto & Taller', section: 'Logística de Despacho', action: 'Consultando envío por Uber Flash' }
-    ];
-    const pick = testPages[Math.floor(Math.random() * testPages.length)];
-    const visit = recordPageView(pick.path, pick.title);
-
-    setRawVisits(prev => {
-      const updated = [visit, ...prev.filter(v => v.id !== visit.id)];
-      setMetrics(computeYouTubeMetrics(updated));
-      return updated;
-    });
-
-    const simulatedPresence: LiveVisitorPresence = {
-      sessionId: visit.sessionId,
-      visitorId: visit.id,
-      city: visit.city || 'Ciudad de México',
-      region: 'CDMX',
-      country: 'México 🇲🇽',
-      isp: 'Infinitum / Totalplay',
-      device: visit.device,
-      os: visit.os,
-      browser: visit.browser,
-      currentPath: pick.path,
-      pageTitle: pick.title,
-      activeSection: pick.section,
-      currentAction: pick.action,
-      scrollDepth: Math.floor(25 + Math.random() * 65),
-      referrer: visit.referrerCategory,
-      referrerCategory: visit.referrerCategory,
-      connectedAt: new Date().toISOString(),
-      lastActiveAt: new Date().toISOString(),
-      isTabActive: true
-    };
-
-    setLivePresences(prev => [simulatedPresence, ...prev.filter(p => p.sessionId !== simulatedPresence.sessionId)].slice(0, 8));
-
-    setTestEventFeedback(true);
-    setTimeout(() => setTestEventFeedback(false), 2500);
-  };
 
   // Format distribution from orders
   const formatCounts: Record<string, number> = {};
@@ -166,21 +114,6 @@ export const DesktopAnalyticsHUD: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {testEventFeedback && (
-            <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <CheckCircle2 size={16} /> ¡Evento registrado en la nube!
-            </span>
-          )}
-
-          <button
-            onClick={handleSimulateLiveEvent}
-            className="mac-btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
-            title="Genera un evento live para comprobar la reactividad inmediata del gráfico"
-          >
-            <Zap size={14} style={{ color: '#fbbf24' }} />
-            Probar Evento en Vivo
-          </button>
 
           <button
             onClick={loadData}
@@ -298,13 +231,6 @@ export const DesktopAnalyticsHUD: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={handleSimulateLiveEvent}
-            className="mac-btn-secondary"
-            style={{ fontSize: '0.78rem', padding: '0.4rem 0.8rem' }}
-          >
-            <Zap size={13} style={{ color: '#fbbf24' }} /> Simular Navegación en Vivo
-          </button>
         </div>
 
         {/* Active Visitors Stream / Cards */}
@@ -461,13 +387,6 @@ export const DesktopAnalyticsHUD: React.FC = () => {
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.78rem' }}>
                 Cuando los clientes naveguen por la página web, verás aquí su ubicación, la sección donde están y su actividad en tiempo real.
               </p>
-              <button
-                onClick={handleSimulateLiveEvent}
-                className="mac-btn-secondary"
-                style={{ margin: '0.85rem auto 0 auto', fontSize: '0.78rem', padding: '0.35rem 0.8rem' }}
-              >
-                <Zap size={13} style={{ color: '#fbbf24' }} /> Probar demostración de presencia
-              </button>
             </div>
           )}
         </div>

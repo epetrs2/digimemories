@@ -82,7 +82,9 @@ export const MacSidebar: React.FC<MacSidebarProps> = ({
     <aside
       style={{
         width: '260px',
-        height: 'calc(100vh - 48px)',
+        height: '100%',
+        maxHeight: '100%',
+        boxSizing: 'border-box',
         background: 'var(--mac-bg-sidebar)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
@@ -91,7 +93,8 @@ export const MacSidebar: React.FC<MacSidebarProps> = ({
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: '1.25rem 0.85rem',
-        flexShrink: 0
+        flexShrink: 0,
+        overflowY: 'auto'
       }}
     >
       {/* Navigation Group */}
@@ -196,7 +199,7 @@ export const MacSidebar: React.FC<MacSidebarProps> = ({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
           <Sparkles size={14} style={{ color: 'var(--mac-accent)' }} />
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f5f5f4' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
             Laboratorio DigiMemories
           </span>
         </div>

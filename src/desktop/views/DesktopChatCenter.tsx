@@ -13,7 +13,9 @@ import {
   MapPin, 
   Radio, 
   Zap, 
-  Eye
+  Eye,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { 
   getChatThreads, 
@@ -36,12 +38,16 @@ export const DesktopChatCenter: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'online' | 'urgent' | 'unread'>('all');
   const [soundEnabled, setSoundEnabled] = useState(true);
 
+  // Bulk selection state
+  const [selectedThreadIds, setSelectedThreadIds] = useState<Set<string>>(new Set());
+
   // Live presence state & auto-cleanup
   const [activeVisitors, setActiveVisitors] = useState<LiveVisitorPresence[]>([]);
   const [autoCleanupOnDisconnect, setAutoCleanupOnDisconnect] = useState<boolean>(true);
   const [lastCleanedNotice, setLastCleanedNotice] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const prevUnreadRef = useRef(0);
 
   const playChime = () => {
     if (!soundEnabled || typeof window === 'undefined') return;
@@ -70,6 +76,11 @@ export const DesktopChatCenter: React.FC = () => {
     if (typeof window !== 'undefined' && (window as any).macOSAdminApi?.setDockBadge) {
       (window as any).macOSAdminApi.setDockBadge(totalUnread > 0 ? String(totalUnread) : '');
     }
+    
+    if (totalUnread > prevUnreadRef.current) {
+      playChime();
+    }
+    prevUnreadRef.current = totalUnread;
   };
 
   // Helper to match a thread with live visitor presence
@@ -124,7 +135,6 @@ export const DesktopChatCenter: React.FC = () => {
     const interval = setInterval(loadThreads, 15000);
     const handleSync = () => {
       loadThreads();
-      playChime();
     };
     window.addEventListener('digimemories_chat_sync', handleSync);
 
@@ -179,9 +189,50 @@ export const DesktopChatCenter: React.FC = () => {
       await deleteChatThread(idToDelete);
       const remaining = threads.filter(t => t.id !== idToDelete);
       setThreads(remaining);
+      setSelectedThreadIds(prev => {
+        const next = new Set(prev);
+        next.delete(idToDelete);
+        return next;
+      });
       if (selectedThreadId === idToDelete) {
         setSelectedThreadId(remaining.length > 0 ? remaining[0].id : null);
       }
+    }
+  };
+
+  const toggleSelectThread = (threadId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedThreadIds(prev => {
+      const next = new Set(prev);
+      if (next.has(threadId)) next.delete(threadId);
+      else next.add(threadId);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedThreadIds.size === filteredThreads.length && filteredThreads.length > 0) {
+      setSelectedThreadIds(new Set());
+    } else {
+      setSelectedThreadIds(new Set(filteredThreads.map(t => t.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedThreadIds.size === 0) return;
+    const count = selectedThreadIds.size;
+    if (window.confirm(`¿Confirmas eliminar permanentemente ${count} ${count === 1 ? 'conversación seleccionada' : 'conversaciones seleccionadas'}? Se eliminarán inmediatamente de la aplicación y de Supabase Cloud.`)) {
+      const idsToDelete = Array.from(selectedThreadIds);
+      for (const id of idsToDelete) {
+        await deleteChatThread(id);
+      }
+      setSelectedThreadIds(new Set());
+      const remaining = threads.filter(t => !idsToDelete.includes(t.id));
+      setThreads(remaining);
+      if (selectedThreadId && idsToDelete.includes(selectedThreadId)) {
+        setSelectedThreadId(remaining.length > 0 ? remaining[0].id : null);
+      }
+      loadThreads();
     }
   };
 
@@ -214,7 +265,7 @@ export const DesktopChatCenter: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: 'calc(100vh - 48px)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', maxHeight: '100%', minHeight: 0, boxSizing: 'border-box', overflow: 'hidden' }}>
       
       {/* Realtime Disconnect Notification Bar */}
       {lastCleanedNotice && (
@@ -228,7 +279,8 @@ export const DesktopChatCenter: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-          zIndex: 50
+          zIndex: 50,
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Zap size={14} />
@@ -244,7 +296,7 @@ export const DesktopChatCenter: React.FC = () => {
       )}
 
       {/* Main 3-Column Layout */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
 
         {/* 1. LEFT COLUMN: CONVERSATIONS LIST */}
         <div style={{
@@ -253,7 +305,10 @@ export const DesktopChatCenter: React.FC = () => {
           background: 'var(--mac-bg-sidebar)',
           display: 'flex',
           flexDirection: 'column',
-          flexShrink: 0
+          flexShrink: 0,
+          minHeight: 0,
+          height: '100%',
+          boxSizing: 'border-box'
         }}>
           
           {/* Header Controls */}
@@ -390,12 +445,105 @@ export const DesktopChatCenter: React.FC = () => {
                 No leídos ({unreadCount})
               </button>
             </div>
+
+            {/* Bulk Selection Toggle Row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.25rem' }}>
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--mac-accent)',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: 0
+                }}
+              >
+                {selectedThreadIds.size === filteredThreads.length && filteredThreads.length > 0 ? (
+                  <>
+                    <CheckSquare size={13} />
+                    <span>Deseleccionar todos</span>
+                  </>
+                ) : (
+                  <>
+                    <Square size={13} />
+                    <span>Seleccionar todos</span>
+                  </>
+                )}
+              </button>
+
+              {selectedThreadIds.size > 0 && (
+                <span style={{ fontSize: '0.7rem', color: '#f87171', fontWeight: 800 }}>
+                  {selectedThreadIds.size} seleccionados
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* Floating Bulk Action Bar */}
+          {selectedThreadIds.size > 0 && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(185, 28, 28, 0.25) 100%)',
+              borderBottom: '1px solid rgba(239, 68, 68, 0.35)',
+              padding: '0.5rem 0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              flexShrink: 0
+            }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#fca5a5' }}>
+                {selectedThreadIds.size} {selectedThreadIds.size === 1 ? 'chat seleccionado' : 'chats seleccionados'}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedThreadIds(new Set())}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--mac-text-muted)',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  className="mac-btn-primary"
+                  style={{
+                    background: '#ef4444',
+                    borderColor: '#dc2626',
+                    fontSize: '0.72rem',
+                    padding: '0.25rem 0.65rem',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}
+                  title="Eliminar de un jalón todas las conversaciones seleccionadas"
+                >
+                  <Trash2 size={12} />
+                  Eliminar ({selectedThreadIds.size})
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Conversation Cards Stream */}
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
             {filteredThreads.map(t => {
               const isSelected = selectedThread?.id === t.id;
+              const isChecked = selectedThreadIds.has(t.id);
               const lastMsg = t.messages[t.messages.length - 1];
               const visitor = getVisitorForThread(t);
               const online = isThreadOnline(t);
@@ -405,32 +553,58 @@ export const DesktopChatCenter: React.FC = () => {
                   key={t.id}
                   onClick={() => setSelectedThreadId(t.id)}
                   style={{
-                    padding: '0.85rem 1rem',
+                    padding: '0.75rem 0.9rem',
                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                    background: isSelected ? 'rgba(234, 88, 12, 0.12)' : 'transparent',
-                    borderLeft: isSelected ? '3px solid var(--mac-accent)' : '3px solid transparent',
+                    background: isChecked 
+                      ? 'rgba(239, 68, 68, 0.12)' 
+                      : isSelected 
+                      ? 'rgba(234, 88, 12, 0.12)' 
+                      : 'transparent',
+                    borderLeft: isChecked
+                      ? '3px solid #ef4444'
+                      : isSelected 
+                      ? '3px solid var(--mac-accent)' 
+                      : '3px solid transparent',
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    display: 'flex',
+                    gap: '0.55rem',
+                    alignItems: 'flex-start'
                   }}
                 >
-                  {/* Top line: Visitor Name + Online Status dot + Timestamp */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
-                      <span 
-                        style={{
-                          width: '7px',
-                          height: '7px',
-                          borderRadius: '50%',
-                          background: online ? '#10b981' : '#64748b',
-                          boxShadow: online ? '0 0 6px rgba(16, 185, 129, 0.8)' : 'none',
-                          flexShrink: 0
-                        }} 
-                        title={online ? 'Visitante en línea navegando el sitio' : 'Visitante desconectado'}
-                      />
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f5f5f4', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
-                        {t.visitorName}
-                      </span>
-                    </div>
+                  {/* Select Checkbox */}
+                  <div
+                    onClick={(e) => toggleSelectThread(t.id, e)}
+                    style={{
+                      paddingTop: '0.15rem',
+                      cursor: 'pointer',
+                      color: isChecked ? '#ef4444' : 'var(--mac-text-muted)',
+                      flexShrink: 0
+                    }}
+                    title={isChecked ? 'Deseleccionar conversación' : 'Seleccionar conversación'}
+                  >
+                    {isChecked ? <CheckSquare size={16} /> : <Square size={16} />}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Top line: Visitor Name + Online Status dot + Timestamp */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden' }}>
+                        <span 
+                          style={{
+                            width: '7px',
+                            height: '7px',
+                            borderRadius: '50%',
+                            background: online ? '#10b981' : '#64748b',
+                            boxShadow: online ? '0 0 6px rgba(16, 185, 129, 0.8)' : 'none',
+                            flexShrink: 0
+                          }} 
+                          title={online ? 'Visitante en línea navegando el sitio' : 'Visitante desconectado'}
+                        />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--mac-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '145px' }}>
+                          {t.visitorName}
+                        </span>
+                      </div>
 
                     <span style={{ fontSize: '0.68rem', color: 'var(--mac-text-muted)', flexShrink: 0 }}>
                       {lastMsg ? lastMsg.timestamp : ''}
@@ -543,7 +717,8 @@ export const DesktopChatCenter: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              );
+              </div>
+            );
             })}
 
             {filteredThreads.length === 0 && (
@@ -703,7 +878,7 @@ export const DesktopChatCenter: React.FC = () => {
             </div>
 
             {/* Quick Canned Replies Bar */}
-            <div style={{ padding: '0.5rem 1.5rem', display: 'flex', gap: '0.4rem', overflowX: 'auto', borderTop: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(0,0,0,0.1)' }}>
+            <div style={{ padding: '0.5rem 1.5rem', display: 'flex', gap: '0.4rem', overflowX: 'auto', borderTop: '1px solid var(--mac-border)', background: 'var(--mac-bg-surface)', flexShrink: 0 }}>
               {cannedReplies.map((canned, idx) => (
                 <button
                   key={idx}
@@ -729,7 +904,7 @@ export const DesktopChatCenter: React.FC = () => {
             </div>
 
             {/* Input Reply Bar */}
-            <form onSubmit={handleSendReply} style={{ padding: '0.85rem 1.5rem', borderTop: '1px solid var(--mac-border)', display: 'flex', gap: '0.75rem', background: 'var(--mac-bg-surface)' }}>
+            <form onSubmit={handleSendReply} style={{ padding: '0.85rem 1.5rem', borderTop: '1px solid var(--mac-border)', display: 'flex', gap: '0.75rem', background: 'var(--mac-bg-surface)', flexShrink: 0 }}>
               <input 
                 type="text"
                 placeholder="Escribe una respuesta como Operador de Laboratorio..."
@@ -758,10 +933,14 @@ export const DesktopChatCenter: React.FC = () => {
             borderLeft: '1px solid var(--mac-border)',
             background: 'var(--mac-bg-sidebar)',
             padding: '1.25rem',
+            paddingBottom: '2.5rem',
             display: 'flex',
             flexDirection: 'column',
             gap: '1.25rem',
             flexShrink: 0,
+            minHeight: 0,
+            height: '100%',
+            boxSizing: 'border-box',
             overflowY: 'auto'
           }}>
             {/* Header */}
@@ -798,7 +977,7 @@ export const DesktopChatCenter: React.FC = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                   <span style={{ fontSize: '0.68rem', color: 'var(--mac-text-muted)' }}>Ubicación Real:</span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f5f5f4', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--mac-text-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <MapPin size={13} style={{ color: 'var(--mac-accent)' }} />
                     {currentVisitor.city}, {currentVisitor.region} ({currentVisitor.country})
                   </span>

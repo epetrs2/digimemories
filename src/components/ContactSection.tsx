@@ -109,7 +109,7 @@ export const ContactSection: React.FC = () => {
     const text = inq
       ? `¡Hola DigiMemories! Acabo de enviar un formulario (Folio: ${inq.id}). Mi nombre es ${inq.name}, tengo aproximadamente ${inq.itemCount} piezas de ${inq.formatType}. Mi duda: ${inq.message || 'Quisiera asesoría sobre el rescate de mis recuerdos.'}`
       : '¡Hola DigiMemories! Quisiera recibir información y asesoría para digitalizar mis recuerdos familiares.';
-    return `https://wa.me/525540939599?text=${encodeURIComponent(text)}`;
+    return `https://wa.me/525548889876?text=${encodeURIComponent(text)}`;
   };
 
   return (
@@ -238,7 +238,7 @@ export const ContactSection: React.FC = () => {
                 }}
               >
                 <MessageCircle size={18} />
-                Iniciar Chat por WhatsApp (+52 55 4093 9599)
+                Iniciar Chat por WhatsApp
               </a>
             </div>
 

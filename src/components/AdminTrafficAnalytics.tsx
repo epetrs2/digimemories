@@ -1,23 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   fetchCloudTrafficVisits, 
-  recordPageView, 
   subscribeToRealtimeTraffic, 
   computeYouTubeMetrics, 
   type TrafficVisit,
   type YouTubeStyleMetrics 
 } from '../lib/analytics';
 import { 
-  TrendingUp, 
-  Compass, 
-  RefreshCw, 
-  MapPin, 
-  Clock, 
-  Zap, 
-  Activity, 
-  Layers,
-  Smartphone,
-  CheckCircle2
+  RefreshCw,
+  Activity, Layers, TrendingUp, Compass, MapPin, Smartphone, Clock, CheckCircle2
 } from 'lucide-react';
 
 interface Props {
@@ -31,7 +22,6 @@ export const AdminTrafficAnalytics: React.FC<Props> = ({ totalOrdersCount }) => 
   const [hoveredMinute, setHoveredMinute] = useState<{ label: string; count: number } | null>(null);
   const [hoveredHour, setHoveredHour] = useState<{ label: string; count: number } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [justSimulated, setJustSimulated] = useState(false);
 
   const loadTrafficData = async () => {
     setIsRefreshing(true);
@@ -68,24 +58,6 @@ export const AdminTrafficAnalytics: React.FC<Props> = ({ totalOrdersCount }) => 
     };
   }, []);
 
-  const handleSimulateLiveVisit = () => {
-    const testPages = ['/calculator', '/', '/track', '/contact', '/process'];
-    const testSources = ['Instagram', 'Google Search', 'WhatsApp', 'Directo / Link'];
-    const pickPage = testPages[Math.floor(Math.random() * testPages.length)];
-    const pickSource = testSources[Math.floor(Math.random() * testSources.length)];
-
-    const simulated = recordPageView(pickPage, `Página ${pickPage}`);
-    simulated.referrerCategory = pickSource as any;
-
-    setVisits(prev => {
-      const updated = [simulated, ...prev];
-      setMetrics(computeYouTubeMetrics(updated));
-      return updated;
-    });
-
-    setJustSimulated(true);
-    setTimeout(() => setJustSimulated(false), 2500);
-  };
 
   if (!metrics) {
     return (
@@ -141,28 +113,6 @@ export const AdminTrafficAnalytics: React.FC<Props> = ({ totalOrdersCount }) => 
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          <button
-            onClick={handleSimulateLiveVisit}
-            style={{
-              padding: '0.65rem 1.15rem',
-              fontSize: '0.8rem',
-              fontWeight: 800,
-              borderRadius: '12px',
-              border: 'none',
-              background: justSimulated ? '#16a34a' : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-              color: '#ffffff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <Zap size={15} />
-            {justSimulated ? '✓ ¡Visita Registrada en Vivo!' : '⚡ Simular Visita en Vivo'}
-          </button>
-
           <button
             onClick={loadTrafficData}
             disabled={isRefreshing}
