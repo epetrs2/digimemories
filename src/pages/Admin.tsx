@@ -129,7 +129,7 @@ const Admin: React.FC = () => {
         } else {
           loadData();
         }
-      }, 3000);
+      }, 15000);
       window.addEventListener('digimemories_chat_sync', loadData);
       window.addEventListener('digimemories_orders_sync', loadData);
       window.addEventListener('digimemories_email_sent', loadData);

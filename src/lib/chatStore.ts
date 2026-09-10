@@ -23,22 +23,90 @@ export interface ChatThread {
   messages: ChatMessage[];
 }
 
-import { saveChatThreadToCloud, fetchChatThreadsFromCloud, deleteChatThreadFromCloud } from './supabase';
+import { 
+  saveChatThreadToCloud, 
+  fetchChatThreadsFromCloud, 
+  deleteChatThreadFromCloud,
+  registerChatsReconciler
+} from './supabase';
 
 const THREADS_KEY = 'digimemories_chat_threads_v3';
 const CURRENT_VISITOR_KEY = 'digimemories_current_visitor_id';
+const CHAT_TOMBSTONES_KEY = 'digimemories_deleted_chat_ids';
+
+export const getDeletedChatThreadIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(CHAT_TOMBSTONES_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+};
+
+export const addDeletedChatThreadId = (id: string) => {
+  try {
+    const set = getDeletedChatThreadIds();
+    set.add(id);
+    localStorage.setItem(CHAT_TOMBSTONES_KEY, JSON.stringify(Array.from(set)));
+  } catch (e) {
+    console.warn('Error saving chat tombstone:', e);
+  }
+};
+
+export const reconcileAndStoreChatThreads = (cloudThreads: ChatThread[]): ChatThread[] => {
+  const localThreads = getChatThreads();
+  const deletedIds = getDeletedChatThreadIds();
+  const validCloudThreads = cloudThreads.filter(ct => !deletedIds.has(ct.id));
+  const map = new Map<string, ChatThread>();
+
+  localThreads.forEach(lt => {
+    if (!deletedIds.has(lt.id)) {
+      map.set(lt.id, lt);
+    }
+  });
+
+  validCloudThreads.forEach(cloudT => {
+    const localT = map.get(cloudT.id);
+    if (!localT) {
+      map.set(cloudT.id, cloudT);
+      return;
+    }
+
+    let unreadByAdmin = cloudT.unreadByAdmin;
+    if (localT.unreadByAdmin === 0 && (localT.messages?.length || 0) >= (cloudT.messages?.length || 0)) {
+      unreadByAdmin = 0;
+    }
+
+    if ((localT.messages?.length || 0) > (cloudT.messages?.length || 0)) {
+      map.set(cloudT.id, {
+        ...cloudT,
+        ...localT,
+        unreadByAdmin
+      });
+      saveChatThreadToCloud(localT);
+    } else {
+      map.set(cloudT.id, {
+        ...localT,
+        ...cloudT,
+        unreadByAdmin
+      });
+    }
+  });
+
+  const reconciled = Array.from(map.values());
+  localStorage.setItem(THREADS_KEY, JSON.stringify(reconciled));
+  window.dispatchEvent(new CustomEvent('digimemories_chat_sync'));
+  return reconciled;
+};
+
+// Register with Supabase realtime engine
+registerChatsReconciler(reconcileAndStoreChatThreads);
 
 // Initial background sync
 if (typeof window !== 'undefined') {
   fetchChatThreadsFromCloud().then(cloudThreads => {
     if (cloudThreads && cloudThreads.length > 0) {
-      const local = getChatThreads();
-      const map = new Map<string, ChatThread>();
-      local.forEach(t => map.set(t.id, t));
-      cloudThreads.forEach(t => map.set(t.id, t));
-      const merged = Array.from(map.values());
-      localStorage.setItem(THREADS_KEY, JSON.stringify(merged));
-      window.dispatchEvent(new CustomEvent('digimemories_chat_sync'));
+      reconcileAndStoreChatThreads(cloudThreads);
     }
   });
 }
@@ -306,6 +374,7 @@ export const markThreadAsReadByVisitor = (threadId: string) => {
 
 export const deleteChatThread = async (threadId: string): Promise<boolean> => {
   try {
+    addDeletedChatThreadId(threadId);
     const threads = getChatThreads();
     const filtered = threads.filter(t => t.id !== threadId);
     localStorage.setItem(THREADS_KEY, JSON.stringify(filtered));

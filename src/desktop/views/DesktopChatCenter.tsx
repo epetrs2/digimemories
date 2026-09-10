@@ -61,7 +61,7 @@ export const DesktopChatCenter: React.FC = () => {
 
   useEffect(() => {
     loadThreads();
-    const interval = setInterval(loadThreads, 3000);
+    const interval = setInterval(loadThreads, 20000);
     const handleSync = () => {
       loadThreads();
       playChime();

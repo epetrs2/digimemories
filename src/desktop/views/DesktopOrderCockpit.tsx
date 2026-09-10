@@ -25,6 +25,54 @@ import {
 } from '../../lib/store';
 import { sendDepositConfirmationAndPinEmail } from '../../lib/emailService';
 
+const DebouncedTapeInput: React.FC<{
+  initialValue: string;
+  placeholder?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  onCommit: (val: string) => void;
+}> = ({ initialValue, placeholder, className, style, onCommit }) => {
+  const [val, setVal] = useState(initialValue || '');
+  const timerRef = React.useRef<any>(null);
+  const isFocusedRef = React.useRef(false);
+
+  useEffect(() => {
+    if (!isFocusedRef.current) {
+      setVal(initialValue || '');
+    }
+  }, [initialValue]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setVal(v);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onCommit(v);
+    }, 400);
+  };
+
+  const handleBlur = () => {
+    isFocusedRef.current = false;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (val !== (initialValue || '')) {
+      onCommit(val);
+    }
+  };
+
+  return (
+    <input
+      type="text"
+      className={className}
+      placeholder={placeholder}
+      style={style}
+      value={val}
+      onFocus={() => { isFocusedRef.current = true; }}
+      onChange={handleChange}
+      onBlur={handleBlur}
+    />
+  );
+};
+
 export const DesktopOrderCockpit: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -40,7 +88,8 @@ export const DesktopOrderCockpit: React.FC = () => {
 
   useEffect(() => {
     loadOrders();
-    const interval = setInterval(loadOrders, 3000);
+    // Relaxed background heartbeat (30s) while Realtime events deliver changes instantly
+    const interval = setInterval(loadOrders, 30000);
     window.addEventListener('digimemories_orders_sync', loadOrders);
     return () => {
       clearInterval(interval);
@@ -513,13 +562,13 @@ export const DesktopOrderCockpit: React.FC = () => {
                         <label style={{ fontSize: '0.7rem', color: 'var(--mac-text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
                           🏷️ Etiqueta física del casete (Identificación)
                         </label>
-                        <input
-                          type="text"
+                        <DebouncedTapeInput
+                          key={`label-${item.id}`}
                           className="mac-input"
                           placeholder="ej. 'Navidad 1994', 'Boda tíos', 'Vacaciones 1998'..."
                           style={{ width: '100%', fontSize: '0.76rem', padding: '0.35rem 0.6rem' }}
-                          value={item.customLabel || ''}
-                          onChange={e => handleUpdateItemField(selectedOrder.id, item.id, { customLabel: e.target.value })}
+                          initialValue={item.customLabel || ''}
+                          onCommit={val => handleUpdateItemField(selectedOrder.id, item.id, { customLabel: val })}
                         />
                       </div>
 
@@ -527,13 +576,13 @@ export const DesktopOrderCockpit: React.FC = () => {
                         <label style={{ fontSize: '0.7rem', color: 'var(--mac-text-secondary)', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>
                           Notas de laboratorio / Observaciones
                         </label>
-                        <input
-                          type="text"
+                        <DebouncedTapeInput
+                          key={`notes-${item.id}`}
                           className="mac-input"
                           placeholder="ej. Carrete con fricción leve, audio balanceado..."
                           style={{ width: '100%', fontSize: '0.76rem', padding: '0.35rem 0.6rem' }}
-                          value={item.notes || ''}
-                          onChange={e => handleUpdateItemField(selectedOrder.id, item.id, { notes: e.target.value })}
+                          initialValue={item.notes || ''}
+                          onCommit={val => handleUpdateItemField(selectedOrder.id, item.id, { notes: val })}
                         />
                       </div>
                     </div>

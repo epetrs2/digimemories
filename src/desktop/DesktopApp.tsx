@@ -11,9 +11,9 @@ import DesktopBusinessSettings from './views/DesktopBusinessSettings';
 import DesktopSecurityVault from './views/DesktopSecurityVault';
 
 import { validateAdminSession, destroyAdminSession } from '../lib/security';
-import { getOrders, type Order } from '../lib/store';
-import { getChatThreads, type ChatThread } from '../lib/chatStore';
-import { fetchOrdersFromCloud, fetchChatThreadsFromCloud, initSupabaseRealtimeListeners, saveChatThreadToCloud } from '../lib/supabase';
+import { getOrders, reconcileAndStoreOrders, type Order } from '../lib/store';
+import { getChatThreads, reconcileAndStoreChatThreads, type ChatThread } from '../lib/chatStore';
+import { fetchOrdersFromCloud, fetchChatThreadsFromCloud, initSupabaseRealtimeListeners } from '../lib/supabase';
 import { Search, X, Package, MessageSquare } from 'lucide-react';
 
 export const DesktopApp: React.FC = () => {
@@ -63,9 +63,8 @@ export const DesktopApp: React.FC = () => {
     handleThemeChange(next);
   };
 
-  // Auto-lock idle timer (15 minutes)
-  const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
   const lastActivityRef = React.useRef<number>(Date.now());
+  const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 mins lock
 
   const handleUserActivity = useCallback(() => {
     lastActivityRef.current = Date.now();
@@ -108,7 +107,7 @@ export const DesktopApp: React.FC = () => {
     }
   }, []);
 
-  // 100% Direct Cloud Sync with Supabase Database
+  // 100% Direct Cloud Sync with Supabase Database with non-destructive reconciliation
   const syncWithCloud = useCallback(async () => {
     try {
       const [cloudOrders, cloudChats] = await Promise.all([
@@ -117,21 +116,12 @@ export const DesktopApp: React.FC = () => {
       ]);
 
       if (cloudOrders) {
-        localStorage.setItem('digimemories_orders_mock', JSON.stringify(cloudOrders));
-        setOrders(cloudOrders);
+        const reconciledO = reconcileAndStoreOrders(cloudOrders);
+        setOrders(reconciledO);
       }
       if (cloudChats) {
-        const localThreads = getChatThreads();
-        const reconciled = cloudChats.map(cloudT => {
-          const localT = localThreads.find(l => l.id === cloudT.id);
-          if (localT && localT.unreadByAdmin === 0 && cloudT.unreadByAdmin > 0 && (localT.messages?.length || 0) >= (cloudT.messages?.length || 0)) {
-            cloudT.unreadByAdmin = 0;
-            saveChatThreadToCloud(cloudT);
-          }
-          return cloudT;
-        });
-        localStorage.setItem('digimemories_chat_threads_v3', JSON.stringify(reconciled));
-        setChatThreads(reconciled);
+        const reconciledC = reconcileAndStoreChatThreads(cloudChats);
+        setChatThreads(reconciledC);
       }
       setIsOnline(true);
     } catch (e) {
@@ -145,8 +135,9 @@ export const DesktopApp: React.FC = () => {
     refreshData();
     syncWithCloud();
 
-    const localInterval = setInterval(refreshData, 3000);
-    const cloudInterval = setInterval(syncWithCloud, 6000);
+    // Supabase Realtime handles instant events; intervals are relaxed heartbeats
+    const localInterval = setInterval(refreshData, 15000);
+    const cloudInterval = setInterval(syncWithCloud, 25000);
 
     window.addEventListener('digimemories_orders_sync', refreshData);
     window.addEventListener('digimemories_chat_sync', refreshData);
