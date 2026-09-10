@@ -12,57 +12,112 @@ import {
 export const VhsExploded3D: React.FC = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasMountRef = useRef<HTMLDivElement | null>(null);
-  const [, setScrollProgress] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [activeStage, setActiveStage] = useState(0);
+  const [useCssFallback, setUseCssFallback] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
+  // Scroll listener for calculating progress (shared between WebGL & CSS 3D fallback)
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const totalDist = rect.height - window.innerHeight;
+      const progress = Math.max(0, Math.min(1, -rect.top / Math.max(1, totalDist)));
+      
+      setScrollProgress(progress);
+
+      if (progress < 0.22) setActiveStage(0);
+      else if (progress < 0.50) setActiveStage(1);
+      else if (progress < 0.75) setActiveStage(2);
+      else setActiveStage(3);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = -(e.clientY / window.innerHeight) * 2 + 1;
+      setMousePos({ x: x * 15, y: y * 12 });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  // WebGL 3D Scene Initialization
   useEffect(() => {
     const mount = canvasMountRef.current;
     if (!mount) return;
 
-    // 1. SCENE & CAMERA SETUP
+    // 1. SAFE WEBGL SUPPORT CHECK
+    let renderer: THREE.WebGLRenderer | null = null;
+    try {
+      const testCanvas = document.createElement('canvas');
+      const gl = testCanvas.getContext('webgl2') || 
+                 testCanvas.getContext('webgl') || 
+                 testCanvas.getContext('experimental-webgl');
+      if (!gl) {
+        setUseCssFallback(true);
+        return;
+      }
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'default' });
+    } catch {
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+      } catch {
+        setUseCssFallback(true);
+        return;
+      }
+    }
+
+    if (!renderer) {
+      setUseCssFallback(true);
+      return;
+    }
+
+    // 2. SCENE & CAMERA SETUP
     const scene = new THREE.Scene();
     const width = mount.clientWidth || window.innerWidth;
     const height = mount.clientHeight || window.innerHeight;
 
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 0.9, 7.2);
+    camera.position.set(0, 0.8, 7.2);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     mount.appendChild(renderer.domElement);
 
-    // 2. STUDIO LIGHTING
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+    // 3. STUDIO LIGHTING
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffedd5, 2.4);
+    const keyLight = new THREE.DirectionalLight(0xffedd5, 2.2);
     keyLight.position.set(6, 8, 7);
-    keyLight.castShadow = true;
     scene.add(keyLight);
 
     const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.8);
     rimLight.position.set(-6, -3, -5);
     scene.add(rimLight);
 
-    const fillWarmLight = new THREE.PointLight(0xea580c, 1.6, 25);
+    const fillWarmLight = new THREE.PointLight(0xea580c, 1.5, 25);
     fillWarmLight.position.set(3, -2, 4);
     scene.add(fillWarmLight);
 
-    // 3. PROCEDURAL TEXTURES
-    // 3A. RETRO VHS LABEL CANVAS
+    // 4. RETRO VHS LABEL TEXTURE
     const labelCanvas = document.createElement('canvas');
     labelCanvas.width = 1024;
     labelCanvas.height = 512;
     const ctx = labelCanvas.getContext('2d');
     if (ctx) {
-      // Background off-white label
       ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, 1024, 512);
 
-      // Top colored banner
       const grad = ctx.createLinearGradient(0, 0, 1024, 0);
       grad.addColorStop(0, '#c2410c');
       grad.addColorStop(0.5, '#ea580c');
@@ -70,7 +125,6 @@ export const VhsExploded3D: React.FC = () => {
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 1024, 90);
 
-      // Brand text in banner
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 36px -apple-system, sans-serif';
       ctx.fillText('DIGIMEMORIES', 50, 58);
@@ -81,107 +135,48 @@ export const VhsExploded3D: React.FC = () => {
       ctx.font = 'bold 24px monospace';
       ctx.fillText('VHS • HQ 120', 820, 58);
 
-      // Inner border lines
       ctx.strokeStyle = '#cbd5e1';
       ctx.lineWidth = 4;
       ctx.strokeRect(30, 110, 964, 370);
 
-      // Title header
       ctx.fillStyle = '#0f172a';
       ctx.font = 'bold 34px -apple-system, sans-serif';
       ctx.fillText('ARCHIVO FAMILIAR ORIGINAL (1994)', 60, 170);
 
-      // Handwritten pen lines simulation
       ctx.fillStyle = '#1e3a8a';
       ctx.font = 'italic 500 28px Georgia, serif';
       ctx.fillText('• Boda de Papá y Mamá (Catedral)', 65, 235);
       ctx.fillText('• Vacaciones de Verano 94 (Acapulco)', 65, 285);
       ctx.fillText('• Primeros pasos de Mariana en Navidad', 65, 335);
 
-      // Technical footer
       ctx.fillStyle = '#64748b';
       ctx.font = '600 18px monospace';
       ctx.fillText('SP 120 MIN  |  HI-FI STEREO  |  FORMATO ANALÓGICO NTSC', 65, 410);
       ctx.fillText('ADVERTENCIA: CINTA MAGNÉTICA SUJETA A PÉRDIDA DE SEÑAL POR EDAD', 65, 445);
-
-      // Fake barcode on right
-      ctx.fillStyle = '#1e293b';
-      for (let x = 800; x < 960; x += 6) {
-        if (Math.random() > 0.3) {
-          ctx.fillRect(x, 380, Math.random() > 0.5 ? 4 : 2, 60);
-        }
-      }
     }
     const labelTexture = new THREE.CanvasTexture(labelCanvas);
 
-    // 4. VHS MESH BUILDER
-    // VHS Standard Dimensions: 4.2 wide, 2.4 high, 0.55 deep
+    // 5. VHS 3D MODEL BUILDER
     const vhsGroup = new THREE.Group();
     scene.add(vhsGroup);
 
-    // Shared Materials
-    const plasticBlackMat = new THREE.MeshStandardMaterial({
-      color: 0x18181b,
-      roughness: 0.55,
-      metalness: 0.1
-    });
+    const plasticBlackMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.55, metalness: 0.1 });
+    const plasticDarkGrayMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.6, metalness: 0.05 });
+    const clearWindowMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.38, roughness: 0.15, transmission: 0.8, ior: 1.45 });
+    const spoolWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4, metalness: 0.05 });
+    const magneticTapeMat = new THREE.MeshStandardMaterial({ color: 0x1a120c, roughness: 0.25, metalness: 0.25 });
+    const metalRollerMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.92, roughness: 0.2 });
+    const screwMat = new THREE.MeshStandardMaterial({ color: 0xa1a1aa, metalness: 0.95, roughness: 0.25 });
 
-    const plasticDarkGrayMat = new THREE.MeshStandardMaterial({
-      color: 0x27272a,
-      roughness: 0.6,
-      metalness: 0.05
-    });
-
-    const clearWindowMat = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.38,
-      roughness: 0.15,
-      transmission: 0.8,
-      ior: 1.45
-    });
-
-    const spoolWhiteMat = new THREE.MeshStandardMaterial({
-      color: 0xf1f5f9,
-      roughness: 0.4,
-      metalness: 0.05
-    });
-
-    const magneticTapeMat = new THREE.MeshStandardMaterial({
-      color: 0x1a120c,
-      roughness: 0.25,
-      metalness: 0.25
-    });
-
-    const metalRollerMat = new THREE.MeshStandardMaterial({
-      color: 0xd4d4d8,
-      metalness: 0.92,
-      roughness: 0.2
-    });
-
-    const screwMat = new THREE.MeshStandardMaterial({
-      color: 0xa1a1aa,
-      metalness: 0.95,
-      roughness: 0.25
-    });
-
-    // 4A. FRONT SHELL GROUP (Front face + clear windows + label)
+    // Front Shell
     const frontShellGroup = new THREE.Group();
     vhsGroup.add(frontShellGroup);
+    frontShellGroup.add(new THREE.Mesh(new THREE.BoxGeometry(4.2, 2.4, 0.1), plasticBlackMat));
 
-    // Main front frame
-    const frontFaceGeo = new THREE.BoxGeometry(4.2, 2.4, 0.1);
-    const frontFaceMesh = new THREE.Mesh(frontFaceGeo, plasticBlackMat);
-    frontShellGroup.add(frontFaceMesh);
-
-    // Label Plane on front
-    const labelGeo = new THREE.PlaneGeometry(3.6, 1.7);
-    const labelMat = new THREE.MeshStandardMaterial({ map: labelTexture, roughness: 0.5 });
-    const labelMesh = new THREE.Mesh(labelGeo, labelMat);
+    const labelMesh = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.7), new THREE.MeshStandardMaterial({ map: labelTexture, roughness: 0.5 }));
     labelMesh.position.set(0, 0.15, 0.055);
     frontShellGroup.add(labelMesh);
 
-    // Two observation windows
     const leftWindowMesh = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.25, 0.12), clearWindowMat);
     leftWindowMesh.position.set(-1.05, 0.15, 0.01);
     frontShellGroup.add(leftWindowMesh);
@@ -190,150 +185,98 @@ export const VhsExploded3D: React.FC = () => {
     rightWindowMesh.position.set(1.05, 0.15, 0.01);
     frontShellGroup.add(rightWindowMesh);
 
-    // 4B. FRONT PROTECTIVE FLIP DOOR
+    // Front Door Flap
     const frontDoorGroup = new THREE.Group();
-    frontDoorGroup.position.set(0, -1.2, 0); // Pivot along bottom edge
+    frontDoorGroup.position.set(0, -1.2, 0);
     vhsGroup.add(frontDoorGroup);
-
     const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.35, 0.56), plasticDarkGrayMat);
     doorMesh.position.set(0, 0.175, 0);
     frontDoorGroup.add(doorMesh);
 
-    // 4C. LEFT SPOOL (Source Tape Reel)
+    // Left Spool
     const leftSpoolGroup = new THREE.Group();
     leftSpoolGroup.position.set(-1.05, 0.15, -0.1);
     vhsGroup.add(leftSpoolGroup);
 
-    // White hub
     const spoolHubGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.38, 24);
-    const leftHubMesh = new THREE.Mesh(spoolHubGeo, spoolWhiteMat);
-    leftHubMesh.rotation.x = Math.PI / 2;
-    leftSpoolGroup.add(leftHubMesh);
+    const leftHub = new THREE.Mesh(spoolHubGeo, spoolWhiteMat);
+    leftHub.rotation.x = Math.PI / 2;
+    leftSpoolGroup.add(leftHub);
 
-    // Wound magnetic tape coil (thick roll)
-    const tapeCoilGeo = new THREE.CylinderGeometry(0.95, 0.95, 0.36, 32, 1, true);
-    const leftTapeMesh = new THREE.Mesh(tapeCoilGeo, magneticTapeMat);
-    leftTapeMesh.rotation.x = Math.PI / 2;
-    leftSpoolGroup.add(leftTapeMesh);
+    const leftTape = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.36, 32, 1, true), magneticTapeMat);
+    leftTape.rotation.x = Math.PI / 2;
+    leftSpoolGroup.add(leftTape);
 
-    // 4D. RIGHT SPOOL (Take-up Tape Reel)
+    // Right Spool
     const rightSpoolGroup = new THREE.Group();
     rightSpoolGroup.position.set(1.05, 0.15, -0.1);
     vhsGroup.add(rightSpoolGroup);
 
-    const rightHubMesh = new THREE.Mesh(spoolHubGeo, spoolWhiteMat);
-    rightHubMesh.rotation.x = Math.PI / 2;
-    rightSpoolGroup.add(rightHubMesh);
+    const rightHub = new THREE.Mesh(spoolHubGeo, spoolWhiteMat);
+    rightHub.rotation.x = Math.PI / 2;
+    rightSpoolGroup.add(rightHub);
 
-    // Smaller tape roll on right side
-    const rightTapeCoilGeo = new THREE.CylinderGeometry(0.65, 0.65, 0.36, 32, 1, true);
-    const rightTapeMesh = new THREE.Mesh(rightTapeCoilGeo, magneticTapeMat);
-    rightTapeMesh.rotation.x = Math.PI / 2;
-    rightSpoolGroup.add(rightTapeMesh);
+    const rightTape = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.36, 32, 1, true), magneticTapeMat);
+    rightTape.rotation.x = Math.PI / 2;
+    rightSpoolGroup.add(rightTape);
 
-    // 4E. INTERNAL COMPONENTS (Metal guide pins, tape path ribbon)
+    // Internals
     const internalsGroup = new THREE.Group();
     vhsGroup.add(internalsGroup);
 
-    // Left Guide Roller
     const rollerGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.45, 16);
     const leftRoller = new THREE.Mesh(rollerGeo, metalRollerMat);
     leftRoller.position.set(-1.85, -0.95, -0.1);
     internalsGroup.add(leftRoller);
 
-    // Right Guide Roller
     const rightRoller = new THREE.Mesh(rollerGeo, metalRollerMat);
     rightRoller.position.set(1.85, -0.95, -0.1);
     internalsGroup.add(rightRoller);
 
-    // Magnetic ribbon strip spanning along bottom edge
-    const ribbonGeo = new THREE.BoxGeometry(3.7, 0.32, 0.01);
-    const ribbonMesh = new THREE.Mesh(ribbonGeo, magneticTapeMat);
+    const ribbonMesh = new THREE.Mesh(new THREE.BoxGeometry(3.7, 0.32, 0.01), magneticTapeMat);
     ribbonMesh.position.set(0, -0.98, -0.1);
     internalsGroup.add(ribbonMesh);
 
-    // 4F. BACK SHELL
+    // Back Shell
     const backShellGroup = new THREE.Group();
     backShellGroup.position.set(0, 0, -0.28);
     vhsGroup.add(backShellGroup);
+    backShellGroup.add(new THREE.Mesh(new THREE.BoxGeometry(4.2, 2.4, 0.1), plasticDarkGrayMat));
 
-    const backFaceGeo = new THREE.BoxGeometry(4.2, 2.4, 0.1);
-    const backFaceMesh = new THREE.Mesh(backFaceGeo, plasticDarkGrayMat);
-    backShellGroup.add(backFaceMesh);
-
-    // 4G. SCREWS GROUP (5 corner screws popping out backwards)
+    // Screws
     const screwsGroup = new THREE.Group();
     vhsGroup.add(screwsGroup);
-
     const screwGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.15, 12);
-    const screwPositions = [
-      [-1.9, 1.0, -0.36],
-      [1.9, 1.0, -0.36],
-      [-1.9, -1.0, -0.36],
-      [1.9, -1.0, -0.36],
-      [0, 0.15, -0.36]
-    ];
-    screwPositions.forEach(pos => {
+    [[-1.9, 1.0, -0.36], [1.9, 1.0, -0.36], [-1.9, -1.0, -0.36], [1.9, -1.0, -0.36], [0, 0.15, -0.36]].forEach(pos => {
       const s = new THREE.Mesh(screwGeo, screwMat);
       s.position.set(pos[0], pos[1], pos[2]);
       s.rotation.x = Math.PI / 2;
       screwsGroup.add(s);
     });
 
-    // 5. INTERACTIVE MOUSE PARALLAX
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetMouseX = 0;
-    let targetMouseY = 0;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth) * 2 - 1;
-      const y = -(e.clientY / window.innerHeight) * 2 + 1;
-      targetMouseX = x * 0.45;
-      targetMouseY = y * 0.3;
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
-    // 6. SCROLL INTERPOLATION & ANIMATION LOOP
-    let currentProgress = 0;
+    // 6. RENDER LOOP WITH EXPLODED INTERPOLATION
     let animId: number;
+    let lerpP = 0;
 
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
+    const render = () => {
+      animId = requestAnimationFrame(render);
 
-      // Lerp mouse
-      mouseX += (targetMouseX - mouseX) * 0.08;
-      mouseY += (targetMouseY - mouseY) * 0.08;
-
-      // Read current scroll progress from DOM
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const totalDist = rect.height - window.innerHeight;
-        const progress = Math.max(0, Math.min(1, -rect.top / Math.max(1, totalDist)));
-        currentProgress += (progress - currentProgress) * 0.09;
-        setScrollProgress(currentProgress);
-
-        // Update active stage for callout cards
-        if (currentProgress < 0.22) setActiveStage(0);
-        else if (currentProgress < 0.50) setActiveStage(1);
-        else if (currentProgress < 0.75) setActiveStage(2);
-        else setActiveStage(3);
+        const targetP = Math.max(0, Math.min(1, -rect.top / Math.max(1, totalDist)));
+        lerpP += (targetP - lerpP) * 0.09;
       }
 
-      const p = currentProgress;
+      const p = lerpP;
 
-      // Exploded View Component Animations:
-      // Front Shell pops forward
       frontShellGroup.position.z = p * 2.4;
       frontShellGroup.rotation.x = p * 0.15;
 
-      // Front Door flips open & lifts
       frontDoorGroup.rotation.x = -p * Math.PI * 0.85;
       frontDoorGroup.position.y = -1.2 + p * 1.35;
       frontDoorGroup.position.z = p * 2.9;
 
-      // Spools lift upwards and separate laterally
       leftSpoolGroup.position.y = 0.15 + p * 1.5;
       leftSpoolGroup.position.x = -1.05 - p * 0.85;
       leftSpoolGroup.position.z = -0.1 + p * 1.2;
@@ -344,30 +287,25 @@ export const VhsExploded3D: React.FC = () => {
       rightSpoolGroup.position.z = -0.1 + p * 1.2;
       rightSpoolGroup.rotation.z += 0.008;
 
-      // Internals expand
       internalsGroup.position.y = -p * 0.6;
       internalsGroup.position.z = p * 0.8;
 
-      // Back Shell slides backward
       backShellGroup.position.z = -0.28 - p * 2.2;
       backShellGroup.rotation.x = -p * 0.12;
 
-      // Screws blast out backward
       screwsGroup.position.z = -p * 3.8;
 
-      // Base rotation of whole VHS model
-      vhsGroup.rotation.x = 0.22 + p * 0.35 + mouseY;
-      vhsGroup.rotation.y = -0.38 + p * 0.75 + mouseX;
+      vhsGroup.rotation.x = 0.22 + p * 0.35;
+      vhsGroup.rotation.y = -0.38 + p * 0.75;
       vhsGroup.position.y = 0.15 - p * 0.2;
 
       renderer.render(scene, camera);
     };
 
-    animId = requestAnimationFrame(animate);
+    animId = requestAnimationFrame(render);
 
-    // 7. RESIZE LISTENER
     const handleResize = () => {
-      if (!mount) return;
+      if (!mount || !renderer) return;
       const w = mount.clientWidth || window.innerWidth;
       const h = mount.clientHeight || window.innerHeight;
       camera.aspect = w / h;
@@ -379,14 +317,15 @@ export const VhsExploded3D: React.FC = () => {
 
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
-      if (mount && renderer.domElement) {
-        mount.removeChild(renderer.domElement);
+      if (mount && renderer && renderer.domElement) {
+        try { mount.removeChild(renderer.domElement); } catch {}
       }
-      renderer.dispose();
+      try { renderer.dispose(); } catch {}
     };
-  }, []);
+  }, [useCssFallback]);
+
+  const p = scrollProgress;
 
   return (
     <div 
@@ -414,16 +353,169 @@ export const VhsExploded3D: React.FC = () => {
           boxSizing: 'border-box'
         }}
       >
-        {/* 3D WebGL Canvas Layer */}
-        <div 
-          ref={canvasMountRef}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 1,
-            cursor: 'grab'
-          }}
-        />
+        {/* WebGL 3D Canvas Layer (Used when WebGL is active) */}
+        {!useCssFallback ? (
+          <div 
+            ref={canvasMountRef}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 1,
+              cursor: 'grab'
+            }}
+          />
+        ) : (
+          /* CSS 3D Exploded Engine (Bulletproof Fallback for all environments) */
+          <div 
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              perspective: '1200px',
+              zIndex: 1,
+              pointerEvents: 'none'
+            }}
+          >
+            <div 
+              style={{
+                position: 'relative',
+                width: 'min(420px, 85vw)',
+                height: '240px',
+                transformStyle: 'preserve-3d',
+                transform: `rotateX(${16 - p * 12 + mousePos.y * 0.4}deg) rotateY(${-22 + p * 38 + mousePos.x * 0.4}deg)`,
+                transition: 'transform 0.15s ease-out'
+              }}
+            >
+              {/* Back Shell */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #18181b 0%, #09090b 100%)',
+                  border: '2px solid #27272a',
+                  boxShadow: '0 25px 50px rgba(0,0,0,0.8)',
+                  transform: `translateZ(${-p * 110}px)`,
+                  transition: 'transform 0.1s linear'
+                }}
+              />
+
+              {/* Internal Spools */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: '20px',
+                  display: 'flex',
+                  justifyContent: 'space-around',
+                  alignItems: 'center',
+                  transformStyle: 'preserve-3d',
+                  transform: `translateZ(${p * 50}px) translateY(${-p * 45}px)`,
+                  transition: 'transform 0.1s linear'
+                }}
+              >
+                {/* Left Reel with Magnetic Tape */}
+                <div 
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, #f8fafc 24%, #1e1b18 25%, #2a221b 85%, #f1f5f9 86%)',
+                    border: '3px solid #3f3f46',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transform: `translateX(${-p * 55}px) rotate(${p * 240}deg)`
+                  }}
+                >
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '3px dashed #71717a' }} />
+                </div>
+
+                {/* Right Reel */}
+                <div 
+                  style={{
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, #f8fafc 28%, #1e1b18 29%, #2a221b 72%, #f1f5f9 73%)',
+                    border: '3px solid #3f3f46',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transform: `translateX(${p * 55}px) rotate(${p * 320}deg)`
+                  }}
+                >
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px dashed #71717a' }} />
+                </div>
+              </div>
+
+              {/* Front Protective Door */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  bottom: '-12px',
+                  left: 0,
+                  right: 0,
+                  height: '36px',
+                  background: 'linear-gradient(180deg, #27272a 0%, #18181b 100%)',
+                  borderRadius: '6px',
+                  border: '1px solid #3f3f46',
+                  transformOrigin: 'bottom center',
+                  transform: `translateZ(${p * 140}px) rotateX(${-p * 95}deg)`,
+                  transition: 'transform 0.1s linear'
+                }}
+              />
+
+              {/* Front Casing with Vintage Label and Dual Windows */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #27272a 0%, #18181b 100%)',
+                  border: '2px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow: '0 30px 60px rgba(0,0,0,0.7)',
+                  transform: `translateZ(${p * 120}px)`,
+                  transition: 'transform 0.1s linear',
+                  padding: '12px',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between'
+                }}
+              >
+                {/* Vintage Label */}
+                <div 
+                  style={{
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    color: '#0f172a',
+                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #ea580c', paddingBottom: '4px', marginBottom: '6px' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#c2410c' }}>DIGIMEMORIES</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b' }}>ARCHIVO FAMILIAR 1994</span>
+                  </div>
+                  <div style={{ fontSize: '0.72rem', fontStyle: 'italic', color: '#1e3a8a', lineHeight: 1.3 }}>
+                    Vacaciones Acapulco + Boda Papá y Mamá
+                  </div>
+                </div>
+
+                {/* Clear observation windows */}
+                <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', height: '90px' }}>
+                  <div style={{ width: '100px', height: '80px', borderRadius: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)' }} />
+                  <div style={{ width: '100px', height: '80px', borderRadius: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)' }} />
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
 
         {/* Top Header Bar */}
         <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', maxWidth: '780px', pointerEvents: 'none' }}>

@@ -15,6 +15,7 @@ import Carousel from '../components/Carousel';
 import BeforeAfterSlider from '../components/BeforeAfterSlider';
 import ContactSection from '../components/ContactSection';
 import VhsExploded3D from '../components/VhsExploded3D';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const Home = () => {
   return (
@@ -136,7 +137,9 @@ const Home = () => {
       </section>
 
       {/* 3D Exploded VHS Scrollytelling Experience */}
-      <VhsExploded3D />
+      <ErrorBoundary fallback={null}>
+        <VhsExploded3D />
+      </ErrorBoundary>
 
       {/* Before / After Restoration Section */}
       <section className="section" style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)' }}>
