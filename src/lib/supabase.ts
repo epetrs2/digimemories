@@ -223,6 +223,25 @@ export async function saveChatThreadToCloud(thread: ChatThread): Promise<boolean
   }
 }
 
+export async function deleteChatThreadFromCloud(threadId: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  try {
+    const { error } = await supabase
+      .from('chat_threads')
+      .delete()
+      .eq('id', threadId);
+
+    if (error) {
+      console.warn('[Supabase] deleteChatThread error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn('[Supabase] Exception deleting chat thread:', e);
+    return false;
+  }
+}
+
 /**
  * -------------------------------------------------------------
  * 3. EMAIL NOTIFICATIONS REPOSITORY

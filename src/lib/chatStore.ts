@@ -23,7 +23,7 @@ export interface ChatThread {
   messages: ChatMessage[];
 }
 
-import { saveChatThreadToCloud, fetchChatThreadsFromCloud } from './supabase';
+import { saveChatThreadToCloud, fetchChatThreadsFromCloud, deleteChatThreadFromCloud } from './supabase';
 
 const THREADS_KEY = 'digimemories_chat_threads_v3';
 const CURRENT_VISITOR_KEY = 'digimemories_current_visitor_id';
@@ -301,5 +301,19 @@ export const markThreadAsReadByVisitor = (threadId: string) => {
     thread.unreadByVisitor = 0;
     saveChatThreads(threads, thread);
     saveChatThreadToCloud(thread);
+  }
+};
+
+export const deleteChatThread = async (threadId: string): Promise<boolean> => {
+  try {
+    const threads = getChatThreads();
+    const filtered = threads.filter(t => t.id !== threadId);
+    localStorage.setItem(THREADS_KEY, JSON.stringify(filtered));
+    window.dispatchEvent(new CustomEvent('digimemories_chat_sync'));
+    await deleteChatThreadFromCloud(threadId);
+    return true;
+  } catch (err) {
+    console.error('Failed to delete chat thread', err);
+    return false;
   }
 };

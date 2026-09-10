@@ -14,6 +14,7 @@ import QuoteView from './pages/QuoteView';
 import { recordPageView } from './lib/analytics';
 import { destroyAdminSession } from './lib/security';
 import { fetchCloudBusinessSettings } from './lib/businessSettings';
+import { initVisitorPresenceTracker } from './lib/visitorPresence';
 import DesktopApp from './desktop/DesktopApp';
 
 function NavigationSecurityWatcher() {
@@ -28,8 +29,9 @@ function NavigationSecurityWatcher() {
     prevPathRef.current = location.pathname;
 
     // Exclude /admin from public visitor tracking
-    if (!location.pathname.startsWith('/admin')) {
+    if (!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/desktop')) {
       recordPageView(location.pathname);
+      initVisitorPresenceTracker(location.pathname, document.title);
     }
   }, [location.pathname]);
 

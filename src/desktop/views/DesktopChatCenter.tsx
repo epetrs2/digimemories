@@ -8,13 +8,15 @@ import {
   Search, 
   Volume2, 
   VolumeX,
-  UserCheck
+  UserCheck,
+  Trash2
 } from 'lucide-react';
 import { 
   getChatThreads, 
   addMessageToThread, 
   setThreadMode, 
   markThreadAsReadByAdmin,
+  deleteChatThread,
   type ChatThread 
 } from '../../lib/chatStore';
 
@@ -96,6 +98,21 @@ export const DesktopChatCenter: React.FC = () => {
     const nextMode = selectedThread.mode === 'bot' ? 'human' : 'bot';
     setThreadMode(selectedThread.id, nextMode);
     loadThreads();
+  };
+
+  const handleDeleteThread = async (threadId?: string) => {
+    const idToDelete = threadId || selectedThread?.id;
+    if (!idToDelete) return;
+    const target = threads.find(t => t.id === idToDelete);
+    const targetName = target ? target.visitorName : 'esta conversación';
+    if (window.confirm(`¿Estás seguro de eliminar permanentemente la conversación con "${targetName}"? Se borrará de la aplicación y de Supabase Cloud.`)) {
+      await deleteChatThread(idToDelete);
+      const remaining = threads.filter(t => t.id !== idToDelete);
+      setThreads(remaining);
+      if (selectedThreadId === idToDelete) {
+        setSelectedThreadId(remaining.length > 0 ? remaining[0].id : null);
+      }
+    }
   };
 
   const filteredThreads = threads.filter(t => {
@@ -273,19 +290,41 @@ export const DesktopChatCenter: React.FC = () => {
                     </span>
                   )}
 
-                  {t.unreadByAdmin > 0 && (
-                    <span style={{
-                      marginLeft: 'auto',
-                      fontSize: '0.65rem',
-                      background: 'var(--mac-accent)',
-                      color: '#ffffff',
-                      fontWeight: 800,
-                      padding: '0.1rem 0.4rem',
-                      borderRadius: '999px'
-                    }}>
-                      {t.unreadByAdmin}
-                    </span>
-                  )}
+                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteThread(t.id);
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '0.15rem 0.25rem',
+                        color: 'var(--mac-text-muted)',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      title="Eliminar conversación"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+
+                    {t.unreadByAdmin > 0 && (
+                      <span style={{
+                        fontSize: '0.65rem',
+                        background: 'var(--mac-accent)',
+                        color: '#ffffff',
+                        fontWeight: 800,
+                        padding: '0.1rem 0.4rem',
+                        borderRadius: '999px'
+                      }}>
+                        {t.unreadByAdmin}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -344,6 +383,15 @@ export const DesktopChatCenter: React.FC = () => {
                     <UserCheck size={14} /> Relevar Bot (Tomar Control)
                   </>
                 )}
+              </button>
+
+              <button
+                onClick={() => handleDeleteThread(selectedThread.id)}
+                className="mac-btn-secondary"
+                style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.35)' }}
+                title="Eliminar conversación de raíz"
+              >
+                <Trash2 size={13} /> Eliminar
               </button>
             </div>
           </div>
@@ -497,6 +545,28 @@ export const DesktopChatCenter: React.FC = () => {
                   : 'El bot responde preguntas comunes y ayuda a calcular cotizaciones.'}
               </p>
             </div>
+          </div>
+
+          <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--mac-border)' }}>
+            <button
+              onClick={() => handleDeleteThread(selectedThread.id)}
+              className="mac-btn-secondary"
+              style={{
+                width: '100%',
+                padding: '0.55rem',
+                fontSize: '0.75rem',
+                color: '#f87171',
+                borderColor: 'rgba(239, 68, 68, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.45rem',
+                fontWeight: 700
+              }}
+              title="Eliminar conversación de raíz"
+            >
+              <Trash2 size={13} /> Eliminar Conversación
+            </button>
           </div>
         </div>
       )}

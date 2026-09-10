@@ -590,12 +590,12 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     category: 'Recepción & Diagnóstico',
     icon: '📼',
     description: 'Confirmación de ingreso al taller y comienzo de inspección física preliminar.',
-    subject: '📼 Tus recuerdos han ingresado con éxito al laboratorio DigiMemories (Orden #{{ordenId}})',
+    subject: '📼 Tus recuerdos han ingresado con éxito al taller DigiMemories (Orden #{{ordenId}})',
     body: `Estimado/a {{nombre}},
 
 Te confirmamos que tu material con {{cantidadCintas}} cintas/elementos ha ingresado a nuestra estación técnica de laboratorio bajo el número de orden #{{ordenId}}.
 
-En este momento iniciamos el protocolo de inspección física preliminar: revisión de tensión de cinta, verificación de estado de carretes, ausencia de moho y compatibilidad de cabezales para la digitalización 1:1 en tiempo real.
+En este momento iniciamos el protocolo de inspección física preliminar: revisión de tensión de cinta, verificación de estado de carretes y compatibilidad de cabezales para la digitalización 1:1 en tiempo real.
 
 Puedes consultar el avance de tu orden en cualquier momento en nuestro portal de seguimiento:
 {{trackingUrl}}
@@ -604,26 +604,6 @@ Te mantendremos al tanto de cada fase del proceso.
 
 Atentamente,
 Equipo Técnico DigiMemories`
-  },
-  {
-    id: 'alerta_moho',
-    name: 'Alerta de Moho / Descontaminación',
-    category: 'Incidencias Técnicas',
-    icon: '🦠',
-    description: 'Aviso sobre moho en carretes y aplicación de ciclo térmico preventivo.',
-    subject: '⚠️ Notificación técnica: Hallazgo de humedad/moho en cinta (Orden #{{ordenId}})',
-    body: `Hola {{nombre}},
-
-Durante la inspección de tus cintas correspondientes a la orden #{{ordenId}}, detectamos presencia de humedad/moho en uno o más carretes (formato {{formato}}).
-
-Para no comprometer la cinta ni los cabezales de lectura magnética, realizaremos un ciclo preventivo de secado y descontaminación física controlada antes de ingresar la cinta a la digitalizadora.
-
-Este procedimiento es parte de nuestro protocolo de preservación analógica para maximizar el rescate del metraje original.
-
-Cualquier duda o comentario, estamos a tus órdenes en este correo o vía nuestro chat en vivo en la plataforma.
-
-Atentamente,
-Laboratorio de Restauración DigiMemories`
   },
   {
     id: 'cinta_rota_empalme',
@@ -680,61 +660,56 @@ Saludos cordiales,
 Laboratorio DigiMemories`
   },
   {
-    id: 'digitalizacion_completada',
-    name: 'Digitalización Concluida / Descarga Lista',
+    id: 'preparacion_usb',
+    name: 'Grabado de Memoria USB Finalizado',
     category: 'Entrega de Archivos',
-    icon: '✨',
-    description: 'Entrega de archivos MP4 en la nube con enlace directo seguro.',
-    subject: '✨ ¡Tus videos han sido digitalizados! Accede a tus archivos (Orden #{{ordenId}})',
+    icon: '💾',
+    description: 'Aviso de que los videos han sido grabados en la memoria USB física.',
+    subject: '💾 Digitalización concluida: Tus memorias USB están listas para despacho (Orden #{{ordenId}})',
     body: `¡Excelentes noticias, {{nombre}}!
 
 La digitalización de tus cintas de la orden #{{ordenId}} ha concluido con éxito en nuestro laboratorio.
 
-Tus recuerdos ya se encuentran convertidos en formato digital MP4 en alta definición, listos para disfrutarse en cualquier computadora, smartphone o Smart TV.
+Tus recuerdos familiares han sido transferidos a tu memoria USB física en formato digital MP4 de alta fidelidad, listos para reproducirse en cualquier computadora, Smart TV o dispositivo actual.
 
-Puedes acceder y descargar tus archivos desde el siguiente enlace privado de alta velocidad:
-{{downloadUrl}}
+Tus cassettes originales junto con la memoria USB ya se encuentran debidamente empaquetados y acondicionados para su despacho a tu domicilio.
 
-Te recomendamos guardar una copia en tu disco duro personal o almacenamiento familiar.
-
-¡Muchas gracias por confiar en DigiMemories para rescatar tu historia!
+Puedes consultar los detalles de tu orden en:
+{{trackingUrl}}
 
 Atentamente,
-DigiMemories Preservación Digital`
+Equipo de Preservación DigiMemories`
   },
   {
-    id: 'listo_recoger',
-    name: 'Listo para Recoger en Laboratorio',
+    id: 'despacho_uber_flash',
+    name: 'Despacho Local por Uber Flash (CDMX)',
     category: 'Entrega de Archivos',
-    icon: '📦',
-    description: 'Aviso de que los cassettes físicos y USB están listos en el taller.',
-    subject: '📦 Tu orden #{{ordenId}} está lista para ser recogida en nuestro taller',
+    icon: '🛵',
+    description: 'Aviso de envío por chofer local privado en tiempo real.',
+    subject: '🛵 Tus cintas y memorias van en camino vía Uber Flash (Orden #{{ordenId}})',
     body: `Hola {{nombre}},
 
-Te informamos que tu orden #{{ordenId}} está 100% finalizada y resguardada en nuestro laboratorio.
+Te informamos que tu paquete con los cassettes originales y tu memoria USB de la orden #{{ordenId}} ya fue entregado al chofer de Uber Flash para su entrega directa en tu domicilio.
 
-Tus cassettes originales, junto con la memoria USB con los archivos solicitados, están listos para ser entregados en nuestras instalaciones:
+Por favor mantente al pendiente de tu teléfono celular para recibir al repartidor.
 
-📍 Dirección del Laboratorio: DigiMemories, CDMX
-⏰ Horario de Atención: Lunes a Sábado de 10:00 AM a 6:00 PM
+Cualquier duda o indicación especial, estamos a tu disposición por este medio o por WhatsApp.
 
-Por favor presenta tu número de orden #{{ordenId}} o identificación al acudir.
+¡Gracias por confiar tus recuerdos familiares a DigiMemories!
 
-¡Te esperamos!
-
-Atentamente,
-Equipo DigiMemories`
+Saludos cordiales,
+Logística DigiMemories CDMX`
   },
   {
     id: 'despacho_paqueteria',
-    name: 'Despacho por Paquetería & Guía',
+    name: 'Despacho por Paquetería Nacional',
     category: 'Entrega de Archivos',
     icon: '🚚',
     description: 'Envío de guía de mensajería y enlace de rastreo de paquete en tránsito.',
     subject: '🚚 Tus cintas y memorias van en camino (Guía #{{numeroGuia}} - Orden #{{ordenId}})',
     body: `Estimado/a {{nombre}},
 
-Tu paquete con los cassettes originales y el almacenamiento digital de la orden #{{ordenId}} ha sido recolectado por el servicio de mensajería.
+Tu paquete con los cassettes originales y el almacenamiento digital en memoria USB de la orden #{{ordenId}} ha sido recolectado por el servicio de paquetería.
 
 Detalles del envío:
 • Empresa: {{paqueteria}}
@@ -749,20 +724,40 @@ Saludos cordiales,
 Logística DigiMemories`
   },
   {
-    id: 'recordatorio_saldo',
-    name: 'Recordatorio de Saldo Pendiente',
-    category: 'Facturación & Pagos',
-    icon: '💳',
-    description: 'Notificación amable para liquidar saldo y desbloquear accesos.',
-    subject: '💳 Notificación de saldo pendiente para entrega de archivos (Orden #{{ordenId}})',
+    id: 'confirmacion_entrega',
+    name: 'Confirmación de Entrega & Respaldo',
+    category: 'Entrega de Archivos',
+    icon: '✅',
+    description: 'Confirmación de recepción física y recomendaciones de preservación.',
+    subject: '✅ Entrega completada: Tus memorias están seguras en casa (Orden #{{ordenId}})',
     body: `Hola {{nombre}},
 
-Tus materiales de la orden #{{ordenId}} están listos en laboratorio. Para habilitar el enlace de descarga o programar el envío de tus memorias físicas, te recordamos que existe un saldo pendiente de \${{saldoPendiente}} MXN.
+Nos alegra confirmar que tu paquete con los cassettes originales y tu memoria USB de la orden #{{ordenId}} ha sido entregado en tu domicilio.
+
+Recomendaciones técnicas de preservación:
+1. Te sugerimos realizar una copia de seguridad de tu memoria USB en tu computadora personal o disco duro externo.
+2. Mantén tus cassettes originales en un sitio fresco, ventilado y protegido de la luz solar directa.
+
+¡Ha sido un honor rescatar y devolver a la vida estos momentos tan valiosos para tu familia!
+
+Con aprecio,
+Laboratorio DigiMemories`
+  },
+  {
+    id: 'recordatorio_saldo',
+    name: 'Recordatorio de Saldo para Despacho',
+    category: 'Facturación & Pagos',
+    icon: '💳',
+    description: 'Notificación amable para liquidar saldo y programar el envío del paquete.',
+    subject: '💳 Liquidación de saldo para programar despacho de memorias (Orden #{{ordenId}})',
+    body: `Hola {{nombre}},
+
+Tus materiales de la orden #{{ordenId}} están 100% listos y empaquetados en laboratorio. Para programar el despacho de tu paquete a domicilio (Uber Flash o Paquetería), te recordamos que existe un saldo pendiente de \${{saldoPendiente}} MXN.
 
 Puedes liquidar tu saldo de forma ágil mediante MercadoPago o transferencia bancaria ingresando a tu portal de orden:
 {{trackingUrl}}
 
-En cuanto se confirme el pago, tus accesos se habilitarán de manera inmediata y automatizada.
+En cuanto se confirme el pago, tu paquete entrará de inmediato en la ruta de despacho.
 
 Quedamos a tus órdenes,
 Administración DigiMemories`
@@ -793,12 +788,12 @@ Equipo DigiMemories`
     category: 'Comercial',
     icon: '🎁',
     description: 'Beneficio preferente para clientes que desean digitalizar más cassettes.',
-    subject: '🎁 Descuento exclusivo para digitalizar más recuerdos familiares (Orden #{{ordenId}})',
+    subject: '🎁 Beneficio exclusivo para digitalizar más recuerdos familiares (Orden #{{ordenId}})',
     body: `Estimado/a {{nombre}},
 
 Como cliente de DigiMemories, queremos agradecerte por rescatar tus cassettes de la orden #{{ordenId}}.
 
-Sabemos que con frecuencia las familias descubren más cintas VHS, MiniDV o carretes guardados en casa de familiares. Por ello, te ofrecemos un 15% de descuento en cualquier lote adicional de 5 o más cintas que ingreses durante los próximos 30 días.
+Sabemos que con frecuencia las familias descubren más cintas VHS, MiniDV o carretes guardados en casa de familiares. Por ello, te ofrecemos un 15% de beneficio en cualquier lote adicional de 5 o más cintas que ingreses durante los próximos 30 días.
 
 Código de beneficio preferencial: FAMILIA-{{ordenId}}
 Puedes ingresarlo en nuestra calculadora en línea o mencionarlo directamente con tu asesor técnico.

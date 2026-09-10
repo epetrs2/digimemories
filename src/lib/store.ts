@@ -7,6 +7,7 @@ export interface OrderItem {
   status: ItemStatus;
   extraHours: number;
   notes: string;
+  customLabel?: string; // Etiqueta manuscrita original marcada en el casete
   failureReason?: string;
   failureNote?: string;
   failurePhotoUrl?: string;

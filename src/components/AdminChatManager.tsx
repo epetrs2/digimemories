@@ -4,7 +4,8 @@ import {
   addMessageToThread, 
   setThreadMode, 
   markThreadAsReadByAdmin,
-  archiveChatThread
+  archiveChatThread,
+  deleteChatThread
 } from '../lib/chatStore';
 import type { ChatThread } from '../lib/chatStore';
 import { adminNotifier } from '../lib/audioNotification';
@@ -17,6 +18,7 @@ import {
   ToggleRight,
   AlertTriangle,
   Archive,
+  Trash2,
   RefreshCw,
   Volume2,
   VolumeX,
@@ -173,6 +175,21 @@ export const AdminChatManager: React.FC = () => {
     if (!selectedThread) return;
     if (window.confirm(`¿Deseas finalizar y archivar la conversación con ${selectedThread.visitorName}?`)) {
       archiveChatThread(selectedThread.id, 'admin');
+      if (isMobile) setShowMobileChat(false);
+      loadThreads();
+    }
+  };
+
+  const handleDeleteThread = async (threadId?: string) => {
+    const idToDelete = threadId || selectedThread?.id;
+    if (!idToDelete) return;
+    const target = threads.find(t => t.id === idToDelete);
+    const targetName = target ? target.visitorName : 'esta persona';
+    if (window.confirm(`¿Estás seguro de eliminar permanentemente la conversación con ${targetName}? Se borrará del sistema y de la nube.`)) {
+      await deleteChatThread(idToDelete);
+      if (selectedThreadId === idToDelete) {
+        setSelectedThreadId('');
+      }
       if (isMobile) setShowMobileChat(false);
       loadThreads();
     }
@@ -463,19 +480,42 @@ export const AdminChatManager: React.FC = () => {
                           {thread.status === 'archived' ? '📁 Finalizado' : thread.mode === 'human' ? '👨‍💻 Operador Activo' : '🤖 Asistente Bot'}
                         </span>
 
-                        {thread.unreadByAdmin > 0 && (
-                          <span style={{
-                            background: '#ef4444',
-                            color: '#ffffff',
-                            fontSize: '0.7rem',
-                            fontWeight: 900,
-                            padding: '0.15rem 0.5rem',
-                            borderRadius: '999px',
-                            boxShadow: '0 2px 5px rgba(239, 68, 68, 0.3)'
-                          }}>
-                            {thread.unreadByAdmin}
-                          </span>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteThread(thread.id);
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '0.15rem 0.25rem',
+                              color: '#9ca3af',
+                              borderRadius: '4px',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                            title="Eliminar conversación"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+
+                          {thread.unreadByAdmin > 0 && (
+                            <span style={{
+                              background: '#ef4444',
+                              color: '#ffffff',
+                              fontSize: '0.7rem',
+                              fontWeight: 900,
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '999px',
+                              boxShadow: '0 2px 5px rgba(239, 68, 68, 0.3)'
+                            }}>
+                              {thread.unreadByAdmin}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -601,6 +641,26 @@ export const AdminChatManager: React.FC = () => {
                       <RefreshCw size={14} /> Reabrir Chat
                     </button>
                   )}
+
+                  <button
+                    onClick={() => handleDeleteThread(selectedThread.id)}
+                    style={{
+                      padding: '0.4rem 0.75rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      borderRadius: '10px',
+                      border: '1px solid #fca5a5',
+                      background: '#fff1f2',
+                      color: '#b91c1c',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}
+                    title="Eliminar conversación permanentemente"
+                  >
+                    <Trash2 size={14} /> Eliminar
+                  </button>
                 </div>
               </div>
 

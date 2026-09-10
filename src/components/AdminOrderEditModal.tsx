@@ -572,17 +572,34 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '26px 1fr 1.3fr 1fr 1fr 32px',
+                gap: '0.5rem',
+                padding: '0 0.5rem',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                color: '#78716c'
+              }}>
+                <span>#</span>
+                <span>Formato</span>
+                <span>Etiqueta en Casete</span>
+                <span>Estado</span>
+                <span>Notas Lab</span>
+                <span></span>
+              </div>
+
               {items.map((item, idx) => (
                 <div 
                   key={item.id} 
                   style={{
-                    padding: '0.75rem',
+                    padding: '0.65rem 0.75rem',
                     background: '#ffffff',
                     border: '1px solid #e7e2d9',
                     borderRadius: '12px',
                     display: 'grid',
-                    gridTemplateColumns: '30px 1.5fr 1fr 1fr 36px',
-                    gap: '0.6rem',
+                    gridTemplateColumns: '26px 1fr 1.3fr 1fr 1fr 32px',
+                    gap: '0.5rem',
                     alignItems: 'center'
                   }}
                 >
@@ -594,9 +611,19 @@ export const AdminOrderEditModal: React.FC<Props> = ({ order, isOpen, onClose, o
                     type="text"
                     value={item.format}
                     onChange={e => handleItemChange(item.id, 'format', e.target.value)}
-                    placeholder="Formato (ej. VHS Boda 1995)"
+                    placeholder="ej. VHS, Hi8..."
                     className="input-field"
                     style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem', borderRadius: '8px' }}
+                  />
+
+                  <input
+                    type="text"
+                    value={item.customLabel || ''}
+                    onChange={e => handleItemChange(item.id, 'customLabel', e.target.value)}
+                    placeholder="ej. 'Navidad 1994'..."
+                    className="input-field"
+                    style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem', borderRadius: '8px', border: '1px solid #fed7aa', background: '#fffaf5' }}
+                    title="Etiqueta manuscrita original marcada en el casete"
                   />
 
                   <select

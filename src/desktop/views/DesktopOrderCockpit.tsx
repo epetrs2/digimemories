@@ -457,6 +457,11 @@ export const DesktopOrderCockpit: React.FC = () => {
                           <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
                             Formato: {item.format}
                           </span>
+                          {item.customLabel && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--mac-accent)', background: 'rgba(234, 88, 12, 0.15)', border: '1px solid rgba(234, 88, 12, 0.3)', padding: '0.1rem 0.5rem', borderRadius: '6px' }}>
+                              🏷️ "{item.customLabel}"
+                            </span>
+                          )}
                           {item.extraHours > 0 && (
                             <span style={{ fontSize: '0.7rem', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                               +{item.extraHours}h extras
@@ -467,9 +472,6 @@ export const DesktopOrderCockpit: React.FC = () => {
                               Motivo: {item.failureReason || 'Cinta en blanco / sin señal grabada'}
                             </span>
                           )}
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--mac-text-muted)', marginTop: '0.2rem' }}>
-                          {item.notes || 'Sin observaciones de laboratorio'}
                         </div>
                       </div>
 
@@ -502,6 +504,37 @@ export const DesktopOrderCockpit: React.FC = () => {
                             </button>
                           );
                         })}
+                      </div>
+                    </div>
+
+                    {/* Tape Identification & Technical Notes Row */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.65rem', background: 'var(--mac-bg-surface)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--mac-border)' }}>
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--mac-text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
+                          🏷️ Etiqueta física del casete (Identificación)
+                        </label>
+                        <input
+                          type="text"
+                          className="mac-input"
+                          placeholder="ej. 'Navidad 1994', 'Boda tíos', 'Vacaciones 1998'..."
+                          style={{ width: '100%', fontSize: '0.76rem', padding: '0.35rem 0.6rem' }}
+                          value={item.customLabel || ''}
+                          onChange={e => handleUpdateItemField(selectedOrder.id, item.id, { customLabel: e.target.value })}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--mac-text-secondary)', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>
+                          Notas de laboratorio / Observaciones
+                        </label>
+                        <input
+                          type="text"
+                          className="mac-input"
+                          placeholder="ej. Carrete con fricción leve, audio balanceado..."
+                          style={{ width: '100%', fontSize: '0.76rem', padding: '0.35rem 0.6rem' }}
+                          value={item.notes || ''}
+                          onChange={e => handleUpdateItemField(selectedOrder.id, item.id, { notes: e.target.value })}
+                        />
                       </div>
                     </div>
 

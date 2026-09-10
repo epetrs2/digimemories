@@ -12,7 +12,9 @@ import {
   Monitor,
   Clock,
   MapPin,
-  CheckCircle2
+  CheckCircle2,
+  Radio,
+  Compass
 } from 'lucide-react';
 import { 
   fetchCloudTrafficVisits, 
@@ -23,10 +25,12 @@ import {
   type TrafficVisit
 } from '../../lib/analytics';
 import { getOrders } from '../../lib/store';
+import { subscribeToVisitorPresence, type LiveVisitorPresence } from '../../lib/visitorPresence';
 
 export const DesktopAnalyticsHUD: React.FC = () => {
   const [metrics, setMetrics] = useState<YouTubeStyleMetrics | null>(null);
   const [rawVisits, setRawVisits] = useState<TrafficVisit[]>([]);
+  const [livePresences, setLivePresences] = useState<LiveVisitorPresence[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hoveredMinute, setHoveredMinute] = useState<{ label: string; count: number } | null>(null);
   const [testEventFeedback, setTestEventFeedback] = useState(false);
@@ -46,14 +50,19 @@ export const DesktopAnalyticsHUD: React.FC = () => {
   useEffect(() => {
     loadData();
 
-    // Subscribe to live events from Supabase WebSocket channel
-    const unsub = subscribeToRealtimeTraffic((newVisit) => {
+    // 1. Subscribe to live visits from Supabase WebSocket channel
+    const unsubVisits = subscribeToRealtimeTraffic((newVisit) => {
       setRawVisits(prev => {
         const filtered = prev.filter(v => v.id !== newVisit.id);
         const updated = [newVisit, ...filtered];
         setMetrics(computeYouTubeMetrics(updated));
         return updated;
       });
+    });
+
+    // 2. Subscribe to Wix-style Realtime Presence
+    const unsubPresence = subscribeToVisitorPresence((visitors) => {
+      setLivePresences(visitors);
     });
 
     const interval = setInterval(() => {
@@ -64,17 +73,18 @@ export const DesktopAnalyticsHUD: React.FC = () => {
     }, 4000);
 
     return () => {
-      unsub();
+      unsubVisits();
+      unsubPresence();
       clearInterval(interval);
     };
   }, []);
 
   const handleSimulateLiveEvent = () => {
     const testPages = [
-      { path: '/calculator', title: 'Calculadora de Cotizaciones' },
-      { path: '/track', title: 'Portal de Rastreo en Vivo' },
-      { path: '/', title: 'DigiMemories — Inicio' },
-      { path: '/contact', title: 'Contacto & Laboratorio' }
+      { path: '/calculator', title: 'Calculadora de Presupuestos', section: 'Calculando 8 cintas VHS', action: 'Seleccionando formato VHS' },
+      { path: '/track', title: 'Portal de Rastreo en Vivo', section: 'Consultando orden #302308', action: 'Revisando estado de digitalización' },
+      { path: '/', title: 'DigiMemories — Inicio', section: 'Sección Comparativa', action: 'Moviendo comparador de video' },
+      { path: '/contact', title: 'Contacto & Taller', section: 'Logística de Despacho', action: 'Consultando envío por Uber Flash' }
     ];
     const pick = testPages[Math.floor(Math.random() * testPages.length)];
     const visit = recordPageView(pick.path, pick.title);
@@ -84,6 +94,27 @@ export const DesktopAnalyticsHUD: React.FC = () => {
       setMetrics(computeYouTubeMetrics(updated));
       return updated;
     });
+
+    const simulatedPresence: LiveVisitorPresence = {
+      sessionId: visit.sessionId,
+      visitorId: visit.id,
+      city: visit.city || 'CDMX (Polanco)',
+      country: 'México 🇲🇽',
+      device: visit.device,
+      os: visit.os,
+      browser: visit.browser,
+      currentPath: pick.path,
+      pageTitle: pick.title,
+      activeSection: pick.section,
+      currentAction: pick.action,
+      referrer: visit.referrerCategory,
+      referrerCategory: visit.referrerCategory,
+      connectedAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString(),
+      isTabActive: true
+    };
+
+    setLivePresences(prev => [simulatedPresence, ...prev.filter(p => p.sessionId !== simulatedPresence.sessionId)].slice(0, 8));
 
     setTestEventFeedback(true);
     setTimeout(() => setTestEventFeedback(false), 2500);
@@ -230,6 +261,140 @@ export const DesktopAnalyticsHUD: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* Wix-Style Live Visitor Activity Monitor */}
+      <div className="mac-card" style={{ padding: '1.75rem', marginBottom: '2rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'rgba(16, 185, 129, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#10b981'
+            }}>
+              <Radio size={20} className="animate-pulse" />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--mac-text-primary)' }}>
+                  Monitor de Actividad en Vivo (Estilo Wix Live View)
+                </h3>
+                <span className="mac-badge-emerald" style={{ fontSize: '0.72rem' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
+                  {livePresences.length > 0 ? `${livePresences.length} en línea ahora` : 'Escuchando en tiempo real'}
+                </span>
+              </div>
+              <span style={{ fontSize: '0.78rem', color: 'var(--mac-text-muted)' }}>
+                Supervisión directa de qué página y sección exacta está explorando cada visitante en tu sitio web.
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleSimulateLiveEvent}
+            className="mac-btn-secondary"
+            style={{ fontSize: '0.78rem', padding: '0.4rem 0.8rem' }}
+          >
+            <Zap size={13} style={{ color: '#fbbf24' }} /> Simular Navegación en Vivo
+          </button>
+        </div>
+
+        {/* Active Visitors Stream / Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+          {livePresences.length > 0 ? (
+            livePresences.map((vis) => (
+              <div 
+                key={vis.sessionId} 
+                style={{
+                  padding: '1.1rem',
+                  background: 'var(--mac-bg-surface)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--mac-border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--mac-text-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      {vis.device === 'Móvil' ? <Smartphone size={14} /> : <Monitor size={14} />}
+                      {vis.visitorId || 'Visitante'}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--mac-text-muted)' }}>
+                      • {vis.browser} ({vis.os})
+                    </span>
+                  </div>
+
+                  <span style={{
+                    fontSize: '0.7rem',
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: '999px',
+                    background: vis.isTabActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                    color: vis.isTabActive ? '#34d399' : '#fbbf24',
+                    fontWeight: 700
+                  }}>
+                    {vis.isTabActive ? '🟢 Activo ahora' : '🟡 En 2° plano'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.78rem', color: 'var(--mac-text-secondary)' }}>
+                  <MapPin size={13} style={{ color: 'var(--mac-accent)' }} />
+                  <span>{vis.city} • Origen: <strong>{vis.referrerCategory}</strong></span>
+                </div>
+
+                {/* Current Page & Action */}
+                <div style={{
+                  background: 'var(--mac-bg-base)',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--mac-border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.25rem'
+                }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--mac-text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Compass size={12} />
+                    <span>Página: <strong>{vis.currentPath}</strong> ({vis.pageTitle})</span>
+                  </div>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--mac-accent)' }}>
+                    ⚡ {vis.currentAction || vis.activeSection || 'Explorando página'}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div style={{
+              gridColumn: '1 / -1',
+              padding: '2.5rem 1.5rem',
+              textAlign: 'center',
+              background: 'var(--mac-bg-surface)',
+              borderRadius: '12px',
+              border: '1px dashed var(--mac-border)',
+              color: 'var(--mac-text-muted)'
+            }}>
+              <Radio size={28} style={{ margin: '0 auto 0.5rem auto', opacity: 0.4 }} />
+              <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>
+                Canal de Presencia en Vivo Activo
+              </p>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.78rem' }}>
+                Cuando los clientes naveguen por la página web, verás aquí su ubicación, la sección donde están y su actividad en tiempo real.
+              </p>
+              <button
+                onClick={handleSimulateLiveEvent}
+                className="mac-btn-secondary"
+                style={{ margin: '0.85rem auto 0 auto', fontSize: '0.78rem', padding: '0.35rem 0.8rem' }}
+              >
+                <Zap size={13} style={{ color: '#fbbf24' }} /> Probar demostración de presencia
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 60-Minute Real-Time Histogram (YouTube Studio Style) */}

@@ -414,8 +414,14 @@ const Track: React.FC = () => {
                 </div>
                 
                 <div style={{ flex: 1, paddingBottom: '0.5rem' }}>
-                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
-                    {item.format} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>({item.id})</span>
+                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span>{item.format}</span>
+                    {item.customLabel && (
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ea580c', background: '#fff7ed', border: '1px solid #fed7aa', padding: '0.1rem 0.55rem', borderRadius: '6px' }}>
+                        🏷️ "{item.customLabel}"
+                      </span>
+                    )}
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>({item.id})</span>
                   </div>
                   
                   <div style={{ color: item.status === 'fallida' ? '#ef4444' : item.status === 'completada' ? '#15803d' : 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, marginTop: '0.2rem' }}>
