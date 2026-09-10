@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Film, Menu, X, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Film, Menu, X, ArrowRight } from 'lucide-react';
 import { destroyAdminSession } from '../lib/security';
 
 const Navbar = () => {
@@ -10,6 +10,7 @@ const Navbar = () => {
   const navLinks = [
     { path: '/', label: 'Inicio' },
     { path: '/process', label: 'Proceso' },
+    { path: '/contacto', label: 'Contacto' },
     { path: '/about', label: 'Quiénes Somos' },
     { path: '/faq', label: 'Preguntas' },
     { path: '/track', label: 'Rastrear Orden' }
@@ -58,7 +59,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Links */}
-        <div style={{ display: 'none', gap: '2rem', alignItems: 'center' }} className="md-flex">
+        <div style={{ display: 'none', gap: '1.5rem', alignItems: 'center' }} className="md-flex nav-links-desktop">
           {navLinks.map((link) => {
             const active = isActive(link.path);
             return (
@@ -68,12 +69,12 @@ const Navbar = () => {
                 onClick={handleNavClick}
                 style={{
                   textDecoration: 'none',
-                  fontWeight: active ? 600 : 500,
-                  fontSize: '0.95rem',
                   color: active ? 'var(--accent-color)' : 'var(--text-secondary)',
+                  fontWeight: active ? 700 : 500,
+                  fontSize: '0.95rem',
                   position: 'relative',
-                  padding: '0.35rem 0',
-                  transition: 'color 0.2s ease'
+                  padding: '0.5rem 0',
+                  transition: 'color var(--transition-fast)'
                 }}
               >
                 {link.label}
@@ -95,23 +96,6 @@ const Navbar = () => {
           })}
           <Link to="/contact" onClick={handleNavClick} className="btn btn-primary" style={{ padding: '0.65rem 1.35rem', fontSize: '0.95rem' }}>
             Cotizar Cintas <ArrowRight size={16} />
-          </Link>
-          <Link 
-            to="/admin" 
-            title="Portal de Operadores & Administración"
-            className="btn btn-secondary" 
-            style={{ 
-              padding: '0.6rem 0.95rem', 
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              borderRadius: '12px',
-              border: '1px solid rgba(214, 204, 194, 0.8)'
-            }}
-          >
-            <ShieldCheck size={16} className="text-accent" />
-            <span>Admin</span>
           </Link>
         </div>
 
@@ -163,15 +147,6 @@ const Navbar = () => {
             style={{ width: '100%', marginTop: '0.5rem' }}
           >
             Cotizar Cintas Ahora
-          </Link>
-          <Link
-            to="/admin"
-            onClick={() => setMobileMenuOpen(false)}
-            className="btn btn-secondary"
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-          >
-            <ShieldCheck size={16} className="text-accent" />
-            Acceso Administrativo / Taller
           </Link>
         </div>
       )}

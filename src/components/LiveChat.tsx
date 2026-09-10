@@ -19,6 +19,7 @@ import {
 import type { ChatThread } from '../lib/chatStore';
 import { getBotResponse, type BotReplyResult } from '../lib/botTrainer';
 import { askGeminiAssistant } from '../lib/geminiService';
+import { linkChatThreadToPresence, reportVisitorAction } from '../lib/visitorPresence';
 
 const FAQ_SUGGESTIONS = [
   "¿Cuánto cuesta digitalizar mis cintas?",
@@ -47,6 +48,9 @@ export const LiveChat: React.FC = () => {
   const syncThread = () => {
     const current = getOrCreateVisitorThread('Visitante', location.pathname);
     setThread(current);
+    if (current && current.id) {
+      linkChatThreadToPresence(current.id);
+    }
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,6 +148,7 @@ export const LiveChat: React.FC = () => {
     // 1. Add visitor message (with photo if present)
     const userDisplayMsg = query || (imageToSend ? '📸 Te adjunto esta fotografía de mis cintas para que me digas qué formato son y su estado.' : '');
     addMessageToThread(thread.id, 'visitor', userDisplayMsg, 'Tú', imageToSend || undefined);
+    reportVisitorAction(query ? `Escribió en chat: "${query.substring(0, 32)}..."` : 'Adjuntó imagen en chat', 'Chat en Vivo');
     if (!textToSend) setInputText('');
     syncThread();
 

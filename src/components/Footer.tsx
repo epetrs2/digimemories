@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Film, ShieldCheck } from 'lucide-react';
+import { Film } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -38,26 +38,10 @@ const Footer = () => {
         }}>
           <Link to="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Inicio</Link>
           <Link to="/process" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Proceso</Link>
+          <Link to="/contacto" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Contacto</Link>
           <Link to="/track" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Rastrear Orden</Link>
           <Link to="/faq" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Preguntas Frecuentes</Link>
           <Link to="/contact" style={{ color: 'var(--accent-color)', textDecoration: 'none' }}>Cotizador</Link>
-          <Link 
-            to="/admin" 
-            style={{ 
-              color: 'var(--text-muted)', 
-              textDecoration: 'none', 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '0.3rem',
-              background: '#f5f3ef',
-              padding: '0.2rem 0.6rem',
-              borderRadius: '6px',
-              border: '1px solid #e7e2d9'
-            }}
-          >
-            <ShieldCheck size={14} className="text-accent" />
-            Acceso Administrador
-          </Link>
         </div>
 
         <div style={{ width: '100%', height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>

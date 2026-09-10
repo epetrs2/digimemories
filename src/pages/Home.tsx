@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Carousel from '../components/Carousel';
 import BeforeAfterSlider from '../components/BeforeAfterSlider';
+import ContactSection from '../components/ContactSection';
 
 const Home = () => {
   return (
@@ -386,6 +387,9 @@ const Home = () => {
           </Link>
         </div>
       </section>
+
+      {/* Multi-Channel Contact Section (WhatsApp, Email, Contact Box) */}
+      <ContactSection />
 
       {/* CTA Final Banner */}
       <section className="section" style={{ textAlign: 'center' }}>

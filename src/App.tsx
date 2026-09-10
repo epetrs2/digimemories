@@ -6,6 +6,7 @@ import LiveChat from './components/LiveChat';
 import Home from './pages/Home';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Contacto from './pages/Contacto';
 import Process from './pages/Process';
 import FAQ from './pages/FAQ';
 import Track from './pages/Track';
@@ -63,6 +64,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/process" element={<Process />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/contacto" element={<Contacto />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/track" element={<Track />} />
             <Route path="/quote/:id" element={<QuoteView />} />

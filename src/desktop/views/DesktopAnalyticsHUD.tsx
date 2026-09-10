@@ -98,8 +98,10 @@ export const DesktopAnalyticsHUD: React.FC = () => {
     const simulatedPresence: LiveVisitorPresence = {
       sessionId: visit.sessionId,
       visitorId: visit.id,
-      city: visit.city || 'CDMX (Polanco)',
+      city: visit.city || 'Ciudad de México',
+      region: 'CDMX',
       country: 'México 🇲🇽',
+      isp: 'Infinitum / Totalplay',
       device: visit.device,
       os: visit.os,
       browser: visit.browser,
@@ -107,6 +109,7 @@ export const DesktopAnalyticsHUD: React.FC = () => {
       pageTitle: pick.title,
       activeSection: pick.section,
       currentAction: pick.action,
+      scrollDepth: Math.floor(25 + Math.random() * 65),
       referrer: visit.referrerCategory,
       referrerCategory: visit.referrerCategory,
       connectedAt: new Date().toISOString(),
@@ -305,69 +308,142 @@ export const DesktopAnalyticsHUD: React.FC = () => {
         </div>
 
         {/* Active Visitors Stream / Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
           {livePresences.length > 0 ? (
-            livePresences.map((vis) => (
-              <div 
-                key={vis.sessionId} 
-                style={{
-                  padding: '1.1rem',
-                  background: 'var(--mac-bg-surface)',
-                  borderRadius: '12px',
-                  border: '1px solid var(--mac-border)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.65rem'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--mac-text-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      {vis.device === 'Móvil' ? <Smartphone size={14} /> : <Monitor size={14} />}
-                      {vis.visitorId || 'Visitante'}
-                    </span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--mac-text-muted)' }}>
-                      • {vis.browser} ({vis.os})
-                    </span>
+            livePresences.map((vis) => {
+              const connectedMs = vis.connectedAt ? Date.now() - new Date(vis.connectedAt).getTime() : 0;
+              const mins = Math.floor(connectedMs / 60000);
+              const secs = Math.floor((connectedMs % 60000) / 1000);
+              const durationStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+              // Source color badge
+              let sourceColor = '#9ca3af';
+              let sourceBg = 'rgba(156, 163, 175, 0.15)';
+              const catLower = (vis.referrerCategory || '').toLowerCase();
+              if (catLower.includes('google ads') || catLower.includes('patrocinad')) {
+                sourceColor = '#f59e0b';
+                sourceBg = 'rgba(245, 158, 11, 0.2)';
+              } else if (catLower.includes('google')) {
+                sourceColor = '#38bdf8';
+                sourceBg = 'rgba(56, 189, 248, 0.2)';
+              } else if (catLower.includes('meta') || catLower.includes('instagram') || catLower.includes('facebook')) {
+                sourceColor = '#ec4899';
+                sourceBg = 'rgba(236, 72, 153, 0.2)';
+              } else if (catLower.includes('whatsapp')) {
+                sourceColor = '#34d399';
+                sourceBg = 'rgba(52, 211, 153, 0.2)';
+              }
+
+              return (
+                <div 
+                  key={vis.sessionId} 
+                  style={{
+                    padding: '1.15rem',
+                    background: 'var(--mac-bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--mac-border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--mac-text-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        {vis.device === 'Móvil' ? <Smartphone size={14} /> : <Monitor size={14} />}
+                        {vis.visitorId || 'Visitante'}
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--mac-text-muted)' }}>
+                        • {vis.browser} ({vis.os})
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{
+                        fontSize: '0.68rem',
+                        padding: '0.15rem 0.45rem',
+                        borderRadius: '999px',
+                        background: 'rgba(255,255,255,0.06)',
+                        color: 'var(--mac-text-secondary)',
+                        fontWeight: 600
+                      }}>
+                        ⏱ {durationStr}
+                      </span>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: '999px',
+                        background: vis.isTabActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                        color: vis.isTabActive ? '#34d399' : '#fbbf24',
+                        fontWeight: 700
+                      }}>
+                        {vis.isTabActive ? '🟢 Activo' : '🟡 2° plano'}
+                      </span>
+                    </div>
                   </div>
 
-                  <span style={{
-                    fontSize: '0.7rem',
-                    padding: '0.15rem 0.5rem',
-                    borderRadius: '999px',
-                    background: vis.isTabActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                    color: vis.isTabActive ? '#34d399' : '#fbbf24',
-                    fontWeight: 700
+                  {/* Location & Referrer Tag */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.78rem', color: 'var(--mac-text-primary)', fontWeight: 600 }}>
+                      <MapPin size={13} style={{ color: 'var(--mac-accent)', flexShrink: 0 }} />
+                      <span>{vis.city || 'México'} {vis.region && vis.region !== vis.city ? `(${vis.region})` : ''} • {vis.country || 'México 🇲🇽'}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        padding: '0.15rem 0.55rem',
+                        borderRadius: '6px',
+                        background: sourceBg,
+                        color: sourceColor,
+                        border: `1px solid ${sourceColor}40`
+                      }}>
+                        {vis.referrerCategory || 'Directo 🔗'}
+                      </span>
+                      {vis.isp && (
+                        <span style={{ fontSize: '0.68rem', color: 'var(--mac-text-muted)' }}>
+                          • {vis.isp}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Current Page, Section & Action */}
+                  <div style={{
+                    background: 'var(--mac-bg-base)',
+                    padding: '0.75rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--mac-border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.4rem'
                   }}>
-                    {vis.isTabActive ? '🟢 Activo ahora' : '🟡 En 2° plano'}
-                  </span>
-                </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: 'var(--mac-text-muted)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Compass size={12} />
+                        <span>Ruta: <strong>{vis.currentPath}</strong></span>
+                      </div>
+                      <span>Scroll: {vis.scrollDepth || 0}%</span>
+                    </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.78rem', color: 'var(--mac-text-secondary)' }}>
-                  <MapPin size={13} style={{ color: 'var(--mac-accent)' }} />
-                  <span>{vis.city} • Origen: <strong>{vis.referrerCategory}</strong></span>
-                </div>
+                    {/* Scroll progress bar */}
+                    <div style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ width: `${vis.scrollDepth || 0}%`, height: '100%', background: 'var(--mac-accent)', transition: 'width 0.3s ease' }}></div>
+                    </div>
 
-                {/* Current Page & Action */}
-                <div style={{
-                  background: 'var(--mac-bg-base)',
-                  padding: '0.65rem 0.85rem',
-                  borderRadius: '8px',
-                  border: '1px solid var(--mac-border)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.25rem'
-                }}>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--mac-text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Compass size={12} />
-                    <span>Página: <strong>{vis.currentPath}</strong> ({vis.pageTitle})</span>
-                  </div>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--mac-accent)' }}>
-                    ⚡ {vis.currentAction || vis.activeSection || 'Explorando página'}
+                    <div style={{ fontSize: '0.75rem', color: 'var(--mac-text-secondary)', fontWeight: 600 }}>
+                      👁️ Sección: <strong>{vis.activeSection || 'Página principal'}</strong>
+                    </div>
+
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--mac-accent)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      ⚡ {vis.currentAction || 'Navegando activamente'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div style={{
               gridColumn: '1 / -1',

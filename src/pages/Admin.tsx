@@ -285,6 +285,50 @@ const Admin: React.FC = () => {
   const totalUnreadMessages = chatThreads.reduce((acc, t) => acc + (t.unreadByAdmin || 0), 0);
   const totalAttention = chatThreads.filter(t => t.needsHumanAttention && t.status === 'active').length;
 
+  const isNativeApp = typeof window !== 'undefined' && Boolean((window as any).macOSAdminApi?.isElectron || window.location.search.includes('allow_web_admin=true'));
+
+  if (!isNativeApp) {
+    return (
+      <div className="container section animate-on-load" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <div className="glass" style={{ maxWidth: '540px', width: '100%', padding: '3.5rem 2.5rem', borderRadius: '28px', textAlign: 'center', background: '#ffffff', boxShadow: '0 20px 45px rgba(0,0,0,0.08)', border: '1px solid rgba(214, 204, 194, 0.8)' }}>
+          <div style={{ width: '76px', height: '76px', background: '#fef2f2', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', color: '#dc2626', border: '1px solid #fecaca', boxShadow: '0 8px 20px rgba(220, 38, 38, 0.15)' }}>
+            <Lock size={38} />
+          </div>
+
+          <span style={{ display: 'inline-block', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#dc2626', background: '#fee2e2', padding: '0.3rem 0.85rem', borderRadius: '999px', marginBottom: '1rem' }}>
+            Acceso Web Deshabilitado
+          </span>
+
+          <h2 style={{ fontSize: '1.85rem', marginBottom: '0.75rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#1c1917' }}>
+            Acceso Exclusivo por App
+          </h2>
+
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2rem' }}>
+            Por medidas de seguridad de DigiMemories, el acceso directo a la administración desde el navegador web público ha sido retirado. La gestión de taller, atención de chats y métricas se realiza exclusivamente desde la aplicación nativa para macOS.
+          </p>
+
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem', textAlign: 'left', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontWeight: 700, fontSize: '0.88rem', color: '#334155' }}>
+              <ShieldCheck size={18} style={{ color: '#059669' }} />
+              <span>Cómo acceder al panel:</span>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.83rem', color: '#64748b', lineHeight: '1.5' }}>
+              Abre la aplicación <strong>DigiMemories Admin.app</strong> instalada en tu equipo macOS. Si estás en una computadora autorizada, ejecuta la aplicación desde tu carpeta de Aplicaciones.
+            </p>
+          </div>
+
+          <a 
+            href="/" 
+            className="btn btn-primary" 
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.85rem' }}
+          >
+            Regresar a la Página Principal
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="container section animate-on-load" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
