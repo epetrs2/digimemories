@@ -87,7 +87,7 @@ export const VhsExploded3D: React.FC = () => {
     const height = mount.clientHeight || window.innerHeight;
 
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 0.8, 7.2);
+    camera.position.set(0, 0.35, 7.2);
 
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -349,7 +349,7 @@ export const VhsExploded3D: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           overflow: 'hidden',
-          padding: '2rem 1.5rem',
+          padding: '5rem 1.5rem 1.5rem',
           boxSizing: 'border-box'
         }}
       >
@@ -561,180 +561,192 @@ export const VhsExploded3D: React.FC = () => {
           </p>
         </div>
 
-        {/* Dynamic Glassmorphism Storytelling Cards Overlay */}
+        {/* Bottom HUD: Storytelling Cards + Timeline Indicator */}
         <div style={{
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: '560px',
-          pointerEvents: 'none',
-          marginBottom: '1rem'
-        }}>
-          {/* STAGE 0: CÁPSULA INTACTA */}
-          <div style={{
-            opacity: activeStage === 0 ? 1 : 0,
-            transform: activeStage === 0 ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-            position: activeStage === 0 ? 'relative' : 'absolute',
-            inset: 0,
-            background: 'rgba(28, 25, 23, 0.82)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: '20px',
-            padding: '1.25rem 1.6rem',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-            textAlign: 'center'
-          }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#38bdf8', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-              <Sparkles size={14} /> La Cápsula del Tiempo Familiar
-            </div>
-            <h3 style={{ margin: '0 0 0.4rem 0', fontSize: '1.2rem', fontWeight: 800, color: '#f8fafc' }}>
-              Guardadas por más de 30 años
-            </h3>
-            <p style={{ margin: 0, fontSize: '0.86rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-              En los 80s y 90s, bodas, navidades y primeros pasos quedaron atrapados en cinta magnética. Pero estas cintas fueron diseñadas para durar solo 15 a 20 años.
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.75rem', fontSize: '0.78rem', color: '#fb923c', fontWeight: 700 }}>
-              <span>Desliza para ver la apertura interior</span>
-              <ArrowDown size={14} className="animate-bounce" />
-            </div>
-          </div>
-
-          {/* STAGE 1: DESMAGNETIZACIÓN NATURAL */}
-          <div style={{
-            opacity: activeStage === 1 ? 1 : 0,
-            transform: activeStage === 1 ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-            position: activeStage === 1 ? 'relative' : 'absolute',
-            inset: 0,
-            background: 'rgba(28, 25, 23, 0.85)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(234, 88, 12, 0.35)',
-            borderRadius: '20px',
-            padding: '1.25rem 1.6rem',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.45)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#fb923c', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <AlertTriangle size={14} /> FASE 1: APERTURA FRONTAL
-              </span>
-              <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', fontWeight: 800 }}>
-                -20% Señal / década
-              </span>
-            </div>
-            <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '1.18rem', fontWeight: 800, color: '#ffffff' }}>
-              1. Desmagnetización Inevitable de la Cinta
-            </h3>
-            <p style={{ margin: 0, fontSize: '0.84rem', color: '#cbd5e1', lineHeight: 1.48 }}>
-              Las diminutas partículas de óxido de hierro pierden su orientación magnética gradualmente. El video comienza a presentar estática, rayas blancas de distorsión ("dropout") y colores desvanecidos.
-            </p>
-          </div>
-
-          {/* STAGE 2: SÍNDROME DE CINTA PEGAJOSA Y MOHO */}
-          <div style={{
-            opacity: activeStage === 2 ? 1 : 0,
-            transform: activeStage === 2 ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-            position: activeStage === 2 ? 'relative' : 'absolute',
-            inset: 0,
-            background: 'rgba(28, 25, 23, 0.85)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            borderRadius: '20px',
-            padding: '1.25rem 1.6rem',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.45)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f87171', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Flame size={14} /> FASE 2: NÚCLEO Y BOBINAS
-              </span>
-              <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', fontWeight: 800 }}>
-                Peligro Crítico de Moho
-              </span>
-            </div>
-            <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '1.18rem', fontWeight: 800, color: '#ffffff' }}>
-              2. Hidrólisis Química (Síndrome de Cinta Pegajosa)
-            </h3>
-            <p style={{ margin: 0, fontSize: '0.84rem', color: '#cbd5e1', lineHeight: 1.48 }}>
-              La humedad del aire descompone los polímeros aglutinantes de la cinta. Las capas se pegan entre sí y prolifera moho blanco microscópico que devora la emulsión. Al ponerla en una videocasetera común, la cinta se rompe.
-            </p>
-          </div>
-
-          {/* STAGE 3: RESCATE 1:1 EN ESTUDIO PROFESIONAL */}
-          <div style={{
-            opacity: activeStage === 3 ? 1 : 0,
-            transform: activeStage === 3 ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-            position: activeStage === 3 ? 'relative' : 'absolute',
-            inset: 0,
-            background: 'rgba(28, 25, 23, 0.88)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(16, 185, 129, 0.4)',
-            borderRadius: '20px',
-            padding: '1.25rem 1.6rem',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <CheckCircle2 size={14} /> FASE 3: DESPIECE TOTAL & SOLUCIÓN
-              </span>
-              <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', fontWeight: 800 }}>
-                Digitalización 1:1 en Estudio
-              </span>
-            </div>
-            <h3 style={{ margin: '0 0 0.35rem 0', fontSize: '1.18rem', fontWeight: 800, color: '#ffffff' }}>
-              3. Rescate Profesional en DigiMemories
-            </h3>
-            <p style={{ margin: 0, fontSize: '0.84rem', color: '#cbd5e1', lineHeight: 1.48 }}>
-              No arriesgues tus recuerdos en aparatos viejos que rayan la cinta. En nuestro laboratorio limpiamos las guías, estabilizamos la señal con TBC profesional y te entregamos tus videos en Full HD 1080p listos para celular, TV y USB.
-            </p>
-          </div>
-        </div>
-
-        {/* Bottom Timeline Indicator */}
-        <div style={{
-          position: 'relative',
-          zIndex: 10,
+          maxWidth: '580px',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: '1.5rem',
-          background: 'rgba(0, 0, 0, 0.45)',
-          backdropFilter: 'blur(12px)',
-          padding: '0.5rem 1.25rem',
-          borderRadius: '999px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          pointerEvents: 'none',
-          flexWrap: 'wrap',
-          justifyContent: 'center'
+          gap: '0.85rem',
+          pointerEvents: 'none'
         }}>
-          {[
-            { label: 'Casete Intacto' },
-            { label: 'Desmagnetización' },
-            { label: 'Moho & Cinta Pegada' },
-            { label: 'Rescate Digital' }
-          ].map((step, idx) => {
-            const isActive = activeStage === idx;
-            return (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: isActive ? '#ea580c' : 'rgba(255, 255, 255, 0.2)',
-                  boxShadow: isActive ? '0 0 10px #ea580c' : 'none',
-                  transition: 'all 0.3s ease'
-                }} />
-                <span style={{
-                  fontSize: '0.72rem',
-                  fontWeight: isActive ? 800 : 500,
-                  color: isActive ? '#f8fafc' : '#94a3b8',
-                  transition: 'color 0.3s ease'
-                }}>
-                  {step.label}
+          {/* Dynamic Glassmorphism Storytelling Cards Overlay */}
+          <div style={{
+            position: 'relative',
+            width: '100%',
+            minHeight: '140px'
+          }}>
+            {/* STAGE 0: CÁPSULA INTACTA */}
+            <div style={{
+              opacity: activeStage === 0 ? 1 : 0,
+              transform: activeStage === 0 ? 'translateY(0)' : 'translateY(16px)',
+              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(28, 25, 23, 0.88)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '18px',
+              padding: '1.1rem 1.4rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              textAlign: 'center',
+              pointerEvents: activeStage === 0 ? 'auto' : 'none'
+            }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#38bdf8', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                <Sparkles size={13} /> La Cápsula del Tiempo Familiar
+              </div>
+              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc' }}>
+                Guardadas por más de 30 años
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                En los 80s y 90s, bodas, navidades y primeros pasos quedaron atrapados en cinta magnética. Pero estas cintas fueron diseñadas para durar solo 15 a 20 años.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '0.6rem', fontSize: '0.75rem', color: '#fb923c', fontWeight: 700 }}>
+                <span>Desliza para ver la apertura interior</span>
+                <ArrowDown size={13} className="animate-bounce" />
+              </div>
+            </div>
+
+            {/* STAGE 1: DESMAGNETIZACIÓN NATURAL */}
+            <div style={{
+              opacity: activeStage === 1 ? 1 : 0,
+              transform: activeStage === 1 ? 'translateY(0)' : 'translateY(16px)',
+              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(28, 25, 23, 0.9)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(234, 88, 12, 0.35)',
+              borderRadius: '18px',
+              padding: '1.1rem 1.4rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              pointerEvents: activeStage === 1 ? 'auto' : 'none'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#fb923c', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <AlertTriangle size={13} /> FASE 1: APERTURA FRONTAL
+                </span>
+                <span style={{ fontSize: '0.65rem', padding: '0.12rem 0.45rem', borderRadius: '999px', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', fontWeight: 800 }}>
+                  -20% Señal / década
                 </span>
               </div>
-            );
-          })}
+              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.12rem', fontWeight: 800, color: '#ffffff' }}>
+                1. Desmagnetización Inevitable de la Cinta
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                Las diminutas partículas de óxido de hierro pierden su orientación magnética gradualmente. El video comienza a presentar estática, rayas blancas de distorsión ("dropout") y colores desvanecidos.
+              </p>
+            </div>
+
+            {/* STAGE 2: SÍNDROME DE CINTA PEGAJOSA Y MOHO */}
+            <div style={{
+              opacity: activeStage === 2 ? 1 : 0,
+              transform: activeStage === 2 ? 'translateY(0)' : 'translateY(16px)',
+              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(28, 25, 23, 0.9)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '18px',
+              padding: '1.1rem 1.4rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              pointerEvents: activeStage === 2 ? 'auto' : 'none'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#f87171', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Flame size={13} /> FASE 2: NÚCLEO Y BOBINAS
+                </span>
+                <span style={{ fontSize: '0.65rem', padding: '0.12rem 0.45rem', borderRadius: '999px', background: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', fontWeight: 800 }}>
+                  Peligro Crítico de Moho
+                </span>
+              </div>
+              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.12rem', fontWeight: 800, color: '#ffffff' }}>
+                2. Hidrólisis Química (Síndrome de Cinta Pegajosa)
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                La humedad del aire descompone los polímeros aglutinantes de la cinta. Las capas se pegan entre sí y prolifera moho blanco microscópico que devora la emulsión. Al ponerla en una videocasetera común, la cinta se rompe.
+              </p>
+            </div>
+
+            {/* STAGE 3: RESCATE 1:1 EN ESTUDIO PROFESIONAL */}
+            <div style={{
+              opacity: activeStage === 3 ? 1 : 0,
+              transform: activeStage === 3 ? 'translateY(0)' : 'translateY(16px)',
+              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(28, 25, 23, 0.92)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              borderRadius: '18px',
+              padding: '1.1rem 1.4rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              pointerEvents: activeStage === 3 ? 'auto' : 'none'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <CheckCircle2 size={13} /> FASE 3: DESPIECE TOTAL & SOLUCIÓN
+                </span>
+                <span style={{ fontSize: '0.65rem', padding: '0.12rem 0.45rem', borderRadius: '999px', background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', fontWeight: 800 }}>
+                  Digitalización 1:1 en Estudio
+                </span>
+              </div>
+              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.12rem', fontWeight: 800, color: '#ffffff' }}>
+                3. Rescate Profesional en DigiMemories
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                No arriesgues tus recuerdos en aparatos viejos que rayan la cinta. En nuestro laboratorio limpiamos las guías, estabilizamos la señal con TBC profesional y te entregamos tus videos en Full HD 1080p listos para celular, TV y USB.
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom Timeline Indicator */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.25rem',
+            background: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(12px)',
+            padding: '0.45rem 1.15rem',
+            borderRadius: '999px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            pointerEvents: 'none',
+            flexWrap: 'wrap',
+            justifyContent: 'center'
+          }}>
+            {[
+              { label: 'Casete Intacto' },
+              { label: 'Desmagnetización' },
+              { label: 'Moho & Cinta Pegada' },
+              { label: 'Rescate Digital' }
+            ].map((step, idx) => {
+              const isActive = activeStage === idx;
+              return (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <span style={{
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    background: isActive ? '#ea580c' : 'rgba(255, 255, 255, 0.25)',
+                    boxShadow: isActive ? '0 0 10px #ea580c' : 'none',
+                    transition: 'all 0.3s ease'
+                  }} />
+                  <span style={{
+                    fontSize: '0.7rem',
+                    fontWeight: isActive ? 800 : 500,
+                    color: isActive ? '#f8fafc' : '#94a3b8',
+                    transition: 'color 0.3s ease'
+                  }}>
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
       </div>
