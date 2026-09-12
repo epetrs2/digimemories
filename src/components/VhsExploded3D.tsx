@@ -86,175 +86,255 @@ export const VhsExploded3D: React.FC = () => {
     const width = mount.clientWidth || window.innerWidth;
     const height = mount.clientHeight || window.innerHeight;
 
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 0.35, 7.2);
+    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+    camera.position.set(0, 0.22, 6.6);
 
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     mount.appendChild(renderer.domElement);
 
     // 3. STUDIO LIGHTING
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.3);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffedd5, 2.2);
-    keyLight.position.set(6, 8, 7);
+    const frontDirectLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    frontDirectLight.position.set(0, 2, 7);
+    scene.add(frontDirectLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffedd5, 2.0);
+    keyLight.position.set(5, 7, 7);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.8);
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.6);
     rimLight.position.set(-6, -3, -5);
     scene.add(rimLight);
 
-    const fillWarmLight = new THREE.PointLight(0xea580c, 1.5, 25);
-    fillWarmLight.position.set(3, -2, 4);
-    scene.add(fillWarmLight);
+    const fillLight = new THREE.PointLight(0xea580c, 1.4, 25);
+    fillLight.position.set(3, -2, 4);
+    scene.add(fillLight);
 
-    // 4. RETRO VHS LABEL TEXTURE
-    const labelCanvas = document.createElement('canvas');
-    labelCanvas.width = 1024;
-    labelCanvas.height = 512;
-    const ctx = labelCanvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(0, 0, 1024, 512);
+    // 4. AUTHENTIC TEXTURES LOADER
+    const textureLoader = new THREE.TextureLoader();
+    const loadTex = (url: string) => {
+      const tex = textureLoader.load(url);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.generateMipmaps = true;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      return tex;
+    };
 
-      const grad = ctx.createLinearGradient(0, 0, 1024, 0);
-      grad.addColorStop(0, '#c2410c');
-      grad.addColorStop(0.5, '#ea580c');
-      grad.addColorStop(1, '#f97316');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 1024, 90);
+    const frontTex = loadTex('/assets/vhs/vhs_front_cutout.png');
+    const backTex = loadTex('/assets/vhs/vhs_back.png');
+    const spineTex = loadTex('/assets/vhs/vhs_spine.png');
+    const flapTex = loadTex('/assets/vhs/vhs_flap.png');
+    const reelFullTex = loadTex('/assets/vhs/vhs_reel_full.png');
+    const reelSmallTex = loadTex('/assets/vhs/vhs_reel_small.png');
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 36px -apple-system, sans-serif';
-      ctx.fillText('DIGIMEMORIES', 50, 58);
-      ctx.font = '600 22px -apple-system, sans-serif';
-      ctx.fillText('LABORATORIO DE PRESERVACIÓN', 320, 58);
+    // 5. AUTHENTIC VHS 3D CASSETTE MODEL
+    // Exact standard VHS dimensions: 188mm x 104mm x 25mm -> ratio 4.34 x 2.4 x 0.56
+    const W = 4.34;
+    const H = 2.40;
+    const D = 0.56;
 
-      ctx.fillStyle = '#ffedd5';
-      ctx.font = 'bold 24px monospace';
-      ctx.fillText('VHS • HQ 120', 820, 58);
-
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(30, 110, 964, 370);
-
-      ctx.fillStyle = '#0f172a';
-      ctx.font = 'bold 34px -apple-system, sans-serif';
-      ctx.fillText('ARCHIVO FAMILIAR ORIGINAL (1994)', 60, 170);
-
-      ctx.fillStyle = '#1e3a8a';
-      ctx.font = 'italic 500 28px Georgia, serif';
-      ctx.fillText('• Boda de Papá y Mamá (Catedral)', 65, 235);
-      ctx.fillText('• Vacaciones de Verano 94 (Acapulco)', 65, 285);
-      ctx.fillText('• Primeros pasos de Mariana en Navidad', 65, 335);
-
-      ctx.fillStyle = '#64748b';
-      ctx.font = '600 18px monospace';
-      ctx.fillText('SP 120 MIN  |  HI-FI STEREO  |  FORMATO ANALÓGICO NTSC', 65, 410);
-      ctx.fillText('ADVERTENCIA: CINTA MAGNÉTICA SUJETA A PÉRDIDA DE SEÑAL POR EDAD', 65, 445);
-    }
-    const labelTexture = new THREE.CanvasTexture(labelCanvas);
-
-    // 5. VHS 3D MODEL BUILDER
     const vhsGroup = new THREE.Group();
     scene.add(vhsGroup);
 
-    const plasticBlackMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.55, metalness: 0.1 });
-    const plasticDarkGrayMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.6, metalness: 0.05 });
-    const clearWindowMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.38, roughness: 0.15, transmission: 0.8, ior: 1.45 });
-    const spoolWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4, metalness: 0.05 });
-    const magneticTapeMat = new THREE.MeshStandardMaterial({ color: 0x1a120c, roughness: 0.25, metalness: 0.25 });
-    const metalRollerMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.92, roughness: 0.2 });
-    const screwMat = new THREE.MeshStandardMaterial({ color: 0xa1a1aa, metalness: 0.95, roughness: 0.25 });
+    const casingBlackMat = new THREE.MeshStandardMaterial({ 
+      color: 0x151518, 
+      roughness: 0.65, 
+      metalness: 0.08 
+    });
 
-    // Front Shell
+    const windowGlassMat = new THREE.MeshPhysicalMaterial({ 
+      color: 0xffffff, 
+      transparent: true, 
+      opacity: 0.28, 
+      roughness: 0.12, 
+      transmission: 0.85, 
+      ior: 1.48 
+    });
+
+    const tapeEdgeMat = new THREE.MeshStandardMaterial({ 
+      color: 0x18120e, 
+      roughness: 0.35, 
+      metalness: 0.3 
+    });
+
+    const chromeRollerMat = new THREE.MeshStandardMaterial({ 
+      color: 0xd4d4d8, 
+      metalness: 0.95, 
+      roughness: 0.18 
+    });
+
+    const screwMat = new THREE.MeshStandardMaterial({ 
+      color: 0xa1a1aa, 
+      metalness: 0.92, 
+      roughness: 0.25 
+    });
+
+    // --- FRONT SHELL ---
     const frontShellGroup = new THREE.Group();
     vhsGroup.add(frontShellGroup);
-    frontShellGroup.add(new THREE.Mesh(new THREE.BoxGeometry(4.2, 2.4, 0.1), plasticBlackMat));
 
-    const labelMesh = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.7), new THREE.MeshStandardMaterial({ map: labelTexture, roughness: 0.5 }));
-    labelMesh.position.set(0, 0.15, 0.055);
-    frontShellGroup.add(labelMesh);
+    // Front textured face with real transparent acrylic windows
+    const frontMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(W, H), 
+      new THREE.MeshStandardMaterial({ 
+        map: frontTex, 
+        transparent: true, 
+        roughness: 0.55, 
+        metalness: 0.08 
+      })
+    );
+    frontMesh.position.set(0, 0, D / 2);
+    frontShellGroup.add(frontMesh);
 
-    const leftWindowMesh = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.25, 0.12), clearWindowMat);
-    leftWindowMesh.position.set(-1.05, 0.15, 0.01);
-    frontShellGroup.add(leftWindowMesh);
+    // Clear acrylic observation window panes
+    const leftWindowGlass = new THREE.Mesh(new THREE.PlaneGeometry(1.08, 1.10), windowGlassMat);
+    leftWindowGlass.position.set(-1.18, -0.04, D / 2 + 0.005);
+    frontShellGroup.add(leftWindowGlass);
 
-    const rightWindowMesh = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.25, 0.12), clearWindowMat);
-    rightWindowMesh.position.set(1.05, 0.15, 0.01);
-    frontShellGroup.add(rightWindowMesh);
+    const rightWindowGlass = new THREE.Mesh(new THREE.PlaneGeometry(1.08, 1.10), windowGlassMat);
+    rightWindowGlass.position.set(1.18, -0.04, D / 2 + 0.005);
+    frontShellGroup.add(rightWindowGlass);
 
-    // Front Door Flap
+    // Perimeter Casing Walls (Top, Bottom, Left, Right)
+    const topRim = new THREE.Mesh(new THREE.PlaneGeometry(W, D), casingBlackMat);
+    topRim.position.set(0, H / 2, 0);
+    topRim.rotation.x = -Math.PI / 2;
+    frontShellGroup.add(topRim);
+
+    const bottomSpine = new THREE.Mesh(
+      new THREE.PlaneGeometry(W, D), 
+      new THREE.MeshStandardMaterial({ map: spineTex, roughness: 0.6 })
+    );
+    bottomSpine.position.set(0, -H / 2, 0);
+    bottomSpine.rotation.x = Math.PI / 2;
+    frontShellGroup.add(bottomSpine);
+
+    const leftRim = new THREE.Mesh(new THREE.PlaneGeometry(D, H), casingBlackMat);
+    leftRim.position.set(-W / 2, 0, 0);
+    leftRim.rotation.y = -Math.PI / 2;
+    frontShellGroup.add(leftRim);
+
+    const rightRim = new THREE.Mesh(new THREE.PlaneGeometry(D, H), casingBlackMat);
+    rightRim.position.set(W / 2, 0, 0);
+    rightRim.rotation.y = Math.PI / 2;
+    frontShellGroup.add(rightRim);
+
+    // --- TOP FLAP (Protective Door with "Insert this side into recorder") ---
     const frontDoorGroup = new THREE.Group();
-    frontDoorGroup.position.set(0, -1.2, 0);
+    // Pivot at top edge of the cassette
+    frontDoorGroup.position.set(0, H / 2, D / 2);
     vhsGroup.add(frontDoorGroup);
-    const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.35, 0.56), plasticDarkGrayMat);
-    doorMesh.position.set(0, 0.175, 0);
-    frontDoorGroup.add(doorMesh);
 
-    // Left Spool
+    const flapMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(W, 0.28), 
+      new THREE.MeshStandardMaterial({ map: flapTex, roughness: 0.6 })
+    );
+    flapMesh.position.set(0, -0.14, 0);
+    frontDoorGroup.add(flapMesh);
+
+    const flapTop = new THREE.Mesh(new THREE.PlaneGeometry(W, D * 0.95), casingBlackMat);
+    flapTop.position.set(0, 0, -D * 0.475);
+    flapTop.rotation.x = -Math.PI / 2;
+    frontDoorGroup.add(flapTop);
+
+    // Exposed magnetic tape under flap (visible when door opens!)
+    const flapTapeRibbon = new THREE.Mesh(
+      new THREE.BoxGeometry(W * 0.92, 0.22, 0.02), 
+      tapeEdgeMat
+    );
+    flapTapeRibbon.position.set(0, -0.14, -D * 0.35);
+    frontDoorGroup.add(flapTapeRibbon);
+
+    // --- LEFT SPOOL (Take-up reel with full tape) ---
     const leftSpoolGroup = new THREE.Group();
-    leftSpoolGroup.position.set(-1.05, 0.15, -0.1);
+    leftSpoolGroup.position.set(-1.18, -0.04, 0);
     vhsGroup.add(leftSpoolGroup);
 
-    const spoolHubGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.38, 24);
-    const leftHub = new THREE.Mesh(spoolHubGeo, spoolWhiteMat);
-    leftHub.rotation.x = Math.PI / 2;
-    leftSpoolGroup.add(leftHub);
+    const spoolGeo = new THREE.CylinderGeometry(0.96, 0.96, 0.42, 48);
+    const leftReelCapMat = new THREE.MeshStandardMaterial({ 
+      map: reelFullTex, 
+      transparent: true, 
+      roughness: 0.4 
+    });
 
-    const leftTape = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.36, 32, 1, true), magneticTapeMat);
-    leftTape.rotation.x = Math.PI / 2;
-    leftSpoolGroup.add(leftTape);
+    const leftSpoolMesh = new THREE.Mesh(spoolGeo, [tapeEdgeMat, leftReelCapMat, leftReelCapMat]);
+    leftSpoolMesh.rotation.x = Math.PI / 2;
+    leftSpoolGroup.add(leftSpoolMesh);
 
-    // Right Spool
+    // --- RIGHT SPOOL (Supply reel with smaller tape pack) ---
     const rightSpoolGroup = new THREE.Group();
-    rightSpoolGroup.position.set(1.05, 0.15, -0.1);
+    rightSpoolGroup.position.set(1.18, -0.04, 0);
     vhsGroup.add(rightSpoolGroup);
 
-    const rightHub = new THREE.Mesh(spoolHubGeo, spoolWhiteMat);
-    rightHub.rotation.x = Math.PI / 2;
-    rightSpoolGroup.add(rightHub);
+    const rightReelCapMat = new THREE.MeshStandardMaterial({ 
+      map: reelSmallTex, 
+      transparent: true, 
+      roughness: 0.4 
+    });
 
-    const rightTape = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.36, 32, 1, true), magneticTapeMat);
-    rightTape.rotation.x = Math.PI / 2;
-    rightSpoolGroup.add(rightTape);
+    const rightSpoolMesh = new THREE.Mesh(spoolGeo, [tapeEdgeMat, rightReelCapMat, rightReelCapMat]);
+    rightSpoolMesh.rotation.x = Math.PI / 2;
+    rightSpoolGroup.add(rightSpoolMesh);
 
-    // Internals
+    // --- INTERNAL GUIDE ROLLERS & MAGNETIC TAPE RIBBON ---
     const internalsGroup = new THREE.Group();
     vhsGroup.add(internalsGroup);
 
-    const rollerGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.45, 16);
-    const leftRoller = new THREE.Mesh(rollerGeo, metalRollerMat);
-    leftRoller.position.set(-1.85, -0.95, -0.1);
+    const rollerGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.44, 20);
+    const leftRoller = new THREE.Mesh(rollerGeo, chromeRollerMat);
+    leftRoller.position.set(-1.88, -0.96, 0);
     internalsGroup.add(leftRoller);
 
-    const rightRoller = new THREE.Mesh(rollerGeo, metalRollerMat);
-    rightRoller.position.set(1.85, -0.95, -0.1);
+    const rightRoller = new THREE.Mesh(rollerGeo, chromeRollerMat);
+    rightRoller.position.set(1.88, -0.96, 0);
     internalsGroup.add(rightRoller);
 
-    const ribbonMesh = new THREE.Mesh(new THREE.BoxGeometry(3.7, 0.32, 0.01), magneticTapeMat);
-    ribbonMesh.position.set(0, -0.98, -0.1);
+    // Bottom horizontal tape ribbon running between rollers
+    const ribbonMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(3.76, 0.28, 0.012), 
+      tapeEdgeMat
+    );
+    ribbonMesh.position.set(0, -0.96, 0);
     internalsGroup.add(ribbonMesh);
 
-    // Back Shell
+    // --- BACK SHELL ---
     const backShellGroup = new THREE.Group();
-    backShellGroup.position.set(0, 0, -0.28);
+    backShellGroup.position.set(0, 0, -D / 2);
     vhsGroup.add(backShellGroup);
-    backShellGroup.add(new THREE.Mesh(new THREE.BoxGeometry(4.2, 2.4, 0.1), plasticDarkGrayMat));
 
-    // Screws
+    const backMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(W, H), 
+      new THREE.MeshStandardMaterial({ 
+        map: backTex, 
+        roughness: 0.65, 
+        metalness: 0.06 
+      })
+    );
+    backMesh.rotation.y = Math.PI; // Face backwards
+    backShellGroup.add(backMesh);
+
+    // --- SCREWS (Corner & Center assembly) ---
     const screwsGroup = new THREE.Group();
     vhsGroup.add(screwsGroup);
     const screwGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.15, 12);
-    [[-1.9, 1.0, -0.36], [1.9, 1.0, -0.36], [-1.9, -1.0, -0.36], [1.9, -1.0, -0.36], [0, 0.15, -0.36]].forEach(pos => {
+    [
+      [-1.95, 1.05, -D / 2 - 0.04], 
+      [1.95, 1.05, -D / 2 - 0.04], 
+      [-1.95, -1.05, -D / 2 - 0.04], 
+      [1.95, -1.05, -D / 2 - 0.04], 
+      [0, 0.08, -D / 2 - 0.04]
+    ].forEach(pos => {
       const s = new THREE.Mesh(screwGeo, screwMat);
       s.position.set(pos[0], pos[1], pos[2]);
       s.rotation.x = Math.PI / 2;
       screwsGroup.add(s);
     });
 
-    // 6. RENDER LOOP WITH EXPLODED INTERPOLATION
+    // 6. ANIMATION RENDER LOOP WITH SCROLL EXPLOSION
     let animId: number;
     let lerpP = 0;
 
@@ -265,39 +345,46 @@ export const VhsExploded3D: React.FC = () => {
         const rect = containerRef.current.getBoundingClientRect();
         const totalDist = rect.height - window.innerHeight;
         const targetP = Math.max(0, Math.min(1, -rect.top / Math.max(1, totalDist)));
-        lerpP += (targetP - lerpP) * 0.09;
+        lerpP += (targetP - lerpP) * 0.085;
       }
 
       const p = lerpP;
 
-      frontShellGroup.position.z = p * 2.4;
-      frontShellGroup.rotation.x = p * 0.15;
+      // Front Shell lifts forward
+      frontShellGroup.position.z = p * 2.3;
+      frontShellGroup.rotation.x = p * 0.12;
 
-      frontDoorGroup.rotation.x = -p * Math.PI * 0.85;
-      frontDoorGroup.position.y = -1.2 + p * 1.35;
-      frontDoorGroup.position.z = p * 2.9;
+      // Top Door flap hinges open
+      frontDoorGroup.rotation.x = -p * 1.55;
+      frontDoorGroup.position.z = D / 2 + p * 2.6;
 
-      leftSpoolGroup.position.y = 0.15 + p * 1.5;
-      leftSpoolGroup.position.x = -1.05 - p * 0.85;
-      leftSpoolGroup.position.z = -0.1 + p * 1.2;
-      leftSpoolGroup.rotation.z += 0.006;
+      // Left spool lifts in 3D and spins
+      leftSpoolGroup.position.z = p * 2.6;
+      leftSpoolGroup.position.y = -0.04 + p * 1.35;
+      leftSpoolGroup.position.x = -1.18 - p * 0.75;
+      leftSpoolMesh.rotation.z += 0.007;
 
-      rightSpoolGroup.position.y = 0.15 + p * 1.5;
-      rightSpoolGroup.position.x = 1.05 + p * 0.85;
-      rightSpoolGroup.position.z = -0.1 + p * 1.2;
-      rightSpoolGroup.rotation.z += 0.008;
+      // Right spool lifts in 3D and spins
+      rightSpoolGroup.position.z = p * 2.6;
+      rightSpoolGroup.position.y = -0.04 + p * 1.35;
+      rightSpoolGroup.position.x = 1.18 + p * 0.75;
+      rightSpoolMesh.rotation.z += 0.009;
 
-      internalsGroup.position.y = -p * 0.6;
-      internalsGroup.position.z = p * 0.8;
+      // Internals floating
+      internalsGroup.position.y = -p * 0.55;
+      internalsGroup.position.z = p * 0.9;
 
-      backShellGroup.position.z = -0.28 - p * 2.2;
-      backShellGroup.rotation.x = -p * 0.12;
+      // Back shell drops backwards
+      backShellGroup.position.z = -D / 2 - p * 2.2;
+      backShellGroup.rotation.x = -p * 0.1;
 
-      screwsGroup.position.z = -p * 3.8;
+      // Screws float out
+      screwsGroup.position.z = -p * 3.6;
 
-      vhsGroup.rotation.x = 0.22 + p * 0.35;
-      vhsGroup.rotation.y = -0.38 + p * 0.75;
-      vhsGroup.position.y = 0.15 - p * 0.2;
+      // Overall cassette orientation with natural mouse reactivity
+      vhsGroup.rotation.x = 0.18 + p * 0.32;
+      vhsGroup.rotation.y = -0.32 + p * 0.72;
+      vhsGroup.position.y = 0.58 - p * 0.22;
 
       renderer.render(scene, camera);
     };
@@ -365,7 +452,7 @@ export const VhsExploded3D: React.FC = () => {
             }}
           />
         ) : (
-          /* CSS 3D Exploded Engine (Bulletproof Fallback for all environments) */
+          /* CSS 3D Exploded Engine (Authentic VHS Fallback for all environments) */
           <div 
             style={{
               position: 'absolute',
@@ -375,144 +462,118 @@ export const VhsExploded3D: React.FC = () => {
               justifyContent: 'center',
               perspective: '1200px',
               zIndex: 1,
-              pointerEvents: 'none'
+              pointerEvents: 'none',
+              transform: 'translateY(-20px)'
             }}
           >
             <div 
               style={{
                 position: 'relative',
-                width: 'min(420px, 85vw)',
-                height: '240px',
+                width: 'min(440px, 86vw)',
+                height: '243px',
                 transformStyle: 'preserve-3d',
                 transform: `rotateX(${16 - p * 12 + mousePos.y * 0.4}deg) rotateY(${-22 + p * 38 + mousePos.x * 0.4}deg)`,
                 transition: 'transform 0.15s ease-out'
               }}
             >
-              {/* Back Shell */}
-              <div 
+              {/* Back Shell with authentic drive spindle holes */}
+              <img 
+                src="/assets/vhs/vhs_back.png" 
+                alt="VHS Back Shell"
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #18181b 0%, #09090b 100%)',
-                  border: '2px solid #27272a',
-                  boxShadow: '0 25px 50px rgba(0,0,0,0.8)',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '10px',
+                  boxShadow: '0 25px 50px rgba(0,0,0,0.85)',
                   transform: `translateZ(${-p * 110}px)`,
-                  transition: 'transform 0.1s linear'
+                  transition: 'transform 0.1s linear',
+                  pointerEvents: 'none'
                 }}
               />
 
-              {/* Internal Spools */}
+              {/* Internal Spools (Dual authentic white hubs with magnetic tape) */}
               <div 
                 style={{
                   position: 'absolute',
-                  inset: '20px',
+                  inset: '16px',
                   display: 'flex',
                   justifyContent: 'space-around',
                   alignItems: 'center',
                   transformStyle: 'preserve-3d',
-                  transform: `translateZ(${p * 50}px) translateY(${-p * 45}px)`,
+                  transform: `translateZ(${p * 60}px) translateY(${-p * 45}px)`,
                   transition: 'transform 0.1s linear'
                 }}
               >
-                {/* Left Reel with Magnetic Tape */}
-                <div 
+                {/* Left Reel (Full takeup reel) */}
+                <img 
+                  src="/assets/vhs/vhs_reel_full.png"
+                  alt="VHS Left Spool"
                   style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, #f8fafc 24%, #1e1b18 25%, #2a221b 85%, #f1f5f9 86%)',
-                    border: '3px solid #3f3f46',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transform: `translateX(${-p * 55}px) rotate(${p * 240}deg)`
+                    width: '125px',
+                    height: '125px',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.7))',
+                    transform: `translateX(${-p * 50}px) rotate(${p * 240}deg)`,
+                    transition: 'transform 0.1s linear'
                   }}
-                >
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '3px dashed #71717a' }} />
-                </div>
+                />
 
-                {/* Right Reel */}
-                <div 
+                {/* Right Reel (Supply reel) */}
+                <img 
+                  src="/assets/vhs/vhs_reel_small.png"
+                  alt="VHS Right Spool"
                   style={{
-                    width: '100px',
-                    height: '100px',
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, #f8fafc 28%, #1e1b18 29%, #2a221b 72%, #f1f5f9 73%)',
-                    border: '3px solid #3f3f46',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transform: `translateX(${p * 55}px) rotate(${p * 320}deg)`
+                    width: '125px',
+                    height: '125px',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.7))',
+                    transform: `translateX(${p * 50}px) rotate(${p * 320}deg)`,
+                    transition: 'transform 0.1s linear'
                   }}
-                >
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px dashed #71717a' }} />
-                </div>
+                />
               </div>
 
-              {/* Front Protective Door */}
+              {/* Front Protective Door Flap ("Insert this side into recorder") */}
               <div 
                 style={{
                   position: 'absolute',
-                  bottom: '-12px',
+                  top: 0,
                   left: 0,
                   right: 0,
-                  height: '36px',
-                  background: 'linear-gradient(180deg, #27272a 0%, #18181b 100%)',
-                  borderRadius: '6px',
-                  border: '1px solid #3f3f46',
-                  transformOrigin: 'bottom center',
+                  height: '32px',
+                  transformOrigin: 'top center',
                   transform: `translateZ(${p * 140}px) rotateX(${-p * 95}deg)`,
-                  transition: 'transform 0.1s linear'
+                  transition: 'transform 0.1s linear',
+                  zIndex: 4
                 }}
-              />
+              >
+                <img 
+                  src="/assets/vhs/vhs_flap.png" 
+                  alt="VHS Flap"
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
+                />
+              </div>
 
-              {/* Front Casing with Vintage Label and Dual Windows */}
-              <div 
+              {/* Front Face with authentic label and transparent acrylic windows */}
+              <img 
+                src="/assets/vhs/vhs_front_solid.png" 
+                alt="VHS Authentic Front Face"
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #27272a 0%, #18181b 100%)',
-                  border: '2px solid rgba(255, 255, 255, 0.12)',
-                  boxShadow: '0 30px 60px rgba(0,0,0,0.7)',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '10px',
+                  boxShadow: '0 30px 60px rgba(0,0,0,0.75)',
                   transform: `translateZ(${p * 120}px)`,
                   transition: 'transform 0.1s linear',
-                  padding: '12px',
-                  boxSizing: 'border-box',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
+                  zIndex: 3
                 }}
-              >
-                {/* Vintage Label */}
-                <div 
-                  style={{
-                    background: '#f8fafc',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    color: '#0f172a',
-                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #ea580c', paddingBottom: '4px', marginBottom: '6px' }}>
-                    <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#c2410c' }}>DIGIMEMORIES</span>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b' }}>ARCHIVO FAMILIAR 1994</span>
-                  </div>
-                  <div style={{ fontSize: '0.72rem', fontStyle: 'italic', color: '#1e3a8a', lineHeight: 1.3 }}>
-                    Vacaciones Acapulco + Boda Papá y Mamá
-                  </div>
-                </div>
-
-                {/* Clear observation windows */}
-                <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', height: '90px' }}>
-                  <div style={{ width: '100px', height: '80px', borderRadius: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)' }} />
-                  <div style={{ width: '100px', height: '80px', borderRadius: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)' }} />
-                </div>
-              </div>
-
+              />
             </div>
           </div>
         )}
@@ -566,66 +627,67 @@ export const VhsExploded3D: React.FC = () => {
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: '580px',
+          maxWidth: '520px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '0.85rem',
-          pointerEvents: 'none'
+          gap: '0.65rem',
+          pointerEvents: 'none',
+          marginBottom: '0.5rem'
         }}>
           {/* Dynamic Glassmorphism Storytelling Cards Overlay */}
           <div style={{
             position: 'relative',
             width: '100%',
-            minHeight: '140px'
+            minHeight: '118px'
           }}>
             {/* STAGE 0: CÁPSULA INTACTA */}
             <div style={{
               opacity: activeStage === 0 ? 1 : 0,
-              transform: activeStage === 0 ? 'translateY(0)' : 'translateY(16px)',
-              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              transform: activeStage === 0 ? 'translateY(0)' : 'translateY(14px)',
+              transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
               position: 'absolute',
               inset: 0,
-              background: 'rgba(28, 25, 23, 0.88)',
+              background: 'rgba(24, 20, 18, 0.88)',
               backdropFilter: 'blur(16px)',
               border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderRadius: '18px',
-              padding: '1.1rem 1.4rem',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              borderRadius: '16px',
+              padding: '0.85rem 1.25rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.55)',
               textAlign: 'center',
               pointerEvents: activeStage === 0 ? 'auto' : 'none'
             }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#38bdf8', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                <Sparkles size={13} /> La Cápsula del Tiempo Familiar
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#38bdf8', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.2rem' }}>
+                <Sparkles size={12} /> La Cápsula del Tiempo Familiar
               </div>
-              <h3 style={{ margin: '0 0 0.3rem 0', fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc' }}>
+              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.08rem', fontWeight: 800, color: '#f8fafc' }}>
                 Guardadas por más de 30 años
               </h3>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
                 En los 80s y 90s, bodas, navidades y primeros pasos quedaron atrapados en cinta magnética. Pero estas cintas fueron diseñadas para durar solo 15 a 20 años.
               </p>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '0.6rem', fontSize: '0.75rem', color: '#fb923c', fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', marginTop: '0.45rem', fontSize: '0.72rem', color: '#fb923c', fontWeight: 700 }}>
                 <span>Desliza para ver la apertura interior</span>
-                <ArrowDown size={13} className="animate-bounce" />
+                <ArrowDown size={12} className="animate-bounce" />
               </div>
             </div>
 
             {/* STAGE 1: DESMAGNETIZACIÓN NATURAL */}
             <div style={{
               opacity: activeStage === 1 ? 1 : 0,
-              transform: activeStage === 1 ? 'translateY(0)' : 'translateY(16px)',
-              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              transform: activeStage === 1 ? 'translateY(0)' : 'translateY(14px)',
+              transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
               position: 'absolute',
               inset: 0,
-              background: 'rgba(28, 25, 23, 0.9)',
+              background: 'rgba(24, 20, 18, 0.9)',
               backdropFilter: 'blur(16px)',
               border: '1px solid rgba(234, 88, 12, 0.35)',
-              borderRadius: '18px',
-              padding: '1.1rem 1.4rem',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              borderRadius: '16px',
+              padding: '0.85rem 1.25rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.55)',
               pointerEvents: activeStage === 1 ? 'auto' : 'none'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
                 <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#fb923c', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <AlertTriangle size={13} /> FASE 1: APERTURA FRONTAL
                 </span>
@@ -633,10 +695,10 @@ export const VhsExploded3D: React.FC = () => {
                   -20% Señal / década
                 </span>
               </div>
-              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.12rem', fontWeight: 800, color: '#ffffff' }}>
+              <h3 style={{ margin: '0 0 0.2rem 0', fontSize: '1.08rem', fontWeight: 800, color: '#ffffff' }}>
                 1. Desmagnetización Inevitable de la Cinta
               </h3>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
                 Las diminutas partículas de óxido de hierro pierden su orientación magnética gradualmente. El video comienza a presentar estática, rayas blancas de distorsión ("dropout") y colores desvanecidos.
               </p>
             </div>
@@ -644,19 +706,19 @@ export const VhsExploded3D: React.FC = () => {
             {/* STAGE 2: SÍNDROME DE CINTA PEGAJOSA Y MOHO */}
             <div style={{
               opacity: activeStage === 2 ? 1 : 0,
-              transform: activeStage === 2 ? 'translateY(0)' : 'translateY(16px)',
-              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              transform: activeStage === 2 ? 'translateY(0)' : 'translateY(14px)',
+              transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
               position: 'absolute',
               inset: 0,
-              background: 'rgba(28, 25, 23, 0.9)',
+              background: 'rgba(24, 20, 18, 0.9)',
               backdropFilter: 'blur(16px)',
               border: '1px solid rgba(239, 68, 68, 0.4)',
-              borderRadius: '18px',
-              padding: '1.1rem 1.4rem',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              borderRadius: '16px',
+              padding: '0.85rem 1.25rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.55)',
               pointerEvents: activeStage === 2 ? 'auto' : 'none'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
                 <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#f87171', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <Flame size={13} /> FASE 2: NÚCLEO Y BOBINAS
                 </span>
@@ -664,10 +726,10 @@ export const VhsExploded3D: React.FC = () => {
                   Peligro Crítico de Moho
                 </span>
               </div>
-              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.12rem', fontWeight: 800, color: '#ffffff' }}>
+              <h3 style={{ margin: '0 0 0.2rem 0', fontSize: '1.08rem', fontWeight: 800, color: '#ffffff' }}>
                 2. Hidrólisis Química (Síndrome de Cinta Pegajosa)
               </h3>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
                 La humedad del aire descompone los polímeros aglutinantes de la cinta. Las capas se pegan entre sí y prolifera moho blanco microscópico que devora la emulsión. Al ponerla en una videocasetera común, la cinta se rompe.
               </p>
             </div>
@@ -675,16 +737,16 @@ export const VhsExploded3D: React.FC = () => {
             {/* STAGE 3: RESCATE 1:1 EN ESTUDIO PROFESIONAL */}
             <div style={{
               opacity: activeStage === 3 ? 1 : 0,
-              transform: activeStage === 3 ? 'translateY(0)' : 'translateY(16px)',
-              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              transform: activeStage === 3 ? 'translateY(0)' : 'translateY(14px)',
+              transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
               position: 'absolute',
               inset: 0,
-              background: 'rgba(28, 25, 23, 0.92)',
+              background: 'rgba(24, 20, 18, 0.92)',
               backdropFilter: 'blur(16px)',
               border: '1px solid rgba(16, 185, 129, 0.4)',
-              borderRadius: '18px',
-              padding: '1.1rem 1.4rem',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              borderRadius: '16px',
+              padding: '0.85rem 1.25rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.55)',
               pointerEvents: activeStage === 3 ? 'auto' : 'none'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
